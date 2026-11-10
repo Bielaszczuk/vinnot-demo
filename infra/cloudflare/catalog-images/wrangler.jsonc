@@ -1,0 +1,11 @@
+{
+  "name": "vinnot-catalog-images",
+  "main": "worker.mjs",
+  "account_id": "33ca94a4a75ed440a81ac011d00534cb",
+  "compatibility_date": "2026-10-05",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "images.vinnot.com", "custom_domain": true }],
+  "r2_buckets": [{ "binding": "CATALOG_IMAGES", "bucket_name": "vinnot-catalog-images" }],
+  "observability": { "enabled": true }
+}

@@ -1,0 +1,130 @@
+name: vinnot-low-cost
+
+services:
+  postgres:
+    extends:
+      file: compose.postgres.yml
+      service: postgres
+    container_name: vinnot-dev-postgres-local
+    environment:
+      POSTGRES_DB: vinnot
+      POSTGRES_USER: vinnot_admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vinnot_admin -d vinnot"]
+
+  backend:
+    image: ${BACKEND_IMAGE:-497675597655.dkr.ecr.us-east-1.amazonaws.com/vinnot-backend:dev-latest}
+    container_name: vinnot-dev-backend
+    restart: unless-stopped
+    env_file:
+      - runtime.env
+    environment:
+      AWS_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vinnot
+      DB_USERNAME: vinnot_admin
+      SERVER_PORT: "8080"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "6"
+      SERVER_TOMCAT_THREADS_MIN_SPARE: "2"
+      SERVER_TOMCAT_THREADS_MAX: "30"
+      JAVA_OPTS: >-
+        -Xms128m
+        -Xmx512m
+        -XX:+UseSerialGC
+        -XX:MaxMetaspaceSize=192m
+        -XX:+ExitOnOutOfMemoryError
+        -XX:+UseContainerSupport
+      APP_SHARING_API_ORIGIN: https://api-dev.vinnot.com
+      APP_SHARING_ANDROID_AVAILABLE: "true"
+      APP_AUTH_FRONTEND_BASE_URL: https://dev.vinnot.com
+      APP_PUBLIC_API_BASE_URL: https://api-dev.vinnot.com/api
+      APP_STORAGE_PROVIDER: ${APP_STORAGE_PROVIDER:-s3}
+      APP_STORAGE_R2_WRITES_ENABLED: ${APP_STORAGE_R2_WRITES_ENABLED:-true}
+      APP_STORAGE_R2_ACCOUNT_ID: ${APP_STORAGE_R2_ACCOUNT_ID:-}
+      APP_STORAGE_R2_ACCESS_KEY_ID: ${APP_STORAGE_R2_ACCESS_KEY_ID:-}
+      APP_STORAGE_R2_SECRET_ACCESS_KEY: ${APP_STORAGE_R2_SECRET_ACCESS_KEY:-}
+      APP_STORAGE_R2_BUCKET: ${APP_STORAGE_R2_BUCKET:-}
+      APP_STORAGE_R2_ENVIRONMENT: development
+      APP_STORAGE_R2_PUBLIC_BASE_URL: https://images.vinnot.com
+      APP_STORAGE_R2_MAX_RESERVED_BYTES: 536870912
+      APP_STORAGE_R2_MAX_MONTHLY_WRITES: 5000
+      APP_STORAGE_R2_MAX_MONTHLY_READS: 100000
+      APP_STORAGE_S3_BUCKET: vinnot-dev-uploads-497675597655
+      APP_STORAGE_S3_REGION: us-east-1
+      APP_STORAGE_S3_AVATAR_PREFIX: avatars
+      APP_STORAGE_S3_WINE_LABEL_PREFIX: wine-labels
+      APP_STORAGE_S3_WINE_LABEL_QUARANTINE_PREFIX: wine-label-quarantine
+      EMAIL_PROVIDER: ses
+      EMAIL_FROM: no-reply@vinnot.com
+      EMAIL_SES_REGION: us-east-1
+      # From email-feedback-stack.json (Environment=dev); deploy that stack before these take effect.
+      EMAIL_SES_CONFIGURATION_SET: vinnot-dev
+      EMAIL_FEEDBACK_QUEUE_URL: https://sqs.us-east-1.amazonaws.com/497675597655/vinnot-dev-email-feedback
+      AI_PROVIDER: openai
+      AI_ENABLED: "true"
+      OPENAI_MODEL: gpt-6-luna
+      WINE_LABEL_RECOGNITION_TIMEOUT: "8s"
+      GOOGLE_OAUTH_AUDIENCES: 162159837919-ojvdkl55fsaovve22saral06m9a4rm1o.apps.googleusercontent.com,162159837919-5m0ojpq0ut7uct3n1s8sucgase0rqftn.apps.googleusercontent.com,162159837919-k1pmtt1hq04c070a6us3uh4hs1iau0bh.apps.googleusercontent.com
+      FACEBOOK_APP_ID: "984338657968690"
+      FACEBOOK_GRAPH_VERSION: v23.0
+      APPLE_OAUTH_AUDIENCES: com.vinnot.app.dev,com.vinnot.web.dev
+      APPLE_TEAM_ID: 569A638J8F
+      APPLE_KEY_ID: 3WPWA3AC2Y
+      APPLE_REDIRECT_URIS: https://dev.vinnot.com/login
+      JWT_EXPIRATION: "900000"
+      JWT_REFRESH_EXPIRATION: "604800000"
+      CORS_ALLOWED_ORIGINS: https://api-dev.vinnot.com,https://dev.vinnot.com,http://localhost:5173
+      RATE_LIMIT_TRUST_FORWARDED_FOR: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/api/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 300s
+    mem_limit: 768m
+    cpus: 1.05
+    logging: &bounded-logging
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
+    networks:
+      - runtime
+
+  proxy:
+    # Exact version + multi-arch index digest; bump deliberately.
+    image: caddy:2.11.6-alpine@sha256:d44355d3c2149dc580ce2cac735955d1c08d3d00882c30489c241aa51a5c10d9
+    container_name: vinnot-dev-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+    mem_limit: 96m
+    cpus: 0.20
+    logging: *bounded-logging
+    networks:
+      - runtime
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  runtime:
+    name: vinnot-low-cost-runtime

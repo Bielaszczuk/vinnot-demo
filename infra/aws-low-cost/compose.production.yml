@@ -1,0 +1,85 @@
+# Overlay the shared topology explicitly; never pass this file to the dev deploy script.
+name: vinnot-production
+
+services:
+  postgres:
+    extends:
+      file: compose.production-data.yml
+      service: postgres
+    environment:
+      POSTGRES_PASSWORD: !reset null
+
+  backend:
+    image: ${PROD_BACKEND_IMAGE:?Set the verified production image digest}
+    container_name: vinnot-prod-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vinnot_prod
+      DB_USERNAME: vinnot_prod_runtime
+      SPRING_FLYWAY_ENABLED: "false"
+      APP_SHARING_API_ORIGIN: https://api.vinnot.com
+      APP_SHARING_ANDROID_AVAILABLE: "true"
+      APP_AUTH_FRONTEND_BASE_URL: https://vinnot.com
+      APP_PUBLIC_API_BASE_URL: https://api.vinnot.com/api
+      # From email-feedback-stack.json (Environment=prod); its IAM policy must exist before this release runs.
+      EMAIL_SES_CONFIGURATION_SET: vinnot-prod
+      EMAIL_FEEDBACK_QUEUE_URL: https://sqs.us-east-1.amazonaws.com/497675597655/vinnot-prod-email-feedback
+      # Push goes out through Expo from the release that ships the 0.1.3 binaries able to register devices.
+      PUSH_PROVIDER: expo
+      # Payment destinations belong to this deployment, even if a dev URL is exported.
+      # Credentials and opt-in flags remain in the production runtime secret.
+      EVENT_PAYMENTS_REDIRECT_URI: https://vinnot.com/partner/payments/callback
+      EVENT_PAYMENTS_CHECKOUT_RETURN_URI: https://vinnot.com/payments/return
+      EVENT_PAYMENTS_NOTIFICATION_URI: https://api.vinnot.com/api/payments/mercadopago/webhooks
+      APP_STORAGE_R2_ENVIRONMENT: production
+      APP_STORAGE_S3_BUCKET: vinnot-prod-uploads-497675597655
+      GOOGLE_OAUTH_AUDIENCES: ${PROD_GOOGLE_OAUTH_AUDIENCES:?Set verified production Google audiences}
+      # Keep the provider fail-closed even if a development credential is exported.
+      FACEBOOK_APP_ID: ""
+      FACEBOOK_APP_SECRET: ""
+      APPLE_OAUTH_AUDIENCES: com.vinnot.app,com.vinnot.web
+      APPLE_TEAM_ID: ${PROD_APPLE_TEAM_ID:?Set the verified Apple team}
+      APPLE_KEY_ID: ${PROD_APPLE_KEY_ID:?Set the verified Apple key ID}
+      APPLE_REDIRECT_URIS: https://vinnot.com/login
+      CORS_ALLOWED_ORIGINS: https://api.vinnot.com,https://vinnot.com
+      AI_MONTHLY_LIMIT_USD: ${PROD_AI_MONTHLY_LIMIT_USD:?Allocate the shared OpenAI budget explicitly}
+
+  migrate:
+    image: ${PROD_BACKEND_IMAGE:?Set the verified production image digest}
+    profiles: [migration]
+    restart: "no"
+    env_file:
+      - path: migration.env
+        required: false
+    environment:
+      VINNOT_MIGRATION_DB_URL: jdbc:postgresql://postgres:5432/vinnot_prod
+    entrypoint:
+      - java
+      - -Xmx256m
+      - -Dloader.main=com.vinnot.shared.infrastructure.persistence.ProductionMigrationRunner
+      - -cp
+      - /app/vinnot-backend.jar
+      - org.springframework.boot.loader.launch.PropertiesLauncher
+    depends_on:
+      postgres:
+        condition: service_healthy
+    mem_limit: 384m
+    cpus: 0.65
+    networks: [runtime]
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  proxy:
+    container_name: vinnot-prod-proxy
+    environment:
+      VINNOT_API_HOST: api.vinnot.com
+
+secrets:
+  postgres-bootstrap-password:
+    file: ./secrets/postgres-bootstrap-password
+
+networks:
+  runtime:
+    name: vinnot-production-runtime

@@ -1,0 +1,2 @@
+to: guest@example.test
+subject: Tu inscripción en Vinnot

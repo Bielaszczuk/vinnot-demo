@@ -1,0 +1,77 @@
+{
+  "reviews": {
+    "wine-001": [
+      {
+        "id": "review-001",
+        "wine_id": "wine-001",
+        "user_id": "user-001",
+        "user_name": "Juan García",
+        "user_avatar": null,
+        "rating": 5,
+        "comment": "Exceptional Malbec! The depth of flavor and smooth finish make this a standout. Perfect with a good steak.",
+        "helpful_count": 24,
+        "created_at": "2024-06-15T18:30:00Z"
+      },
+      {
+        "id": "review-002",
+        "wine_id": "wine-001",
+        "user_id": "user-002",
+        "user_name": "María López",
+        "user_avatar": null,
+        "rating": 4,
+        "comment": "Very good wine, rich and complex. A bit pricey but worth it for special occasions.",
+        "helpful_count": 12,
+        "created_at": "2024-05-20T14:00:00Z"
+      },
+      {
+        "id": "review-003",
+        "wine_id": "wine-001",
+        "user_id": "user-003",
+        "user_name": "Carlos Mendez",
+        "user_avatar": null,
+        "rating": 5,
+        "comment": "One of the best Argentine Malbecs I've ever had. The violet notes are incredible.",
+        "helpful_count": 18,
+        "created_at": "2024-04-10T20:15:00Z"
+      }
+    ],
+    "wine-002": [
+      {
+        "id": "review-004",
+        "wine_id": "wine-002",
+        "user_id": "user-004",
+        "user_name": "Ana Rodríguez",
+        "user_avatar": null,
+        "rating": 4,
+        "comment": "Solid Cabernet with great structure. Would recommend letting it breathe for an hour.",
+        "helpful_count": 8,
+        "created_at": "2024-07-01T16:45:00Z"
+      },
+      {
+        "id": "review-005",
+        "wine_id": "wine-002",
+        "user_id": "user-005",
+        "user_name": "Roberto Silva",
+        "user_avatar": null,
+        "rating": 5,
+        "comment": "Excellent value for the quality. The tobacco notes are subtle but present.",
+        "helpful_count": 15,
+        "created_at": "2024-06-25T12:30:00Z"
+      }
+    ],
+    "wine-003": [
+      {
+        "id": "review-006",
+        "wine_id": "wine-003",
+        "user_id": "user-006",
+        "user_name": "Laura Fernández",
+        "user_avatar": null,
+        "rating": 4,
+        "comment": "Beautiful Chardonnay! Not too oaky, just the right balance of fruit and cream.",
+        "helpful_count": 6,
+        "created_at": "2024-08-05T19:00:00Z"
+      }
+    ]
+  }
+}
+

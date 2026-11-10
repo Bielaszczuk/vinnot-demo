@@ -1,0 +1,181 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Separately authorized production release identity and constrained command; no runtime provisioning.",
+  "Parameters": {
+    "OidcProviderArn": {
+      "Type": "String",
+      "AllowedPattern": "^arn:aws:iam::497675597655:oidc-provider/token.actions.githubusercontent.com$"
+    },
+    "GitHubSubject": {
+      "Type": "String",
+      "AllowedPattern": "^repo:Bielaszczuk(@[0-9]+)?/vinnot(@[0-9]+)?:ref:refs/heads/main$",
+      "Description": "Exact subject verified for this repository; no wildcard or environment assumption."
+    }
+  },
+  "Resources": {
+    "ReleaseDocument": {
+      "Type": "AWS::SSM::Document",
+      "Properties": {
+        "Name": "Vinnot-ProductionRelease",
+        "DocumentType": "Command",
+        "Content": {
+          "schemaVersion": "2.2",
+          "description": "Release only; never accepts arbitrary shell or migration credentials. Requires SSM Agent ENV_VAR interpolation support.",
+          "parameters": {
+            "Operation": {
+              "type": "String",
+              "allowedValues": [
+                "deploy",
+                "rollback"
+              ],
+              "interpolationType": "ENV_VAR"
+            },
+            "Image": {
+              "type": "String",
+              "allowedPattern": "^497675597655\\.dkr\\.ecr\\.us-east-1\\.amazonaws\\.com/vinnot-backend-prod@sha256:[a-f0-9]{64}$",
+              "interpolationType": "ENV_VAR"
+            },
+            "Revision": {
+              "type": "String",
+              "allowedPattern": "^[a-f0-9]{40}$",
+              "interpolationType": "ENV_VAR"
+            },
+            "RuntimeHash": {
+              "type": "String",
+              "allowedPattern": "^[a-f0-9]{64}$",
+              "interpolationType": "ENV_VAR"
+            },
+            "Schema": {
+              "type": "String",
+              "allowedPattern": "^[A-Za-z0-9+/=]+$",
+              "interpolationType": "ENV_VAR"
+            }
+          },
+          "mainSteps": [
+            {
+              "action": "aws:runShellScript",
+              "name": "Release",
+              "inputs": {
+                "timeoutSeconds": "2400",
+                "runCommand": [
+                  "set -eu",
+                  ": \"${SSM_Operation:?Upgrade SSM Agent for ENV_VAR interpolation}\"",
+                  "exec /opt/vinnot-prod/deploy-production.sh \"$SSM_Operation\" \"$SSM_Image\" \"$SSM_Revision\" \"$SSM_RuntimeHash\" \"$SSM_Schema\""
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "ReleaseRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "vinnot-production-release",
+        "MaxSessionDuration": 3600,
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Federated": {
+                  "Ref": "OidcProviderArn"
+                }
+              },
+              "Action": "sts:AssumeRoleWithWebIdentity",
+              "Condition": {
+                "StringEquals": {
+                  "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+                  "token.actions.githubusercontent.com:sub": {
+                    "Ref": "GitHubSubject"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "production-publication",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "RegistryAuthentication",
+                  "Effect": "Allow",
+                  "Action": [
+                    "ecr:GetAuthorizationToken"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Sid": "ProductionImageOnly",
+                  "Effect": "Allow",
+                  "Action": [
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:InitiateLayerUpload",
+                    "ecr:UploadLayerPart",
+                    "ecr:CompleteLayerUpload",
+                    "ecr:PutImage",
+                    "ecr:DescribeImages",
+                    "ecr:BatchGetImage",
+                    "ecr:GetDownloadUrlForLayer"
+                  ],
+                  "Resource": "arn:aws:ecr:us-east-1:497675597655:repository/vinnot-backend-prod"
+                },
+                {
+                  "Sid": "WebInventory",
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:ListBucket"
+                  ],
+                  "Resource": "arn:aws:s3:::vinnot-prod-web-497675597655"
+                },
+                {
+                  "Sid": "WebPublicationWithoutDeletion",
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject",
+                    "s3:PutObject"
+                  ],
+                  "Resource": "arn:aws:s3:::vinnot-prod-web-497675597655/*"
+                },
+                {
+                  "Sid": "InvalidateProductionOnly",
+                  "Effect": "Allow",
+                  "Action": [
+                    "cloudfront:CreateInvalidation",
+                    "cloudfront:GetInvalidation"
+                  ],
+                  "Resource": "arn:aws:cloudfront::497675597655:distribution/ELFTVWJHW2QAA"
+                },
+                {
+                  "Sid": "ConstrainedReleaseCommand",
+                  "Effect": "Allow",
+                  "Action": [
+                    "ssm:SendCommand"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:document/${ReleaseDocument}"
+                    },
+                    "arn:aws:ec2:us-east-1:497675597655:instance/i-06bff053f7584c6c2"
+                  ]
+                },
+                {
+                  "Sid": "ReadCommandStatus",
+                  "Effect": "Allow",
+                  "Action": [
+                    "ssm:GetCommandInvocation"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

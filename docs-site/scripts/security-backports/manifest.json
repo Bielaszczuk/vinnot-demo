@@ -1,0 +1,202 @@
+{
+  "format": 1,
+  "trackingIssue": 339,
+  "packages": [
+    {
+      "name": "braces",
+      "version": "3.0.3",
+      "source": "https://github.com/micromatch/braces/pull/72",
+      "commit": "d0d575e55e74a4e0218e5248fafb79efc3e54ebb",
+      "files": [
+        {
+          "file": "lib/compile.js",
+          "beforeSha256": "dc98f22eee3d511785d92a00758d5f0d48efed5f5813bdecc2de430c529b5c9f",
+          "afterSha256": "b651f7715e6db8942ce61d3394357b4d81c8ece88240aa31a458ea1165edd195",
+          "replacements": [
+            {
+              "before": "\nconst fill = require('fill-range');\nconst utils = require('./utils');\n\nconst compile = (ast, options = {}) => {\n  const walk = (node, parent = {}) => {\n    const invalidBlock = utils.isInvalidBrace(parent);\n    const invalidNode = node.invalid === true && options.escapeInvalid === true;\n    const invalid = invalidBlock === true || invalidNode === true;\n",
+              "after": "\nconst fill = require('fill-range');\nconst utils = require('./utils');\nconst { MAX_DEPTH } = require('./constants');\n\nconst compile = (ast, options = {}) => {\n  const maxDepth = Number.isFinite(options.maxDepth) ? Math.min(MAX_DEPTH, options.maxDepth) : MAX_DEPTH;\n\n  const walk = (node, parent = {}, depth = 0) => {\n    if (node.nodes && depth > maxDepth) {\n      throw new RangeError(`AST depth (${depth}), exceeds max depth (${maxDepth})`);\n    }\n    const invalidBlock = utils.isInvalidBrace(parent);\n    const invalidNode = node.invalid === true && options.escapeInvalid === true;\n    const invalid = invalidBlock === true || invalidNode === true;\n"
+            },
+            {
+              "before": "\n    if (node.nodes) {\n      for (const child of node.nodes) {\n        output += walk(child, node);\n      }\n    }\n\n    return output;\n  };\n\n  return walk(ast);\n};\n\nmodule.exports = compile;\n",
+              "after": "\n    if (node.nodes) {\n      for (const child of node.nodes) {\n        output += walk(child, node, child.nodes ? depth + 1 : depth);\n      }\n    }\n\n    return output;\n  };\n\n  return walk(ast, {}, ast.type === 'root' ? 0 : 1);\n};\n\nmodule.exports = compile;\n"
+            }
+          ]
+        },
+        {
+          "file": "lib/constants.js",
+          "beforeSha256": "c18ac5adb57308f1ce42a28552da3a31f5d83709743ebd9a636336813a744d4b",
+          "afterSha256": "f9fb688959232eee3e6ad7906a5b0e3234815db49ee857ef86983d65b917dc7c",
+          "replacements": [
+            {
+              "before": "'use strict';\n\nmodule.exports = {\n  MAX_LENGTH: 10000,\n\n  // Digits\n",
+              "after": "'use strict';\n\nmodule.exports = {\n  MAX_DEPTH: 100,\n  MAX_LENGTH: 10000,\n\n  // Digits\n"
+            }
+          ]
+        },
+        {
+          "file": "lib/expand.js",
+          "beforeSha256": "41ccc196ebfa7b7781a634e721eb744e4e7bcb54cba427a7e3d6806a1b9e58f7",
+          "afterSha256": "2974d5b8763a358d81dfa5b4b804329f525239f34429c396b93a540219504809",
+          "replacements": [
+            {
+              "before": "const fill = require('fill-range');\nconst stringify = require('./stringify');\nconst utils = require('./utils');\n\nconst append = (queue = '', stash = '', enclose = false) => {\n  const result = [];\n",
+              "after": "const fill = require('fill-range');\nconst stringify = require('./stringify');\nconst utils = require('./utils');\nconst { MAX_DEPTH } = require('./constants');\n\nconst append = (queue = '', stash = '', enclose = false) => {\n  const result = [];\n"
+            },
+            {
+              "before": "\nconst expand = (ast, options = {}) => {\n  const rangeLimit = options.rangeLimit === undefined ? 1000 : options.rangeLimit;\n\n  const walk = (node, parent = {}) => {\n    node.queue = [];\n\n    let p = parent;\n",
+              "after": "\nconst expand = (ast, options = {}) => {\n  const rangeLimit = options.rangeLimit === undefined ? 1000 : options.rangeLimit;\n  const maxDepth = Number.isFinite(options.maxDepth) ? Math.min(MAX_DEPTH, options.maxDepth) : MAX_DEPTH;\n\n  const walk = (node, parent = {}, depth = 0) => {\n    if (node.nodes && depth > maxDepth) {\n      throw new RangeError(`AST depth (${depth}), exceeds max depth (${maxDepth})`);\n    }\n    node.queue = [];\n\n    let p = parent;\n"
+            },
+            {
+              "before": "      }\n\n      if (child.nodes) {\n        walk(child, node);\n      }\n    }\n\n    return queue;\n  };\n\n  return utils.flatten(walk(ast));\n};\n\nmodule.exports = expand;\n",
+              "after": "      }\n\n      if (child.nodes) {\n        walk(child, node, child.nodes ? depth + 1 : depth);\n      }\n    }\n\n    return queue;\n  };\n\n  return utils.flatten(walk(ast, {}, ast.type === 'root' ? 0 : 1));\n};\n\nmodule.exports = expand;\n"
+            }
+          ]
+        },
+        {
+          "file": "lib/parse.js",
+          "beforeSha256": "e572166565f15fa6ad9865ae49d678218e32aabfd1b3720f6d0d43d39800d310",
+          "afterSha256": "ef9b3851f848460daaf91ff248222a43e266f97c4f2df7010cb7858e1e39a107",
+          "replacements": [
+            {
+              "before": " */\n\nconst {\n  MAX_LENGTH,\n  CHAR_BACKSLASH, /* \\ */\n  CHAR_BACKTICK, /* ` */\n",
+              "after": " */\n\nconst {\n  MAX_DEPTH,\n  MAX_LENGTH,\n  CHAR_BACKSLASH, /* \\ */\n  CHAR_BACKTICK, /* ` */\n"
+            },
+            {
+              "before": "\n  const opts = options || {};\n  const max = typeof opts.maxLength === 'number' ? Math.min(MAX_LENGTH, opts.maxLength) : MAX_LENGTH;\n  if (input.length > max) {\n    throw new SyntaxError(`Input length (${input.length}), exceeds max characters (${max})`);\n  }\n",
+              "after": "\n  const opts = options || {};\n  const max = typeof opts.maxLength === 'number' ? Math.min(MAX_LENGTH, opts.maxLength) : MAX_LENGTH;\n  const maxDepth = Number.isFinite(opts.maxDepth) ? Math.min(MAX_DEPTH, opts.maxDepth) : MAX_DEPTH;\n  if (input.length > max) {\n    throw new SyntaxError(`Input length (${input.length}), exceeds max characters (${max})`);\n  }\n"
+            },
+            {
+              "before": "  const length = input.length;\n  let index = 0;\n  let depth = 0;\n  let value;\n\n  /**\n",
+              "after": "  const length = input.length;\n  let index = 0;\n  let depth = 0;\n  let nesting = 0;\n  let value;\n\n  /**\n"
+            },
+            {
+              "before": "     */\n\n    if (value === CHAR_LEFT_PARENTHESES) {\n      block = push({ type: 'paren', nodes: [] });\n      stack.push(block);\n      push({ type: 'text', value });\n",
+              "after": "     */\n\n    if (value === CHAR_LEFT_PARENTHESES) {\n      if (nesting >= maxDepth) {\n        throw new SyntaxError(`Input depth (${nesting + 1}), exceeds max depth (${maxDepth})`);\n      }\n      nesting++;\n      block = push({ type: 'paren', nodes: [] });\n      stack.push(block);\n      push({ type: 'text', value });\n"
+            },
+            {
+              "before": "      }\n      block = stack.pop();\n      push({ type: 'text', value });\n      block = stack[stack.length - 1];\n      continue;\n    }\n",
+              "after": "      }\n      block = stack.pop();\n      push({ type: 'text', value });\n      nesting--;\n      block = stack[stack.length - 1];\n      continue;\n    }\n"
+            },
+            {
+              "before": "     */\n\n    if (value === CHAR_LEFT_CURLY_BRACE) {\n      depth++;\n\n      const dollar = prev.value && prev.value.slice(-1) === '$' || block.dollar === true;\n",
+              "after": "     */\n\n    if (value === CHAR_LEFT_CURLY_BRACE) {\n      if (nesting >= maxDepth) {\n        throw new SyntaxError(`Input depth (${nesting + 1}), exceeds max depth (${maxDepth})`);\n      }\n      nesting++;\n      depth++;\n\n      const dollar = prev.value && prev.value.slice(-1) === '$' || block.dollar === true;\n"
+            },
+            {
+              "before": "\n      push({ type, value });\n      depth--;\n\n      block = stack[stack.length - 1];\n      continue;\n",
+              "after": "\n      push({ type, value });\n      depth--;\n      nesting--;\n\n      block = stack[stack.length - 1];\n      continue;\n"
+            }
+          ]
+        },
+        {
+          "file": "lib/stringify.js",
+          "beforeSha256": "379f22d77bfa1478341ccd49c5e4267464aabcbba03558bab332aac23fc6f23a",
+          "afterSha256": "645f13c68af685148e9fe8eca449ee2ebb88eee0f27de7b2125fbfc175b1584d",
+          "replacements": [
+            {
+              "before": "'use strict';\n\nconst utils = require('./utils');\n\nmodule.exports = (ast, options = {}) => {\n  const stringify = (node, parent = {}) => {\n    const invalidBlock = options.escapeInvalid && utils.isInvalidBrace(parent);\n    const invalidNode = node.invalid === true && options.escapeInvalid === true;\n    let output = '';\n",
+              "after": "'use strict';\n\nconst utils = require('./utils');\nconst { MAX_DEPTH } = require('./constants');\n\nmodule.exports = (ast, options = {}) => {\n  const maxDepth = Number.isFinite(options.maxDepth) ? Math.min(MAX_DEPTH, options.maxDepth) : MAX_DEPTH;\n\n  const stringify = (node, parent = {}, depth = 0) => {\n    if (node.nodes && depth > maxDepth) {\n      throw new RangeError(`AST depth (${depth}), exceeds max depth (${maxDepth})`);\n    }\n    const invalidBlock = options.escapeInvalid && utils.isInvalidBrace(parent);\n    const invalidNode = node.invalid === true && options.escapeInvalid === true;\n    let output = '';\n"
+            },
+            {
+              "before": "\n    if (node.nodes) {\n      for (const child of node.nodes) {\n        output += stringify(child);\n      }\n    }\n    return output;\n  };\n\n  return stringify(ast);\n};\n\n",
+              "after": "\n    if (node.nodes) {\n      for (const child of node.nodes) {\n        output += stringify(child, node, child.nodes ? depth + 1 : depth);\n      }\n    }\n    return output;\n  };\n\n  return stringify(ast, {}, ast.type === 'root' ? 0 : 1);\n};\n"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "blockingPackages": {
+    "@docusaurus/babel": {
+      "node_modules/@docusaurus/babel": "3.10.2"
+    },
+    "@docusaurus/bundler": {
+      "node_modules/@docusaurus/bundler": "3.10.2"
+    },
+    "@docusaurus/core": {
+      "node_modules/@docusaurus/core": "3.10.2"
+    },
+    "@docusaurus/mdx-loader": {
+      "node_modules/@docusaurus/mdx-loader": "3.10.2"
+    },
+    "@docusaurus/plugin-content-blog": {
+      "node_modules/@docusaurus/plugin-content-blog": "3.10.2"
+    },
+    "@docusaurus/plugin-content-docs": {
+      "node_modules/@docusaurus/plugin-content-docs": "3.10.2"
+    },
+    "@docusaurus/plugin-content-pages": {
+      "node_modules/@docusaurus/plugin-content-pages": "3.10.2"
+    },
+    "@docusaurus/plugin-css-cascade-layers": {
+      "node_modules/@docusaurus/plugin-css-cascade-layers": "3.10.2"
+    },
+    "@docusaurus/plugin-debug": {
+      "node_modules/@docusaurus/plugin-debug": "3.10.2"
+    },
+    "@docusaurus/plugin-google-analytics": {
+      "node_modules/@docusaurus/plugin-google-analytics": "3.10.2"
+    },
+    "@docusaurus/plugin-google-gtag": {
+      "node_modules/@docusaurus/plugin-google-gtag": "3.10.2"
+    },
+    "@docusaurus/plugin-google-tag-manager": {
+      "node_modules/@docusaurus/plugin-google-tag-manager": "3.10.2"
+    },
+    "@docusaurus/plugin-sitemap": {
+      "node_modules/@docusaurus/plugin-sitemap": "3.10.2"
+    },
+    "@docusaurus/plugin-svgr": {
+      "node_modules/@docusaurus/plugin-svgr": "3.10.2"
+    },
+    "@docusaurus/preset-classic": {
+      "node_modules/@docusaurus/preset-classic": "3.10.2"
+    },
+    "@docusaurus/theme-classic": {
+      "node_modules/@docusaurus/theme-classic": "3.10.2"
+    },
+    "@docusaurus/theme-common": {
+      "node_modules/@docusaurus/theme-common": "3.10.2"
+    },
+    "@docusaurus/theme-mermaid": {
+      "node_modules/@docusaurus/theme-mermaid": "3.10.2"
+    },
+    "@docusaurus/theme-search-algolia": {
+      "node_modules/@docusaurus/theme-search-algolia": "3.10.2"
+    },
+    "@docusaurus/utils": {
+      "node_modules/@docusaurus/utils": "3.10.2"
+    },
+    "@docusaurus/utils-validation": {
+      "node_modules/@docusaurus/utils-validation": "3.10.2"
+    },
+    "@easyops-cn/docusaurus-search-local": {
+      "node_modules/@easyops-cn/docusaurus-search-local": "0.55.3"
+    },
+    "braces": {
+      "node_modules/braces": "3.0.3"
+    },
+    "chokidar": {
+      "node_modules/chokidar": "3.6.0"
+    },
+    "copy-webpack-plugin": {
+      "node_modules/copy-webpack-plugin": "11.0.0"
+    },
+    "fast-glob": {
+      "node_modules/fast-glob": "3.3.3"
+    },
+    "globby": {
+      "node_modules/copy-webpack-plugin/node_modules/globby": "13.2.2",
+      "node_modules/globby": "11.1.0"
+    },
+    "http-proxy-middleware": {
+      "node_modules/http-proxy-middleware": "2.0.10"
+    },
+    "micromatch": {
+      "node_modules/micromatch": "4.0.8"
+    },
+    "webpack-dev-server": {
+      "node_modules/webpack-dev-server": "5.2.7"
+    }
+  }
+}

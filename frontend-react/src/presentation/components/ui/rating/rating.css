@@ -1,0 +1,88 @@
+/*
+ * Glass rating: watercolor glasses filled by fraction, and the pour control
+ * where a bottle above the glasses follows the pointer. Ported from the
+ * approved prototype. The web app is light only, so there is no dark variant.
+ */
+
+:root {
+  --vinnot-pour-muted: #8a776c;
+  --vinnot-pour-focus: var(--color-wine-500);
+  --vinnot-pour-shadow: rgba(43, 34, 38, 0.22);
+  /* Unfilled part of the slider track: a light wash that suits the watercolor art. */
+  --vinnot-pour-track: rgba(138, 119, 108, 0.18);
+}
+
+/* ── Display: a row of glasses ───────────────────────────────────── */
+.vinnot-glasses { display: inline-flex; align-items: flex-end; gap: var(--vinnot-glass-gap, 3px); vertical-align: middle; }
+.vinnot-glass { position: relative; display: inline-block; flex: none; }
+.vinnot-glass img { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; -webkit-user-drag: none; user-select: none; }
+.vinnot-glass .vg-wine { transition: clip-path .09s linear; }
+.vinnot-glass .vg-surface { filter: brightness(1.7) saturate(.8); opacity: .75; mix-blend-mode: screen; transition: clip-path .09s linear; }
+.vinnot-glass .vg-bubble { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: rgba(255, 255, 240, .9); opacity: 0; animation: vg-bubble 1.8s ease-in infinite; }
+@keyframes vg-bubble { 0% { opacity: 0; translate: 0 0; } 20% { opacity: .9; } 100% { opacity: 0; translate: 0 calc(var(--h) * -1); } }
+
+/* ── Input: the pour control ─────────────────────────────────────── */
+.vinnot-pour-card { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 4px 14px; }
+.vinnot-pour-score { display: flex; align-items: baseline; gap: 4px; }
+.vinnot-pour-score b { font-size: 1.5rem; line-height: 1; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 2.2ch; color: var(--color-ink); }
+.vinnot-pour-score span { font-size: .875rem; color: var(--vinnot-pour-muted); }
+
+.vinnot-pour { position: relative; flex: none; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; outline: none; border-radius: 10px; }
+.vinnot-pour:active { cursor: grabbing; }
+.vinnot-pour:focus-visible { box-shadow: 0 0 0 2px var(--vinnot-pour-focus); }
+.vinnot-pour[aria-disabled="true"] { cursor: not-allowed; opacity: .6; }
+.vinnot-pour .vinnot-glass { position: absolute; }
+/* The shadow sits on an unturned layer, so it always falls down the page: short while the bottle stands, long and soft while it is held. */
+.vinnot-pour .vp-shade { position: absolute; inset: 0; pointer-events: none; filter: drop-shadow(0 8px 6px var(--vinnot-pour-shadow)); transition: filter .42s ease; }
+.vinnot-pour .vp-shade[data-stand="true"] { filter: drop-shadow(0 1.5px 2px var(--vinnot-pour-shadow)); }
+.vinnot-pour .vp-shade[data-shadow="false"] { filter: none; }
+.vinnot-pour .vp-bottle { position: absolute; left: 0; top: 0; pointer-events: none; transform-origin: 50% 50%; transition: rotate .35s cubic-bezier(.3,.7,.3,1), left .12s linear, top .12s linear; }
+/* Carried between its stand and the glasses: once uncorked (lift), or after the last pour (settle). */
+.vinnot-pour .vp-bottle[data-travel] { transition: rotate .42s cubic-bezier(.3,.7,.3,1), left .42s cubic-bezier(.3,.7,.3,1), top .42s cubic-bezier(.3,.7,.3,1); }
+.vinnot-pour .vp-bottle img { -webkit-user-drag: none; user-select: none; }
+.vinnot-pour .vp-bottle .vp-art { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* The wine left in the bottle: the full bottle cut at a level surface over the empty one. */
+.vinnot-pour .vp-bottle .vp-full { transition: clip-path .35s cubic-bezier(.3,.7,.3,1); }
+/* The uncorking of the AI profile scene, moved frame by frame from PourRating. */
+.vinnot-pour .vp-bottle .vp-neck { position: absolute; inset: 0; }
+.vinnot-pour .vp-bottle .vp-prop { position: absolute; }
+.vinnot-pour .vp-bottle .vp-foam { border-radius: 50%; background: rgba(255, 253, 240, .92); }
+.vinnot-pour .vp-stream { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.vinnot-pour .vp-stream path { fill: none; stroke-linecap: round; transition: opacity .18s ease; }
+.vinnot-pour .vp-stream .vp-flow { stroke-dasharray: 3 9; animation: vp-flow .35s linear infinite; }
+@keyframes vp-flow { to { stroke-dashoffset: -12; } }
+/* The stream starts once the bottle (left/top .12s) has reached the new glass. */
+.vinnot-pour .vp-pour-in { animation: vp-pour-in .2s linear; }
+@keyframes vp-pour-in { 0%, 60% { opacity: 0; } to { opacity: 1; } }
+/* Not rated yet: a light hint on its own line under the glasses. */
+.vinnot-pour-card .vinnot-pour-hint { flex-basis: 100%; margin: 0; }
+/* The drag demo for new raters: decorative, it never takes the pointer. */
+.vinnot-pour .vp-ghost { position: absolute; inset: 0; pointer-events: none; }
+.vinnot-pour .vp-ghost-glass { position: absolute; opacity: .35; }
+.vinnot-pour .vp-ghost-glass img { position: absolute; inset: 0; width: 100%; height: 100%; -webkit-user-drag: none; user-select: none; transition: clip-path .09s linear; }
+.vinnot-pour .vp-ghost-bottle { position: absolute; inset: 0; }
+/* Moved frame by frame, so the bottle's own easing would only make it lag. */
+.vinnot-pour .vp-ghost-bottle .vp-bottle, .vinnot-pour .vp-ghost-bottle .vp-full { transition: none; }
+
+/* The slider bar under the glasses: a pill track whose wine fills from the left up to the glass sliding on it. */
+.vinnot-pour-card .vinnot-pour-bar-row { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 8px; }
+/* Centred on the track, right after the bar's right end. */
+.vinnot-pour-bar-row .vinnot-pour-score { flex: none; margin-top: var(--vp-bar-track-mid); transform: translateY(-50%); line-height: 1; }
+.vinnot-pour-bar { position: relative; touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; }
+.vinnot-pour-bar[data-disabled="true"] { cursor: not-allowed; opacity: .6; }
+.vinnot-pour-bar .vp-bar-track, .vinnot-pour-bar .vp-bar-fill { position: absolute; height: 5px; border-radius: 999px; pointer-events: none; }
+.vinnot-pour-bar .vp-bar-track { background: var(--vinnot-pour-track); }
+.vinnot-pour-bar .vp-bar-fill { background: linear-gradient(90deg, var(--vp-bar-from), var(--vp-bar-to)); transition: width .12s linear; }
+.vinnot-pour-bar .vp-bar-thumb { position: absolute; top: 0; pointer-events: none; transition: left .12s linear; }
+.vinnot-pour-bar .vp-bar-thumb .vinnot-glass { display: block; }
+.vinnot-pour-bar .vp-bar-ghost { position: absolute; inset: 0; pointer-events: none; }
+.vinnot-pour-bar .vp-bar-ghost .vp-bar-fill { opacity: .35; }
+.vinnot-pour-bar .vp-bar-ghost .vp-bar-thumb { opacity: .45; }
+/* Moved frame by frame, like the demo bottle. */
+.vinnot-pour-bar .vp-bar-ghost .vp-bar-fill, .vinnot-pour-bar .vp-bar-ghost .vp-bar-thumb { transition: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vinnot-pour-bar .vp-bar-fill, .vinnot-pour-bar .vp-bar-thumb { transition: none; }
+  .vinnot-glass .vg-wine, .vinnot-glass .vg-surface, .vinnot-pour .vp-shade, .vinnot-pour .vp-bottle, .vinnot-pour .vp-bottle img { transition: none; }
+  .vinnot-glass .vg-bubble, .vinnot-pour .vp-stream .vp-flow, .vinnot-pour .vp-pour-in { animation: none; }
+}

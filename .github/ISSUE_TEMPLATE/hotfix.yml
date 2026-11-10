@@ -1,0 +1,35 @@
+name: Hotfix
+description: Urgent correction for an active production incident
+title: "[Hotfix]: "
+body:
+  - type: markdown
+    attributes:
+      value: Hotfix branches start from `main`. Do not use this type for normal defects.
+  - type: textarea
+    id: impact
+    attributes:
+      label: Production impact
+      description: Affected users, scope, severity, and start time.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Request IDs, logs, metrics, screenshots, or failing checks.
+    validations:
+      required: true
+  - type: textarea
+    id: mitigation
+    attributes:
+      label: Mitigation and rollback
+      description: Immediate mitigation, rollback path, and data-safety considerations.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification criteria
+      description: Automated regression and production verification required before closure.
+    validations:
+      required: true

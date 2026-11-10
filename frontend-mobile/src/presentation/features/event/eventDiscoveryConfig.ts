@@ -1,0 +1,3 @@
+export const EVENT_DISCOVERY_RADIUS_KM = 100;
+export const EVENT_CATALOG_PAGE_SIZE = 50;
+export const HOME_EVENT_PREVIEW_LIMIT = 3;

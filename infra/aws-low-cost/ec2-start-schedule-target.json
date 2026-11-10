@@ -1,0 +1,9 @@
+{
+  "Arn": "arn:aws:scheduler:::aws-sdk:ec2:startInstances",
+  "RoleArn": "arn:aws:iam::497675597655:role/vinnot-rds-auto-stop-role",
+  "Input": "{\"InstanceIds\":[\"i-0c0c6e1119024f13f\"]}",
+  "RetryPolicy": {
+    "MaximumEventAgeInSeconds": 300,
+    "MaximumRetryAttempts": 2
+  }
+}

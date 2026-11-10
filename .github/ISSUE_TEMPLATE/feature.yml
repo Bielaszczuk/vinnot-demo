@@ -1,0 +1,35 @@
+name: Feature
+description: New user-facing or business capability
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: Describe the outcome and business value, not an implementation shortcut.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: What user or business need should be addressed?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Expected outcome
+      description: Describe the observable behavior after implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] Given ..., when ..., then ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Architecture and constraints
+      description: Security, compatibility, performance, or migration constraints.

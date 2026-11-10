@@ -1,0 +1,2 @@
+to: owner@example.test
+subject: Your event was cancelled

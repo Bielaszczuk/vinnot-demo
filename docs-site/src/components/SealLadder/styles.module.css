@@ -1,0 +1,177 @@
+/* Seal ladder: the approved motion prototype (feature #455), one CSS layer per light effect.
+   Every .m layer uses the seal image as a mask, so reflections stay inside the wax. */
+
+@property --seal-a { syntax: '<angle>'; inherits: true; initial-value: 0deg; }
+@property --seal-sx { syntax: '<percentage>'; inherits: true; initial-value: 100%; }
+
+.ladder {
+  --ladder-stage: radial-gradient(120% 90% at 50% 0%, #fbf6ee 0%, #efe4d3 75%);
+  --ladder-line: #e6d8c4;
+  --ladder-name: #2a1d18;
+  --ladder-accent: #8a6a3a;
+  --ladder-muted: #6b5850;
+  margin: 1.5rem 0 2rem;
+}
+
+:global([data-theme='dark']) .ladder {
+  --ladder-stage: radial-gradient(120% 90% at 50% 0%, #2c1f1c 0%, #17110f 70%);
+  --ladder-line: #3a2c28;
+  --ladder-name: #f1e7dc;
+  --ladder-accent: #c9a25a;
+  --ladder-muted: #b6a397;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.hint {
+  margin: 0;
+  flex: 1 1 18rem;
+  font-size: 0.875rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.toggle {
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  background: var(--ifm-background-surface-color);
+  color: var(--ifm-font-color-base);
+  cursor: pointer;
+}
+
+.toggle:focus-visible { outline: 2px solid var(--ifm-color-primary); outline-offset: 2px; }
+
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+  gap: 12px;
+}
+
+.grid > .card {
+  margin: 0;
+  background: var(--ladder-stage);
+  border: 1px solid var(--ladder-line);
+  border-radius: 18px;
+  padding: 18px 12px 16px;
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  align-content: start;
+  text-align: center;
+  min-width: 0;
+}
+
+.cell { height: 128px; display: grid; place-items: center; }
+.name { font-family: Georgia, 'Iowan Old Style', serif; font-size: 1.3rem; font-weight: 600; line-height: 1.1; color: var(--ladder-name); }
+.points { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ladder-accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+.shine { font-size: 0.8125rem; line-height: 1.45; color: var(--ladder-muted); margin: 0; max-width: 30ch; }
+
+/* ---------- seal ---------- */
+.seal { --s: 112px; width: var(--s); height: var(--s); position: relative; display: inline-block; flex: none; perspective: 600px; }
+.tilt { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 0.25s ease-out; }
+.body { position: absolute; inset: 0; transform-origin: 50% 88%; }
+.art, .m { position: absolute; inset: 0; background: var(--img) center / contain no-repeat; }
+.m { background: none; -webkit-mask: var(--img) center / contain no-repeat; mask: var(--img) center / contain no-repeat; pointer-events: none; opacity: 0; }
+.art { filter: drop-shadow(0 calc(var(--s) * 0.04) calc(var(--s) * 0.05) rgba(0, 0, 0, 0.45)); }
+.behind { position: absolute; pointer-events: none; opacity: 0; }
+.fx { position: absolute; inset: -14%; pointer-events: none; }
+
+.spark {
+  position: absolute; width: var(--z, 14%); aspect-ratio: 1; translate: -50% -50%; opacity: 0; scale: 0.2;
+  background: radial-gradient(circle, #fff 0 18%, var(--c, #fff6d8) 30%, transparent 70%);
+  clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%);
+  filter: drop-shadow(0 0 3px var(--c, #ffe9a8));
+}
+.dot {
+  position: absolute; width: var(--z, 4%); aspect-ratio: 1; border-radius: 50%; translate: -50% -50%; opacity: 0;
+  background: radial-gradient(circle, #fff 0 30%, var(--c) 60%, transparent 72%); filter: drop-shadow(0 0 4px var(--c));
+}
+
+/* 1 Brote: sway */
+.t-brote .body { animation: sway 4.2s ease-in-out; }
+/* 2 Parra: sway and breathe */
+.t-parra .body { animation: sway 4.6s ease-in-out, breathe 4.6s ease-in-out; }
+.t-parra .sheen { opacity: 1; background: radial-gradient(60% 50% at 40% 30%, rgba(220, 255, 190, 0.35), transparent 70%); mix-blend-mode: screen; animation: pulse 4.6s ease-in-out; }
+/* 3 Racimo: grapes ripen green to purple, with dew */
+.t-racimo .body { animation: breathe 5s ease-in-out; }
+.t-racimo .tint { opacity: 0; background: radial-gradient(30% 32% at 42% 60%, #6f2a8a, transparent 100%); mix-blend-mode: color; animation: ripen 5s ease-in-out; }
+.t-racimo .sheen { background: radial-gradient(10% 9% at 36% 52%, rgba(255, 255, 255, 0.95), transparent 100%); mix-blend-mode: screen; animation: dew 5s ease-in-out; }
+/* 4 Vendimia: knife glint */
+.t-vendimia .sheen { background: linear-gradient(120deg, transparent 44%, rgba(255, 250, 230, 0.95) 50%, transparent 56%) 0 0 / 100% 100%; -webkit-mask: radial-gradient(18% 34% at 68% 42%, #000 40%, transparent 100%); mask: radial-gradient(18% 34% at 68% 42%, #000 40%, transparent 100%); mix-blend-mode: screen; animation: knife 3.8s ease-in-out; }
+/* 5 Lagar: occasional sweep */
+.t-lagar .sheen { opacity: 1; background: linear-gradient(110deg, transparent 40%, rgba(255, 236, 210, 0.55) 50%, transparent 60%) var(--seal-sx) 0 / 300% 100% no-repeat; mix-blend-mode: soft-light; animation: sweep 6.5s ease-in-out; }
+.t-lagar .body { animation: breathe 6.5s ease-in-out; }
+/* 6 Barrica: metallic sweep over the hoops */
+.t-barrica .sheen { opacity: 1; background: linear-gradient(105deg, transparent 36%, rgba(255, 255, 255, 0.2) 44%, rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0.2) 56%, transparent 64%) var(--seal-sx) 0 / 300% 100% no-repeat; mix-blend-mode: overlay; animation: sweep 4.2s cubic-bezier(0.5, 0, 0.3, 1); }
+/* 7 Crianza: satin sheen and a wine halo */
+.t-crianza .halo { opacity: 0; inset: -16%; border-radius: 50%; background: radial-gradient(closest-side, rgba(170, 40, 70, 0.75), rgba(170, 40, 70, 0.25) 55%, transparent 100%); filter: blur(calc(var(--s) * 0.05)); animation: halo 4.8s ease-in-out; }
+.t-crianza .sheen { opacity: 1; background: linear-gradient(115deg, transparent 38%, rgba(255, 230, 235, 0.75) 50%, transparent 62%) var(--seal-sx) 0 / 300% 100% no-repeat; mix-blend-mode: overlay; animation: sweep 4.8s ease-in-out; }
+/* 8 Reserva: gold sheen and a gold halo */
+.t-reserva .halo { opacity: 0; inset: -18%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 196, 90, 0.8), rgba(255, 170, 60, 0.25) 55%, transparent 100%); filter: blur(calc(var(--s) * 0.05)); animation: halo 4.4s ease-in-out; }
+.t-reserva .sheen { opacity: 1; background: linear-gradient(112deg, transparent 38%, rgba(255, 240, 190, 0.2) 45%, rgba(255, 248, 215, 1) 50%, rgba(255, 240, 190, 0.2) 55%, transparent 62%) var(--seal-sx) 0 / 300% 100% no-repeat; mix-blend-mode: overlay; animation: sweep 4.4s cubic-bezier(0.5, 0, 0.3, 1); }
+/* 9 Gran Reserva: constant gold, slow rays and sparkles */
+.t-gran-reserva .rays { opacity: 0.5; filter: blur(1.5px); inset: -34%; border-radius: 50%; background: repeating-conic-gradient(from var(--seal-a), rgba(255, 206, 110, 0) 0deg 9deg, rgba(255, 214, 130, 0.45) 12deg, rgba(255, 206, 110, 0) 15deg 22deg); -webkit-mask: radial-gradient(closest-side, transparent 52%, #000 62%, transparent 100%); mask: radial-gradient(closest-side, transparent 55%, #000 64%, transparent 88%); animation: spin 26s linear; }
+.t-gran-reserva .halo { opacity: 0; inset: -14%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 200, 95, 0.7), transparent 100%); filter: blur(calc(var(--s) * 0.05)); animation: halo 3.6s ease-in-out; }
+.t-gran-reserva .sheen { opacity: 1; background: linear-gradient(112deg, transparent 30%, rgba(255, 246, 205, 0.95) 46%, rgba(255, 255, 240, 1) 50%, rgba(255, 246, 205, 0.95) 54%, transparent 70%) var(--seal-sx) 0 / 260% 100% no-repeat; mix-blend-mode: overlay; animation: sweepLoop 2.8s linear; }
+.t-gran-reserva .holo { opacity: 0.35; background: conic-gradient(from var(--seal-a) at 50% 50%, #fff2c4, #c88a2c, #fff6d8, #a5701f, #fff2c4); mix-blend-mode: soft-light; animation: spin 8s linear; }
+/* 10 Gran Enófilo: rotating chrome and sparks */
+.t-gran-enofilo .holo { opacity: 0.85; background: conic-gradient(from var(--seal-a) at 50% 45%, #ffffff, #5d6a78 12%, #f4f8ff 24%, #3a4450 38%, #ffffff 50%, #7d8b9b 62%, #eef3fa 76%, #48525e 88%, #ffffff); mix-blend-mode: overlay; animation: spin 6s linear; }
+.t-gran-enofilo .sheen { opacity: 1; background: linear-gradient(100deg, transparent 42%, rgba(220, 240, 255, 0.95) 50%, transparent 58%) var(--seal-sx) 0 / 300% 100% no-repeat; mix-blend-mode: screen; animation: sweep 3.4s cubic-bezier(0.5, 0, 0.3, 1); }
+.t-gran-enofilo .halo { opacity: 0; inset: -14%; border-radius: 50%; background: radial-gradient(closest-side, rgba(170, 215, 255, 0.55), transparent 100%); filter: blur(calc(var(--s) * 0.05)); animation: halo 3.4s ease-in-out; }
+/* 11 Vinnot: holographic foil that follows the pointer, glitter, rising particles */
+.t-vinnot .holo { opacity: 0.8; background: conic-gradient(from var(--seal-a) at var(--mx, 50%) var(--my, 40%), #ff7ad1, #ffd27a, #8affc1, #79d3ff, #b78bff, #ff7ad1); mix-blend-mode: overlay; filter: saturate(1.35); animation: spin 7s linear; }
+.t-vinnot .tint { opacity: 0.32; background: linear-gradient(var(--ang, 115deg), #ff7ad1, #ffd27a 25%, #8affc1 50%, #79d3ff 75%, #b78bff) var(--seal-sx) 0 / 220% 100%; mix-blend-mode: color; animation: sweepLoop 5.5s linear; }
+.t-vinnot .sheen { opacity: 1; background: linear-gradient(var(--ang, 115deg), transparent 34%, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.85) 50%, rgba(255, 255, 255, 0) 60%, transparent 66%) var(--seal-sx) 0 / 260% 100% no-repeat; mix-blend-mode: overlay; animation: sweepLoop 3.2s ease-in-out; }
+.t-vinnot .glitter {
+  opacity: 0.9;
+  background:
+    radial-gradient(circle at 20% 30%, #fff 0 0.6px, transparent 1.2px) 0 0 / 9px 11px,
+    radial-gradient(circle at 70% 60%, #fff 0 0.5px, transparent 1.1px) 3px 4px / 13px 7px,
+    radial-gradient(circle at 40% 80%, #fff 0 0.7px, transparent 1.3px) 5px 1px / 17px 13px;
+  mix-blend-mode: overlay;
+  animation: glitter 1.6s steps(4);
+}
+.t-vinnot .halo { opacity: 0; inset: -18%; border-radius: 50%; background: conic-gradient(from var(--seal-a), rgba(255, 122, 209, 0.6), rgba(255, 210, 122, 0.6), rgba(138, 255, 193, 0.6), rgba(121, 211, 255, 0.6), rgba(183, 139, 255, 0.6), rgba(255, 122, 209, 0.6)); -webkit-mask: radial-gradient(closest-side, #000 45%, transparent 100%); mask: radial-gradient(closest-side, #000 45%, transparent 100%); filter: blur(calc(var(--s) * 0.06)); animation: haloSpin 7s linear; }
+
+.spark { animation: twinkle var(--d, 2.6s) ease-in-out var(--dl, 0s); }
+.dot { animation: rise var(--d, 3.4s) ease-out var(--dl, 0s); }
+
+/* The ladder loops like the profile. Per-tier shorthands reset the iteration count, so it is
+   forced here; the pause button freezes every layer where it is. */
+.seal * { animation-iteration-count: infinite !important; }
+.paused .seal * { animation-play-state: paused !important; }
+
+@keyframes sway { 0%, 100% { rotate: 0deg; } 25% { rotate: -3.2deg; } 75% { rotate: 3.2deg; } }
+@keyframes breathe { 0%, 100% { scale: 1; } 50% { scale: 1.035; } }
+@keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+@keyframes ripen { 0%, 100% { opacity: 0; } 45%, 60% { opacity: 0.85; } }
+@keyframes dew { 0%, 30%, 100% { opacity: 0; } 45% { opacity: 1; } 60% { opacity: 0; } }
+@keyframes knife { 0%, 100% { opacity: 0; background-position: -40% -40%; } 8% { opacity: 1; } 34% { opacity: 1; background-position: 40% 40%; } 42% { opacity: 0; background-position: 40% 40%; } }
+@keyframes sweep { 0% { --seal-sx: 100%; } 45%, 100% { --seal-sx: 0%; } }
+@keyframes sweepLoop { 0% { --seal-sx: 100%; } 100% { --seal-sx: 0%; } }
+@keyframes halo { 0%, 100% { opacity: 0.2; scale: 0.94; } 50% { opacity: 0.9; scale: 1.04; } }
+@keyframes haloSpin { 0% { --seal-a: 0deg; opacity: 0.55; } 50% { opacity: 0.95; } 100% { --seal-a: 360deg; opacity: 0.55; } }
+@keyframes spin { to { --seal-a: 360deg; } }
+@keyframes glitter { 0% { opacity: 0.35; background-position: 0 0, 3px 4px, 5px 1px; } 50% { opacity: 1; background-position: 2px 1px, 1px 6px, 3px 3px; } 100% { opacity: 0.35; background-position: 0 0, 3px 4px, 5px 1px; } }
+@keyframes twinkle { 0%, 100% { opacity: 0; scale: 0.2; rotate: 0deg; } 18% { opacity: 1; scale: 1; rotate: 45deg; } 36% { opacity: 0; scale: 0.3; rotate: 90deg; } }
+@keyframes rise { 0% { opacity: 0; translate: -50% -50%; } 15% { opacity: 1; } 100% { opacity: 0; translate: calc(-50% + var(--dx, 0px)) calc(-50% - var(--rise, 40px)); } }
+
+/* Reduced motion: a still seal with a fixed highlight keeps each tier recognisable. */
+@media (prefers-reduced-motion: reduce) {
+  .seal * { animation: none !important; }
+  .seal .sheen { --seal-sx: 55%; }
+  .tilt { transition: none; }
+  .toggle { display: none; }
+}

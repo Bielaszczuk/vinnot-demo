@@ -1,0 +1,14 @@
+Cata
+Estado de la inscripción: Pendiente de aprobación
+Estado del pago: Evento gratuito
+Personas: 3
+Fecha del evento: 20 oct 2026, 9:00:00 (America/Argentina/Buenos Aires)
+Contacto de la reserva: Guest <b>
+
+Gestionar inscriptos: https://vinnot.example/partner/events
+
+---
+Vinnot
+Visitar Vinnot: https://vinnot.example
+Contacto: https://vinnot.example/contact
+Privacidad: https://vinnot.example/privacy

@@ -1,0 +1,53 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "esnext",
+    "types": ["vite/client", "google.maps"],
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowJs": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Strict mode */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Path aliases */
+    "paths": {
+      "@/*": ["./src/*"],
+      "@app/*": ["./src/app/*"],
+      "@shared/*": ["./src/shared/*"],
+      "@domain/*": ["./src/domain/*"],
+      "@application/*": ["./src/application/*"],
+      "@infrastructure/*": ["./src/infrastructure/*"],
+      "@presentation/*": ["./src/presentation/*"],
+      "@api/*": ["./src/infrastructure/api/*"],
+      "@config/*": ["./src/shared/config/*"],
+      "@services/*": ["./src/application/services/*"],
+      "@stores/*": ["./src/presentation/stores/*"],
+      "@hooks/*": ["./src/presentation/hooks/*"],
+      "@components/*": ["./src/presentation/components/*"],
+      "@pages/*": ["./src/presentation/pages/*"],
+      "@utils/*": ["./src/shared/utils/*"],
+      "@i18n/*": ["./src/shared/i18n/*"],
+      "@mocks/*": ["./src/infrastructure/mocks/*"],
+      "@assets/*": ["./src/shared/assets/*"],
+      "@types/*": ["./src/shared/types/*"]
+    }
+  },
+  "include": ["src", "tests"]
+}

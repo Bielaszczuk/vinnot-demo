@@ -1,0 +1,9 @@
+Hello Ana,
+
+The status of your proposal Reserva <Malbec> is now "Changes requested". Add the back label {{title}}
+
+---
+Vinnot
+Visit Vinnot: https://vinnot.example
+Contact: https://vinnot.example/contact
+Privacy: https://vinnot.example/privacy

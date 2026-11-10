@@ -1,0 +1,146 @@
+name: Deploy Frontend Dev
+
+on:
+  workflow_call:
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      VITE_GOOGLE_MAPS_API_KEY:
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-frontend-dev
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  S3_BUCKET: vinnot-dev-web-497675597655
+  CLOUDFRONT_DISTRIBUTION_ID: E16RJ3WGUX15VP
+  PUBLIC_URL: https://dev.vinnot.com
+
+jobs:
+  deploy:
+    name: Build And Deploy Validated Web
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: frontend-react
+    env:
+      VITE_API_BASE_URL: https://api-dev.vinnot.com/api
+      VITE_API_TIMEOUT: '30000'
+      VITE_APP_NAME: Vinnot
+      VITE_APP_ENV: development
+      VITE_BASE_PATH: /
+      VITE_MOCK_API: 'false'
+      VITE_EVENT_PAYMENTS_ENABLED: 'true'
+      VITE_FEATURE_WINE_SCAN: 'true'
+      VITE_FEATURE_SOCIAL_LOGIN: 'true'
+      VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ vars.VITE_GOOGLE_OAUTH_CLIENT_ID }}
+      VITE_APPLE_CLIENT_ID: ${{ vars.VITE_APPLE_CLIENT_ID }}
+      VITE_APPLE_REDIRECT_URI: https://dev.vinnot.com/login
+      VITE_FACEBOOK_APP_ID: ${{ vars.VITE_FACEBOOK_APP_ID }}
+      VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+      VITE_GENERATE_SOURCEMAP: 'false'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend-react/package-lock.json
+
+      - name: Validate deployment configuration
+        run: |
+          set -euo pipefail
+          test -n "${VITE_GOOGLE_OAUTH_CLIENT_ID}" || { echo "Missing repository variable VITE_GOOGLE_OAUTH_CLIENT_ID"; exit 1; }
+          test -n "${VITE_FACEBOOK_APP_ID}" || { echo "Missing repository variable VITE_FACEBOOK_APP_ID"; exit 1; }
+          test -n "${VITE_GOOGLE_MAPS_API_KEY}" || { echo "Missing repository secret VITE_GOOGLE_MAPS_API_KEY"; exit 1; }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify build artifact
+        run: |
+          set -euo pipefail
+          test -f dist/index.html
+          grep -R -q "https://api-dev.vinnot.com/api" dist/assets
+          if grep -R -E -q "TU_GOOGLE_MAPS_API_KEY|%3CTU_GOOGLE|<TU_GOOGLE" dist; then
+            echo "A Google Maps placeholder was found in the build artifact"
+            exit 1
+          fi
+
+      - name: Wait for backend legal documents before publication
+        timeout-minutes: 26
+        run: node ../scripts/wait-github-public-terms.mjs
+
+      # A newer development push supersedes this one: later steps skip, so the run ends green.
+      - id: revision
+        name: Skip superseded or reject non-development revisions
+        working-directory: .
+        run: node scripts/verify-deploy-revision.mjs
+
+      # The marker keeps this green but undeployed run from becoming the next CI impact baseline.
+      - name: Record the skipped deployment
+        if: steps.revision.outputs.current == 'false'
+        working-directory: .
+        run: mkdir -p "$RUNNER_TEMP/deploy-superseded" && echo "${{ github.sha }}" > "$RUNNER_TEMP/deploy-superseded/revision"
+
+      - name: Upload the skipped deployment marker
+        if: steps.revision.outputs.current == 'false'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: deploy-superseded-web-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/deploy-superseded/
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Configure AWS credentials
+        if: steps.revision.outputs.current == 'true'
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          allowed-account-ids: '497675597655'
+
+      - name: Wait for protected browser sessions before publishing web
+        if: steps.revision.outputs.current == 'true'
+        timeout-minutes: 26
+        run: node ../scripts/wait-browser-session-contract.mjs
+
+      - name: Apply versioned browser security headers
+        if: steps.revision.outputs.current == 'true'
+        run: node ../scripts/configure-web-security-function.mjs
+
+      - name: Wait for CloudFront security policy deployment
+        if: steps.revision.outputs.current == 'true'
+        run: aws cloudfront wait distribution-deployed --id "${CLOUDFRONT_DISTRIBUTION_ID}"
+
+      - name: Verify AWS identity
+        if: steps.revision.outputs.current == 'true'
+        run: aws sts get-caller-identity
+
+      - name: Archive and publish entrypoint after assets
+        if: steps.revision.outputs.current == 'true'
+        env:
+          WEB_RELEASE_ENV: development
+        run: node ../scripts/publish-web-release.mjs dist
+
+      - name: Verify public frontend
+        if: steps.revision.outputs.current == 'true'
+        working-directory: .
+        run: |
+          set -euo pipefail
+          curl --fail --show-error --silent --retry 5 --retry-delay 5 "${PUBLIC_URL}/" > /dev/null

@@ -1,0 +1,11 @@
+Tasting
+The Vinnot team cancelled this event. Every registered guest has been notified.
+Registrations cancelled: 3
+Event date: Oct 20, 2026, 9:00:00 AM (America/Argentina/Buenos Aires)
+Manage events: https://vinnot.example/partner/events
+
+---
+Vinnot
+Visit Vinnot: https://vinnot.example
+Contact: https://vinnot.example/contact
+Privacy: https://vinnot.example/privacy

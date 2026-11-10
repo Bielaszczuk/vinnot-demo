@@ -1,0 +1,170 @@
+import SealLadder from '@site/src/components/SealLadder';
+import PourRating, { RatingExamples } from '@site/src/components/PourRating';
+
+# Points and seals
+
+Every time you take part in Vinnot you earn points: when you review a wine, when
+your reviews get likes, when you comment, when you suggest a new wine or register
+for an event. Your points change your **wax seal**, which starts as Bud and can
+reach Vinnot. The seal shows next to your name on reviews and on your profile,
+so the community can recognise the people who contribute the most.
+
+## In short
+
+1. Take part: every action in the [How to earn points](#how-to-earn-points) table counts.
+2. You can earn up to **40 points per day**; wines you suggest that the team approves do not count toward that cap.
+3. Your seal follows the points you have today: it goes up when you earn and can go down if points are removed.
+4. Tap your seal on your profile to open “Your points”: how to earn, your recent activity and the full seal ladder.
+
+## How to earn points
+
+| Action | Points | Limit |
+|---|---|---|
+| Publish a review | +3 | Once per wine |
+| Write a comment of 80 characters or more in your review | +2 | Once per wine |
+| Receive a like on one of your reviews | +1 | Up to 5 per day. A like on your own review counts too |
+| Comment on someone else's review | +1 | Up to 3 per day |
+| Suggest a new wine that the team approves | +8 | No daily limit: it does not count toward the 40 cap |
+| Scan a label that exactly matches a catalog wine | +1 | Once per wine, up to 3 per day |
+| Add a wine to your cellar by hand | +1 | Once per wine, up to 3 per day |
+| Register for an event (confirmed registration) | +4 | Per confirmed registration |
+| Complete your profile: photo, first name, last name and phone number | +5 | Once |
+
+- **Giving** likes earns nothing; receiving them does.
+- A wine that enters your cellar because you published a review does not earn the cellar point: that wine already earned through the review.
+- Only published reviews count. A review under review or rejected earns once it is approved.
+- No action earns twice: repeating it on the same content gives no new points.
+
+### The daily cap
+
+You can earn up to 40 points per day, counted in your account's time zone. Wines you
+suggest that the team approves earn their 8 points even when you already reached the
+cap.
+
+## What removes points
+
+| Situation | What happens to your points |
+|---|---|
+| You delete a review and write it again | Its points are removed when you delete it and come back when you write it again: you end up where you were, never with extra points |
+| The moderation team removes one of your reviews or comments | Only that content's points are removed |
+| A review goes back to review, for example after editing a pending or rejected review | It stops counting until it is approved; once approved it earns again, only once |
+| Your event registration is cancelled, rejected or expires | That registration's 4 points are removed |
+| You permanently delete your account | All your points are deleted |
+
+And what does **not** remove points:
+
+- If a review you commented on is deleted, you keep the points for your comment.
+- If someone who liked your review deletes their account, you keep that point.
+
+Every deduction shows in your recent activity as a negative entry.
+
+## The seals
+
+Eleven seals, from the first to the highest. Each one has its own shine, which grows with the level.
+
+Each card shows the seal with its animation, its name and the points you need to reach it.
+
+<SealLadder />
+
+Seal names follow your language: in Spanish they are Brote, Parra, Racimo, Vendimia,
+Lagar, Barrica, Crianza, Reserva, Gran Reserva, Gran Enófilo and Vinnot. If your device
+has reduce motion turned on, the seal stays still with a fixed highlight.
+
+### When you reach a new seal
+
+- The first time you reach a seal, the app and the website celebrate it with the seal on the full screen.
+- You also get a push with the name of the seal you reached, if your “Community” notifications are on.
+- The celebration and the push come only once per seal: if you drop and climb back, they do not repeat.
+
+### If you already used Vinnot
+
+When points launched, Vinnot counted your earlier activity with the same rules and
+the same daily caps, so you start with the seal you earned. Instead of a celebration
+you see a welcome card, once, telling you your seal is ready. Label scans from before
+the launch do not count, because they were not stored before.
+
+## Where your seal shows
+
+| Place | What you see |
+|---|---|
+| Top of your profile | Your seal, your points, the seal name and a progress bar to the next one |
+| “Your points” (tap the seal on your profile) | How to earn points, your last 20 entries and the full seal ladder |
+| A wine's reviews and your own reviews | The seal next to your name |
+| Review comments | The seal next to your name |
+| User administration | Each account's seal and points, for the team only |
+
+- In lists the seal shines once when it appears and again every 8 to 16 seconds; on your profile it shines all the time.
+- The seal does not show on events you organise, blocks, reports or push notifications.
+- A locked or deactivated account shows no seal.
+- Other people see your seal, not your number of points.
+
+## Rating with glasses
+
+Ratings go from **0.1 to 5.0**, with one decimal, on reviews and in your cellar. If
+you want 2.15, it is saved as 2.2.
+
+### How they look
+
+Each glass fills by the fraction of the score: a 2.2 is two full glasses and 0.2 of
+the third. The glass, the wine colour and the bottle follow the wine type, as in the
+AI profile scene:
+
+| Wine type | Glass | Wine | Bottle |
+|---|---|---|---|
+| Red (or unknown type) | Bordeaux | Red | Dark |
+| Fortified | Bordeaux | Ruby | Dark |
+| Rosé | Rosé | Rosé | Clear rosé |
+| White | Tulip | White | Clear white |
+| Orange and dessert | Tulip | Amber | Clear amber |
+| Sparkling | Flute, with rising bubbles | Sparkling | Sparkling |
+
+<RatingExamples />
+
+### How to rate
+
+Try it here: pick a wine type and move the bottle over the glasses or slide the bar below.
+
+<PourRating />
+
+1. Before you rate, the bottle stands to the left of the glasses and uncorks itself: a corkscrew pulls the cork (a sparkling cork pops). Underneath there is a bar with a small glass, and the score reads “0.0 / 5”.
+2. Drag the bottle towards the glasses, slide the bar or tap a glass: the bottle is lifted over the first glass and the glasses fill together with the bar. Each whole number on the bar sits under its glass.
+3. While you raise the score, the bottle tilts, pours a stream of the wine's colour into the glass being filled and empties.
+4. While you lower it, the bottle lifts, the glasses empty and the bottle fills again.
+5. At 5.0, after the last glass is poured, the bottle goes back to its place, open and empty.
+6. The chosen score shows at the end of the bar, for example “3.6 / 5”.
+
+| With | How it adjusts |
+|---|---|
+| Screen reader | It is a slider: each increment or decrement changes 0.1 |
+| Keyboard (web) | Arrows: ±0.1 · Page Up / Page Down: ±0.5 · Home / End: minimum and maximum |
+
+The ratings already in your cellar are kept. Publishing a review copies its rating to
+your cellar with its decimal, without rounding.
+
+## FAQ
+
+**Can I lose my seal?**
+Yes. The seal follows your current points; if points are removed and you fall below
+its threshold, you go back to the previous seal. The celebration does not repeat when
+you win it back.
+
+**Why did an action not earn points?**
+Check the [How to earn points](#how-to-earn-points) table: you may have reached the
+day's 40 cap or that action's daily limit, that wine may have already earned, or the
+review may not be approved yet.
+
+**Can I like my own review?**
+Yes, and it earns 1 point like any like you receive, within the limit of 5 per day.
+
+**Can I turn off the new seal notification?**
+Yes: turn off “Community” in your notification preferences. The celebration inside the
+app and the website still shows.
+
+**Is there a ranking?**
+No. Points are for your seal; there is no ranking between people and no public
+profiles with points.
+
+## More information
+
+- Write a review [in the app](app-user.md#write-a-review) and [on the website](web-user.md#write-a-review).
+- For the technical detail of the rules, the API and the data, see the [Points and seals](../modules/gamification/README.md) module.

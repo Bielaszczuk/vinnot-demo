@@ -1,0 +1,82 @@
+name: iOS Native Validation
+
+on:
+  workflow_dispatch:
+  # Adding the validate:ios-native label starts a run; to validate new commits, remove and re-add
+  # the label or dispatch the workflow. Other pull request events would only produce skipped runs.
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-native-${{ github.event.pull_request.number || github.ref }}-${{ github.event.label.name || 'dispatch' }}
+  cancel-in-progress: true
+
+jobs:
+  ios-native:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'validate:ios-native'
+    name: Unsigned iOS release and native inventory
+    # Expo SDK 58 needs Xcode 26.4 or later; macos-15 stops at 26.3.
+    runs-on: macos-26
+    timeout-minutes: 45
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      EXPO_NO_DOTENV: '1'
+      EXPO_PUBLIC_API_BASE_URL: https://api-dev.vinnot.com/api
+      EXPO_ENV: development
+    steps:
+      - name: Checkout without stored credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          # macOS minutes are billed at 10x; reuse the npm download cache.
+          cache: npm
+          cache-dependency-path: frontend-mobile/package-lock.json
+      - name: Verify toolchain and install scanners
+        run: |
+          xcodebuild -version
+          node scripts/install-security-tools.mjs "$RUNNER_TEMP/security-bin" trivy
+          echo "$RUNNER_TEMP/security-bin" >> "$GITHUB_PATH"
+          mkdir -p security-reports
+      - name: Install mobile dependencies
+        working-directory: frontend-mobile
+        run: npm ci
+      - name: Generate iOS project
+        working-directory: frontend-mobile
+        run: npx --no-install expo prebuild --platform ios --clean --no-install
+      - name: Resolve CocoaPods
+        working-directory: frontend-mobile/ios
+        run: pod install --repo-update
+      - name: Scan resolved CocoaPods
+        run: |
+          cp frontend-mobile/ios/Podfile.lock security-reports/Podfile.lock
+          trivy fs --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --format json --output security-reports/ios-pods.json frontend-mobile/ios/Podfile.lock
+      - name: Compile release for physical iOS without distribution signing
+        working-directory: frontend-mobile/ios
+        run: |
+          set -euo pipefail
+          workspaces=(*.xcworkspace)
+          test "${#workspaces[@]}" -eq 1
+          scheme="${workspaces[0]%.xcworkspace}"
+          xcodebuild -workspace "${workspaces[0]}" -scheme "$scheme" \
+            -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/vinnot-ios-derived" -jobs 3 \
+            CODE_SIGNING_ALLOWED=NO build > ../../security-reports/xcodebuild.log 2>&1 || {
+              tail -100 ../../security-reports/xcodebuild.log
+              exit 1
+            }
+          shasum -a 256 "$RUNNER_TEMP/vinnot-ios-derived/Build/Products/Release-iphoneos/$scheme.app/$scheme" > ../../security-reports/ios-binary.sha256
+      - name: Preserve inventory and build evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ios-native-${{ github.run_id }}-${{ github.run_attempt }}
+          path: security-reports/
+          retention-days: 14
+          if-no-files-found: error

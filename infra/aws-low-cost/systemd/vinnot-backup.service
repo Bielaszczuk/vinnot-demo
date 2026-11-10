@@ -1,0 +1,17 @@
+[Unit]
+Description=Back up the Vinnot low-cost PostgreSQL database
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ec2-user
+Group=ec2-user
+ExecStart=/opt/vinnot/backup-local-db.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+[Install]
+WantedBy=multi-user.target

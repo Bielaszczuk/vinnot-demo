@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+/*
+ * Vinnot design tokens (Tailwind CSS 4 `@theme`).
+ *
+ * The palette follows the watercolor art: burgundy for action, warm cream
+ * paper for the page and warm neutrals for text and lines. The design guide
+ * (docs/<lang>/shared/design/foundations.md) lists every token and its use.
+ */
+@theme {
+  /* Brand: burgundy. wine-700 is the brand color. */
+  --color-wine-50: #fdf2f4;
+  --color-wine-100: #fce7eb;
+  --color-wine-200: #f9d0d9;
+  --color-wine-300: #f4a9ba;
+  --color-wine-400: #ec7794;
+  --color-wine-500: #df4d72;
+  --color-wine-600: #cb2d5d;
+  --color-wine-700: #ab214c;
+  --color-wine-800: #8f1e43;
+  --color-wine-900: #7a1d3e;
+  --color-wine-950: #440b1e;
+
+  /*
+   * Warm neutrals. Tailwind's cool `gray` scale is redefined so every
+   * `gray-*` utility sits on the cream paper without a blue cast.
+   * gray-500 reaches 4.8:1 on the canvas and 5.5:1 on white.
+   */
+  --color-gray-50: #faf8f6;
+  --color-gray-100: #f4f1ee;
+  --color-gray-200: #e8e2dc;
+  --color-gray-300: #d6cec6;
+  --color-gray-400: #a59b93;
+  --color-gray-500: #6f6762;
+  --color-gray-600: #57504b;
+  --color-gray-700: #443d39;
+  --color-gray-800: #2c2522;
+  --color-gray-900: #1f1a18;
+  --color-gray-950: #110d0c;
+
+  /* Semantic surfaces and text. */
+  --color-canvas: #f4eee6;
+  --color-surface: #ffffff;
+  --color-surface-cream: #fbf7f2;
+  --color-ink: #2b2226;
+  --color-muted: #6b5d58;
+  --color-border: #e7ddd3;
+  --color-field: #d6cec6;
+
+  /* Rating stars: ochre, 4.9:1 on white. */
+  --color-rating: #a16207;
+
+  /* Status colors: text and icons pass AA on white and on their soft tint. */
+  --color-success: #047857;
+  --color-success-soft: #ecf8f3;
+  --color-warning: #b45309;
+  --color-warning-soft: #fdf5e9;
+  --color-danger: #b91c1c;
+  --color-danger-soft: #fdf0ef;
+  --color-info: #2b5c8a;
+  --color-info-soft: #eef3f8;
+
+  /* The smallest text size: 11 px. Nothing smaller is used. */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+
+  --font-sans: 'Poppins', system-ui, sans-serif;
+}
+
+@layer base {
+  /* Tailwind 4 draws a bare `border` in currentColor; Vinnot lines are warm. */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-border);
+  }
+}

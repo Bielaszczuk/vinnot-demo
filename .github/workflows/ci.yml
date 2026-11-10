@@ -1,0 +1,436 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      deploy_development:
+        description: 'Publish development after all checks (select the development branch)'
+        type: boolean
+        default: false
+  push:
+    branches:
+      - main
+      - development
+
+permissions:
+  contents: read
+
+# Only superseded PR checks are cancelled; running deployments are not interrupted.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  changes:
+    # Fast repository-wide checks share one job: GitHub bills every job as at least one minute.
+    name: Repository checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      backend: ${{ steps.impact.outputs.backend }}
+      web: ${{ steps.impact.outputs.web }}
+      mobile: ${{ steps.impact.outputs.mobile }}
+      native: ${{ steps.impact.outputs.native }}
+      deploy_backend: ${{ steps.impact.outputs.deploy_backend }}
+      deploy_web: ${{ steps.impact.outputs.deploy_web }}
+      docs: ${{ steps.impact.outputs.docs }}
+      backend_deps: ${{ steps.impact.outputs.backend_deps }}
+      web_deps: ${{ steps.impact.outputs.web_deps }}
+      mobile_deps: ${{ steps.impact.outputs.mobile_deps }}
+      docs_deps: ${{ steps.impact.outputs.docs_deps }}
+      prevalidated: ${{ steps.impact.outputs.prevalidated }}
+      reused: ${{ steps.impact.outputs.reused }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - id: impact
+        name: Determine affected components and pending deployments
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/verify-workflow-policy.mjs
+          node scripts/ci-impact.mjs
+
+      # The policy comes from the base commit, never from the pull request head,
+      # so a pull request cannot relax the rule it is validated against.
+      - name: Validate pull request branch name with the base branch policy
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PULL_REQUEST_BRANCH: ${{ github.head_ref }}
+        run: |
+          policy="$RUNNER_TEMP/base-policy"
+          git worktree add --detach "$policy" "$BASE_SHA"
+          if [[ -f "$policy/scripts/validate-github-branch.mjs" ]]; then
+            node "$policy/scripts/validate-github-branch.mjs" "$PULL_REQUEST_BRANCH"
+          else
+            echo "Branch naming validation is not active on the base branch yet; this pull request is exempt."
+          fi
+
+      - name: Validate bilingual documentation
+        run: python3 scripts/validate_documentation.py
+
+      - name: Check full-size diagram links
+        run: node scripts/check-docs-diagrams.mjs
+
+      - name: Test repository automation and deployment policy
+        run: |
+          tests=()
+          for file in scripts/test/*.test.mjs; do
+            # This image fixture suite needs mobile's installed JPEG/PNG packages.
+            if [[ "$file" != scripts/test/wine-label-benchmark.test.mjs ]]; then tests+=("$file"); fi
+          done
+          node --experimental-test-coverage --test \
+            --test-coverage-lines=100 --test-coverage-branches=100 --test-coverage-functions=100 \
+            --test-coverage-include='scripts/ci-impact.mjs' \
+            --test-coverage-include='scripts/verify-ci-gate.mjs' \
+            --test-coverage-include='scripts/verify-deploy-revision.mjs' \
+            --test-coverage-include='scripts/expo-doctor-check.mjs' "${tests[@]}"
+
+      - name: Install checksum-verified actionlint and gitleaks
+        run: node scripts/install-security-tools.mjs "$RUNNER_TEMP/repository-bin" actionlint gitleaks
+
+      - name: Validate workflow syntax and dependency graph
+        run: '"$RUNNER_TEMP/repository-bin/actionlint" -shellcheck= -pyflakes='
+
+      - name: Verify test architecture across all components
+        run: node scripts/verify-test-architecture.mjs
+
+      - name: Scan full Git history (redacted)
+        run: |
+          mkdir -p "$RUNNER_TEMP/secrets"
+          "$RUNNER_TEMP/repository-bin/gitleaks" git --redact --no-banner --log-opts="--all" \
+            --report-format json --report-path "$RUNNER_TEMP/secrets/secrets.json" .
+
+      - name: Preserve redacted secret findings
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: secret-scan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/secrets/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      # A push to development skips repeating checks for a tree this pull request already passed.
+      - id: tree
+        name: Record the exact tree this pull request validates
+        if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'development'
+        run: |
+          mkdir -p "$RUNNER_TEMP/validated-tree"
+          tree="$(git rev-parse 'HEAD^{tree}')"
+          echo "$tree" > "$RUNNER_TEMP/validated-tree/tree"
+          echo "tree=$tree" >> "$GITHUB_OUTPUT"
+
+      - name: Leave the validated-tree marker
+        if: steps.tree.outputs.tree != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ci-validated-tree-${{ steps.tree.outputs.tree }}
+          path: ${{ runner.temp }}/validated-tree/
+          retention-days: 7
+          if-no-files-found: error
+
+      # A later push of this pull request skips each component whose exact inputs (the component folders it
+      # reads plus everything outside them) this run validates; ci-impact.mjs only trusts a successful run.
+      - name: Record the exact inputs of each component this pull request validates
+        if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'development'
+        env:
+          MARKER_BACKEND: ${{ steps.impact.outputs.marker_backend }}
+          MARKER_WEB: ${{ steps.impact.outputs.marker_web }}
+          MARKER_MOBILE: ${{ steps.impact.outputs.marker_mobile }}
+          MARKER_DOCS: ${{ steps.impact.outputs.marker_docs }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/validated-components"
+          for component in backend web mobile docs; do
+            variable="MARKER_${component^^}"
+            if [[ -n "${!variable}" ]]; then echo "${!variable}" > "$RUNNER_TEMP/validated-components/$component"; fi
+          done
+
+      - name: Leave the validated backend marker
+        if: steps.impact.outputs.marker_backend != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ci-validated-backend-${{ steps.impact.outputs.marker_backend }}
+          path: ${{ runner.temp }}/validated-components/backend
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Leave the validated web marker
+        if: steps.impact.outputs.marker_web != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ci-validated-web-${{ steps.impact.outputs.marker_web }}
+          path: ${{ runner.temp }}/validated-components/web
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Leave the validated mobile marker
+        if: steps.impact.outputs.marker_mobile != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ci-validated-mobile-${{ steps.impact.outputs.marker_mobile }}
+          path: ${{ runner.temp }}/validated-components/mobile
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Leave the validated documentation marker
+        if: steps.impact.outputs.marker_docs != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ci-validated-docs-${{ steps.impact.outputs.marker_docs }}
+          path: ${{ runner.temp }}/validated-components/docs
+          retention-days: 7
+          if-no-files-found: error
+
+  # Dependency scans follow dependency inputs (lockfiles, manifests, image and native configuration),
+  # not sources. Pull requests into main, the weekly schedule and manual runs always scan everything.
+  security:
+    name: Release security
+    needs: [changes]
+    if: >-
+      needs.changes.outputs.backend_deps == 'true' || needs.changes.outputs.native == 'true' ||
+      needs.changes.outputs.web_deps == 'true' || needs.changes.outputs.mobile_deps == 'true' ||
+      needs.changes.outputs.docs_deps == 'true'
+    # Validation of a superseded push is cancelled; its gate fails, so only the newest run deploys.
+    concurrency:
+      group: ci-security-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    uses: ./.github/workflows/security-checks.yml
+    with:
+      # Maven and image scans follow the image inputs (Dockerfile, pom.xml); Java sources add no dependency.
+      backend: ${{ needs.changes.outputs.backend_deps == 'true' }}
+      web: ${{ needs.changes.outputs.web_deps == 'true' }}
+      mobile: ${{ needs.changes.outputs.mobile_deps == 'true' }}
+      native: ${{ needs.changes.outputs.native == 'true' }}
+      docs: ${{ needs.changes.outputs.docs_deps == 'true' }}
+      # Deploy scans its exact image once, before obtaining AWS credentials.
+      scan_image: ${{ needs.changes.outputs.backend_deps == 'true' && !(github.ref == 'refs/heads/development' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy_development))) }}
+
+  backend:
+    name: Backend
+    needs: [changes]
+    if: needs.changes.outputs.backend == 'true'
+    concurrency:
+      group: ci-backend-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      DB_USERNAME: vinnot
+      DB_PASSWORD: vinnot_secret
+      JWT_SECRET: ci-only-jwt-secret-with-at-least-32-characters
+      AI_PROVIDER: mock
+      AI_ENABLED: 'true'
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Java
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Install WebP encoder
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends webp
+
+      - name: Test with coverage
+        run: mvn -B clean verify
+
+  frontend-react:
+    name: React Web
+    needs: [changes]
+    if: needs.changes.outputs.web == 'true'
+    concurrency:
+      group: ci-frontend-react-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend-react
+    env:
+      VITE_API_BASE_URL: https://api-dev.vinnot.com/api
+      VITE_API_TIMEOUT: '30000'
+      VITE_APP_ENV: ci
+      VITE_MOCK_API: 'false'
+      VITE_FEATURE_WINE_SCAN: 'true'
+      VITE_FEATURE_SOCIAL_LOGIN: 'false'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend-react/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify open-tab asset retention and web rollback in Chromium
+        # Only the headless shell: the runner image already has Chrome's system libraries, so no apt mirror is involved.
+        timeout-minutes: 5
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:5174
+        run: |
+          npx --no-install playwright install --only-shell chromium
+          npx --no-install playwright test release-retention.spec.ts --reporter=line
+
+  frontend-mobile:
+    name: Mobile
+    needs: [changes]
+    if: needs.changes.outputs.mobile == 'true'
+    concurrency:
+      group: ci-frontend-mobile-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend-mobile
+    env:
+      EXPO_PUBLIC_API_BASE_URL: https://api-dev.vinnot.com/api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend-mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Expo SDK version drift is a warning until the monthly native release train; other checks block.
+      - name: Validate Expo dependencies
+        run: node ../scripts/expo-doctor-check.mjs
+
+      - name: Validate mobile release configuration policy
+        run: npm run test:release-config
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Bundle iOS JavaScript
+        run: |
+          export_dir="$(mktemp -d)"
+          npx expo export --platform ios --output-dir "$export_dir"
+
+      - name: Validate wine-label acceptance benchmark
+        run: |
+          node --test ../scripts/test/wine-label-benchmark.test.mjs
+          VINNOT_SCAN_VALIDATE_ONLY=YES VINNOT_SCAN_REPETITIONS=3 \
+            node ../scripts/benchmark-wine-label-scanning.mjs
+
+  docs-site:
+    name: Documentation site
+    needs: [changes]
+    if: needs.changes.outputs.docs == 'true'
+    concurrency:
+      group: ci-docs-site-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: docs-site
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+
+      # postinstall applies and verifies the reviewed braces backport.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test with coverage
+        run: npm test
+
+      # Cloudflare Pages builds both languages on every push and fails on broken links
+      # (Cloudflare Pages: vinnot-docs check); CI never publishes the site, so it does not build it twice.
+      - name: Typecheck
+        run: npm run typecheck
+
+  quality-gate:
+    name: CI quality gate
+    if: ${{ always() }}
+    needs: [changes, security, backend, frontend-react, frontend-mobile, docs-site]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Reject failed, cancelled or unexpectedly skipped checks
+        env:
+          CI_NEEDS: ${{ toJSON(needs) }}
+        run: node scripts/verify-ci-gate.mjs
+
+  deploy-backend:
+    name: Deploy backend development
+    needs: [changes, quality-gate]
+    if: >-
+      always() && !cancelled() && needs.quality-gate.result == 'success' &&
+      github.ref == 'refs/heads/development' &&
+      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy_development)) &&
+      needs.changes.outputs.deploy_backend == 'true'
+    uses: ./.github/workflows/deploy-backend-dev.yml
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  deploy-web:
+    name: Deploy web development
+    needs: [changes, quality-gate, deploy-backend]
+    if: >-
+      always() && !cancelled() && needs.quality-gate.result == 'success' &&
+      (needs.deploy-backend.result == 'success' || needs.deploy-backend.result == 'skipped') &&
+      github.ref == 'refs/heads/development' &&
+      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy_development)) &&
+      needs.changes.outputs.deploy_web == 'true'
+    uses: ./.github/workflows/deploy-frontend-dev.yml
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}

@@ -1,0 +1,209 @@
+spring:
+  config:
+    import: optional:file:.env.local[.properties]
+
+  application:
+    name: vinnot-backend
+    version: 0.0.1-SNAPSHOT
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/vinnot
+    username: ${DB_USERNAME:vinnot}
+    password: ${DB_PASSWORD:vinnot_secret}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      auto-commit: true
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      pool-name: VinnotHikariPool
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 15MB
+
+  jackson:
+    datatype:
+      datetime:
+        write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /api
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:true}
+    path: /api-docs
+  swagger-ui:
+    enabled: ${SPRINGDOC_SWAGGER_UI_ENABLED:true}
+    path: /swagger-ui.html
+    operationsSorter: method
+
+logging:
+  level:
+    root: INFO
+    com.vinnot: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: ${LOGGING_LEVEL_HIBERNATE_SQL:OFF}
+    org.hibernate.orm.jdbc.bind: ${LOGGING_LEVEL_HIBERNATE_BIND:OFF}
+    org.hibernate.type.descriptor.sql.BasicBinder: OFF
+    org.hibernate.orm.connections.pooling: WARN
+    org.hibernate.orm.deprecation: ERROR
+
+jwt:
+  secret: ${JWT_SECRET:mySecretKeyForJwtTokenGenerationThatShouldBeAtLeast256BitsLong}
+  expiration: ${JWT_EXPIRATION:900000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
+# Application Configuration
+app:
+  name: Vinnot
+  version: 1.0.0
+  observability:
+    slow-request-threshold-ms: ${SLOW_REQUEST_THRESHOLD_MS:1000}
+  security:
+    rate-limit:
+      # Local development must not inherit production quotas implicitly.
+      # Set RATE_LIMIT_ENABLED=true explicitly when testing throttling locally.
+      enabled: ${RATE_LIMIT_ENABLED:false}
+      trust-forwarded-for: ${RATE_LIMIT_TRUST_FORWARDED_FOR:false}
+      maximum-buckets: ${RATE_LIMIT_MAXIMUM_BUCKETS:100000}
+      bucket-idle-expiration: ${RATE_LIMIT_BUCKET_IDLE_EXPIRATION:25h}
+      credential:
+        capacity: ${RATE_LIMIT_CREDENTIAL_CAPACITY:10}
+        refill-tokens: ${RATE_LIMIT_CREDENTIAL_REFILL_TOKENS:10}
+        refill-period: ${RATE_LIMIT_CREDENTIAL_REFILL_PERIOD:1m}
+      account-action:
+        capacity: ${RATE_LIMIT_ACCOUNT_ACTION_CAPACITY:5}
+        refill-tokens: ${RATE_LIMIT_ACCOUNT_ACTION_REFILL_TOKENS:5}
+        refill-period: ${RATE_LIMIT_ACCOUNT_ACTION_REFILL_PERIOD:15m}
+      registration:
+        capacity: ${RATE_LIMIT_REGISTRATION_CAPACITY:5}
+        refill-tokens: ${RATE_LIMIT_REGISTRATION_REFILL_TOKENS:5}
+        refill-period: ${RATE_LIMIT_REGISTRATION_REFILL_PERIOD:1h}
+      report:
+        capacity: ${RATE_LIMIT_REPORT_CAPACITY:10}
+        refill-tokens: ${RATE_LIMIT_REPORT_REFILL_TOKENS:10}
+        refill-period: ${RATE_LIMIT_REPORT_REFILL_PERIOD:1h}
+      refresh:
+        capacity: ${RATE_LIMIT_REFRESH_CAPACITY:60}
+        refill-tokens: ${RATE_LIMIT_REFRESH_REFILL_TOKENS:60}
+        refill-period: ${RATE_LIMIT_REFRESH_REFILL_PERIOD:1m}
+      ai:
+        capacity: ${RATE_LIMIT_AI_CAPACITY:20}
+        refill-tokens: ${RATE_LIMIT_AI_REFILL_TOKENS:20}
+        refill-period: ${RATE_LIMIT_AI_REFILL_PERIOD:1h}
+      wine-catalog:
+        capacity: ${RATE_LIMIT_WINE_CATALOG_CAPACITY:60}
+        refill-tokens: ${RATE_LIMIT_WINE_CATALOG_REFILL_TOKENS:60}
+        refill-period: ${RATE_LIMIT_WINE_CATALOG_REFILL_PERIOD:1m}
+      public-catalog:
+        capacity: ${RATE_LIMIT_PUBLIC_CATALOG_CAPACITY:180}
+        refill-tokens: ${RATE_LIMIT_PUBLIC_CATALOG_REFILL_TOKENS:180}
+        refill-period: ${RATE_LIMIT_PUBLIC_CATALOG_REFILL_PERIOD:1m}
+      wine-catalog-daily:
+        capacity: ${RATE_LIMIT_WINE_CATALOG_DAILY_CAPACITY:1500}
+        refill-tokens: ${RATE_LIMIT_WINE_CATALOG_DAILY_REFILL_TOKENS:1500}
+        refill-period: ${RATE_LIMIT_WINE_CATALOG_DAILY_REFILL_PERIOD:1d}
+      public-catalog-daily:
+        capacity: ${RATE_LIMIT_PUBLIC_CATALOG_DAILY_CAPACITY:1500}
+        refill-tokens: ${RATE_LIMIT_PUBLIC_CATALOG_DAILY_REFILL_TOKENS:1500}
+        refill-period: ${RATE_LIMIT_PUBLIC_CATALOG_DAILY_REFILL_PERIOD:1d}
+      api-documentation:
+        capacity: ${RATE_LIMIT_API_DOCUMENTATION_CAPACITY:30}
+        refill-tokens: ${RATE_LIMIT_API_DOCUMENTATION_REFILL_TOKENS:30}
+        refill-period: ${RATE_LIMIT_API_DOCUMENTATION_REFILL_PERIOD:1m}
+      general:
+        capacity: ${RATE_LIMIT_GENERAL_CAPACITY:300}
+        refill-tokens: ${RATE_LIMIT_GENERAL_REFILL_TOKENS:300}
+        refill-period: ${RATE_LIMIT_GENERAL_REFILL_PERIOD:1m}
+  uploads:
+    avatar-dir: ${AVATAR_UPLOAD_DIR:uploads/avatars}
+    wine-label-dir: ${WINE_LABEL_UPLOAD_DIR:uploads/wine-labels}
+  storage:
+    provider: ${APP_STORAGE_PROVIDER:local}
+    s3:
+      bucket: ${APP_STORAGE_S3_BUCKET:}
+      region: ${APP_STORAGE_S3_REGION:us-east-1}
+      avatar-prefix: ${APP_STORAGE_S3_AVATAR_PREFIX:avatars}
+      wine-label-prefix: ${APP_STORAGE_S3_WINE_LABEL_PREFIX:wine-labels}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+    allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+    allowed-headers: "*"
+    allow-credentials: true
+  auth:
+    browser-cookie-secure: false
+    frontend-base-url: ${APP_AUTH_FRONTEND_BASE_URL:http://localhost:3000}
+    email-verification-token-minutes: ${EMAIL_VERIFICATION_TOKEN_MINUTES:1440}
+    email-change-token-minutes: ${EMAIL_CHANGE_TOKEN_MINUTES:60}
+    password-reset-token-minutes: ${PASSWORD_RESET_TOKEN_MINUTES:60}
+    email:
+      provider: ${EMAIL_PROVIDER:log}
+      from: ${EMAIL_FROM:no-reply@vinnot.com}
+      ses-region: ${EMAIL_SES_REGION:us-east-1}
+    social:
+      google:
+        audiences: ${GOOGLE_OAUTH_AUDIENCES:162159837919-ojvdkl55fsaovve22saral06m9a4rm1o.apps.googleusercontent.com,162159837919-5m0ojpq0ut7uct3n1s8sucgase0rqftn.apps.googleusercontent.com,162159837919-k1pmtt1hq04c070a6us3uh4hs1iau0bh.apps.googleusercontent.com}
+      apple:
+        audiences: ${APPLE_OAUTH_AUDIENCES:com.vinnot.app.dev}
+        team-id: ${APPLE_TEAM_ID:}
+        key-id: ${APPLE_KEY_ID:}
+        private-key: ${APPLE_PRIVATE_KEY:}
+        redirect-uris: ${APPLE_REDIRECT_URIS:}
+      facebook:
+        app-id: ${FACEBOOK_APP_ID:984338657968690}
+        app-secret: ${FACEBOOK_APP_SECRET:}
+        graph-version: ${FACEBOOK_GRAPH_VERSION:v23.0}
+
+# External Services
+services:
+  google:
+    maps:
+      api-key: ${GOOGLE_MAPS_API_KEY:}
+  openai:
+    api-key: ${OPENAI_API_KEY:}
+    model: ${OPENAI_MODEL:gpt-6-luna}
+    vision-model: ${OPENAI_VISION_MODEL:gpt-4o-mini}
+    retry:
+      max-attempts: ${OPENAI_RETRY_MAX_ATTEMPTS:2}
+      initial-backoff-ms: ${OPENAI_RETRY_INITIAL_BACKOFF_MS:250}
+
+# AI Feature Flags
+ai:
+  provider: ${AI_PROVIDER:mock}
+  enabled: ${AI_ENABLED:true}
+  profile-refresh:
+    # Local runs with real OpenAI must not regenerate stored profiles on their own.
+    enabled: ${AI_PROFILE_REFRESH_ENABLED:false}

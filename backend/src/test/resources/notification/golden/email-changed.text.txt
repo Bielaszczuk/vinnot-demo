@@ -1,0 +1,9 @@
+Hola Ana,
+
+El correo de tu cuenta fue cambiado a new@example.test. Si no realizaste esta acción, contacta a soporte.
+
+---
+Vinnot
+Visitar Vinnot: https://vinnot.example
+Contacto: https://vinnot.example/contact
+Privacidad: https://vinnot.example/privacy

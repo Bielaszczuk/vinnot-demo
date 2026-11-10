@@ -1,0 +1,68 @@
+import Link from '@docusaurus/Link';
+
+# Presentación
+
+La exposición oral de Vinnot en diapositivas animadas: 25 diapositivas que presentan el
+proyecto desde cero, para personas que no conocen la plataforma. Va
+de qué es Vinnot y qué se puede hacer, con la demo en vivo, a cómo se construyó, cómo
+gana dinero y cuánto cuesta crecer. Cada diapositiva muestra qué filas de la rúbrica
+cubre y enlaza la página de esta documentación que explica el tema.
+
+<Link className="button button--primary button--lg" to="/presentation">Abrir la presentación</Link>
+
+## Cómo usarla
+
+La presentación ocupa toda la ventana. Para proyectarla, pulsa **F** o el botón de
+pantalla completa.
+
+| Acción | Teclas o gesto |
+|---|---|
+| Avanzar | → , ↓ , espacio, Enter, Av Pág o clic en la diapositiva |
+| Retroceder | ← , ↑ , Retroceso o Re Pág |
+| Ir al principio o al final | Inicio o Fin |
+| Pantalla completa | F |
+| En el teléfono o la tableta | Deslizar a la izquierda o a la derecha |
+
+Cada diapositiva revela su contenido en pasos: avanzar muestra el paso siguiente antes
+de pasar a la próxima diapositiva. La dirección guarda el número de diapositiva
+(`/presentation#12`), así que al recargar la página se retoma en el mismo lugar. Abajo
+hay un reloj con el tiempo transcurrido y una barra de progreso dividida por capítulo.
+Los pasajes no se animan si el sistema pide reducir el movimiento.
+
+## Recorrido
+
+| Capítulo | Diapositivas | Dónde se explica |
+|---|---|---|
+| I. Qué es Vinnot | Portada, agenda, el problema, la solución, para quién es, una plataforma en tres pantallas | [Proyecto](../project/README.md), [Plan del proyecto](../project/project-plan.md) y [Accesos al producto](../project/deliverables-and-access.md) |
+| II. El producto | Qué se puede hacer, puntos y sellos, recorrido de la demo, demo en vivo | [Manuales](../manuals/README.md), [Puntos y sellos](../manuals/points-and-seals.mdx) y [Videos](../videos/README.md) |
+| III. Cómo se construyó | Plan del proyecto, cronograma, requisitos, diagramas, arquitectura, repositorio, seguridad y calidad | [Índice de requisitos](../project/requirements-index.md), [Cronograma](../gantt/README.md), [Diagramas](../diagrams/README.md), [Arquitectura](../architecture/README.md), [Organización del repositorio](../project/repository-organization.md) y [Seguridad](../security/README.md) |
+| IV. Negocio y escala | Propuesta de valor y competencia, monetización, cómo sumar usuarios, proyección a 12 meses, costos y escala, propuesta para bodegas y hoja de ruta de una bodega fundadora | [Modelo de negocio](../business/README.md), [Monetización](../business/monetization.md), [Proyección de usuarios a 12 meses](../business/user-acquisition-projection.md), [Capacidad y proyección de costos](../business/capacity-and-cost-projections.md) y [Hoja de ruta de precios para bodegas](../business/winery-pricing-roadmap.md) |
+| V. Cierre | Resumen de la rúbrica, accesos y preguntas | [Accesos al producto](../project/deliverables-and-access.md) |
+
+## Cobertura de la rúbrica
+
+| Bloque | Fila | Diapositivas | Página de referencia |
+|---|---|---|---|
+| Documentación | Presentación general del proyecto | Agenda, el problema, la solución | [Proyecto](../project/README.md) |
+| Documentación | Plan de proyecto | Para quién es, plan del proyecto, cronograma | [Plan del proyecto](../project/project-plan.md) |
+| Documentación | Modelado y diagramas | Cronograma, diagramas, arquitectura | [Diagramas](../diagrams/README.md) |
+| Documentación | Requerimientos | Requisitos trazables | [Índice de requisitos](../project/requirements-index.md) y [Matriz de trazabilidad](../modules/traceability.md) |
+| Producto final | Funcionalidad de la web | Tres pantallas, qué se puede hacer, demo en vivo | [Web](../frontend-web/README.md) |
+| Producto final | Funcionalidad mobile | Tres pantallas, qué se puede hacer, puntos y sellos, demo en vivo | [App móvil](../frontend-mobile/README.md) |
+| Producto final | Código fuente y repositorios | Arquitectura, repositorio, seguridad y calidad | [Organización del repositorio](../project/repository-organization.md) |
+| Producto final | Entregables: demo y accesos | Recorrido de la demo, cierre | [Accesos al producto](../project/deliverables-and-access.md) |
+| Exposición oral | Claridad y comunicación | Portada y cierre: el orden de toda la presentación | Esta página |
+| Exposición oral | Participación | Portada | Esta página |
+| Exposición oral | Demostración técnica en vivo | Recorrido de la demo, demo en vivo | [Recorrido guiado por rol](../project/deliverables-and-access.md#recorrido-guiado-por-rol) |
+| Exposición oral | Propuesta de valor | Propuesta de valor, monetización, proyección de usuarios, costos y escala, propuesta para bodegas | [Modelo de negocio](../business/README.md) y [Hoja de ruta de precios para bodegas](../business/winery-pricing-roadmap.md) |
+
+## Datos que muestra
+
+Las cifras de las diapositivas salen de las páginas enlazadas en la tabla anterior y se
+comprueban en las pruebas del sitio (`docs-site/test/presentation-content.test.mjs`):
+los totales de requisitos, el costo mensual, la proyección por usuarios, la comisión de
+ejemplo y los umbrales de los sellos. La proyección de usuarios y los precios para bodegas
+salen de `docs-site/src/components/Presentation/growth.mjs`, y
+`docs-site/test/presentation-growth.test.mjs` los compara con sus páginas. Si una de esas
+páginas cambia una cifra, hay que actualizar `content.mjs` o `growth.mjs` en
+`docs-site/src/components/Presentation/`.

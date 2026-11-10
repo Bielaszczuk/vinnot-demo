@@ -1,0 +1,62 @@
+@font-face{font-family:Poppins;src:url(/fonts/poppins/Poppins_400Regular.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:Poppins;src:url(/fonts/poppins/Poppins_600SemiBold.woff2) format('woff2');font-weight:600;font-display:swap}
+:root{font-family:Poppins,system-ui,sans-serif;color:#231f20;background:#fcfaf9;font-synthesis:none}
+*{box-sizing:border-box}
+body{margin:0}
+a{color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
+a:focus-visible{outline:3px solid #a72350;outline-offset:5px}
+header{max-width:780px;margin:auto;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.logo{display:block;width:154px;height:auto}
+.language{font-size:12px;color:#756b70;min-height:44px;display:flex;align-items:center;padding:0 12px;border:1px solid #eadfe3;border-radius:24px;background:white}
+main{max-width:720px;margin:4px auto 0;padding:0 28px}
+.download{position:relative;isolation:isolate;overflow:hidden;text-align:center;padding:46px 42px 28px;border:1px solid #efe0e6;border-radius:28px;background:linear-gradient(155deg,#fff 60%,#fcf3f6);box-shadow:0 14px 45px #72233c06}
+.download::before{content:"";position:absolute;z-index:-1;right:-42px;top:-62px;width:215px;height:275px;background:url(/images/brand/mark.png) center/contain no-repeat;opacity:.035;pointer-events:none}
+.eyebrow{display:block;font-size:10px;letter-spacing:1.7px;font-weight:600;color:#a72350;text-transform:uppercase}
+h1{max-width:530px;font-size:40px;letter-spacing:-1.4px;line-height:1.22;margin:17px auto 16px;text-wrap:balance}
+.download-description{max-width:470px;margin:0 auto 26px;color:#746a70;font-size:14px;line-height:1.8;text-wrap:pretty}
+.download-button{display:flex;justify-content:center;align-items:center;min-height:56px;max-width:330px;margin:0 auto;padding:14px 18px;border-radius:15px;background:#a72350;color:white;font-size:15px;font-weight:600;transition:background .15s}
+.download-button:hover{background:#8e1c43}
+.download-button[aria-disabled=true]{background:#eee9eb;color:#746b70;cursor:default}
+.download-status{min-height:20px;margin:12px 0 20px;color:#746a70;font-size:11px;line-height:1.8}
+.stores{display:flex;justify-content:center;align-items:flex-start;gap:12px;scroll-margin-top:24px}
+.store-link{display:flex;align-items:center;justify-content:center;width:156px;min-height:62px}
+.store-link img{display:block;max-width:100%;object-fit:contain}
+.store-link[aria-disabled=true]{opacity:.38;pointer-events:none}
+.android-store{width:156px}
+.android-note{display:none;font-size:9px;line-height:1.6;color:#746a70;margin:0 0 4px}
+.android-note.unavailable{display:block}
+.benefits{list-style:none;padding:23px 0 0;margin:26px 0 0;border-top:1px solid #eee1e6;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.benefits li{display:flex;flex-direction:column;align-items:center;gap:9px;font-size:11px;color:#665a62;line-height:1.6}
+.benefits svg{width:22px;height:22px;fill:none;stroke:#a72350;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.content-preview{margin:22px 0 0;display:grid;grid-template-columns:130px 1fr;background:white;border:1px solid #efe0e6;border-radius:22px;overflow:hidden}
+.content-preview--brand{display:none}
+.content-art{min-height:150px;display:flex;align-items:center;justify-content:center;background:#fbf1f4}
+.content-art img{display:block;width:100%;height:100%;max-height:230px;object-fit:cover}
+.content-art .brand-image{height:auto;width:85%;object-fit:contain}
+.content-body{padding:24px}
+.content-body .eyebrow{font-size:9px}
+h2{font-size:21px;letter-spacing:-.5px;line-height:1.4;margin:10px 0}
+.content-body p{font-size:12px;line-height:1.8;color:#746a70;margin:0;overflow-wrap:anywhere}
+.access{padding:26px 0 30px;display:flex;flex-direction:column;align-items:center;gap:9px}
+.app-open{min-height:48px;max-width:380px;width:100%;padding:12px 20px;border:1px solid #e7ccd6;border-radius:14px;color:#9d2650;font-size:12px;display:flex;align-items:center;justify-content:center;gap:12px;background:#fff}
+.web-link{display:flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:10px 20px;color:#756d72;font-size:12px}
+footer{max-width:720px;margin:0 auto;padding:22px 28px 30px;border-top:1px solid #ecdee3;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+footer p{font-size:11px;color:#746a70;margin:0}
+footer nav{display:flex;gap:26px;font-size:11px;color:#746a70}
+footer nav a{min-height:36px;display:flex;align-items:center}
+footer small{font-size:10px;color:#80767c}
+@media(max-width:520px){
+  header{padding:16px 22px;min-height:78px}.logo{width:139px}.language{font-size:11px}
+  main{margin-top:0;padding:0 16px}
+  .download{padding:29px 22px 24px;border-radius:24px}
+  .eyebrow{font-size:8px;letter-spacing:1.2px}
+  h1{font-size:31px;letter-spacing:-1px;margin:14px auto 15px}
+  .download-description{font-size:13px;line-height:1.75;margin-bottom:23px}
+  .download-button{font-size:14px;min-height:54px}
+  .stores{gap:7px}.store-link,.android-store{width:140px}.store-link{min-height:59px}
+  .benefits{gap:6px;padding-top:19px;margin-top:20px}.benefits li{font-size:9px;gap:8px}
+  .content-preview{grid-template-columns:100px 1fr;border-radius:20px}.content-body{padding:19px 16px}h2{font-size:18px}.content-body p{font-size:11px}
+  .app-open{font-size:11px}.access{padding:22px 12px 25px}footer{padding:19px 22px 28px}
+}
+@media(max-width:350px){.stores{gap:3px}.store-link,.android-store{width:122px}.download{padding-left:17px;padding-right:17px}}
+@media(prefers-reduced-motion:reduce){.download-button{transition:none}}

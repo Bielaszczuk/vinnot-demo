@@ -1,0 +1,29 @@
+{
+  "comparisons": {
+    "wine-001_wine-002": {
+      "wines": ["wine-001", "wine-002"],
+      "comparison": [
+        { "attribute": "Price", "values": [45.99, 28.50], "winner_index": 1 },
+        { "attribute": "Rating", "values": [4.7, 4.4], "winner_index": 0 },
+        { "attribute": "Reviews", "values": [342, 198], "winner_index": 0 },
+        { "attribute": "Alcohol", "values": [14.5, 14.0], "winner_index": null },
+        { "attribute": "Body", "values": ["Full", "Full"], "winner_index": null },
+        { "attribute": "Tannins", "values": ["High", "Medium"], "winner_index": null }
+      ],
+      "ai_summary": "Both wines are excellent examples of Argentine reds. The Catena Zapata Malbec offers more complexity and elegance with its violet and dark fruit notes, justifying its higher price. The Trapiche Cabernet provides excellent value with its structured profile and aging potential. Choose the Malbec for special occasions, the Cabernet for everyday enjoyment."
+    },
+    "wine-003_wine-004": {
+      "wines": ["wine-003", "wine-004"],
+      "comparison": [
+        { "attribute": "Price", "values": [22.00, 15.99], "winner_index": 1 },
+        { "attribute": "Rating", "values": [4.3, 4.1], "winner_index": 0 },
+        { "attribute": "Reviews", "values": [156, 89], "winner_index": 0 },
+        { "attribute": "Alcohol", "values": [13.5, 13.0], "winner_index": null },
+        { "attribute": "Sweetness", "values": ["Dry", "Off-dry"], "winner_index": null },
+        { "attribute": "Acidity", "values": ["Medium", "High"], "winner_index": null }
+      ],
+      "ai_summary": "Two distinct Argentine white wine styles. The Luigi Bosca Chardonnay offers richness and creaminess, perfect for richer dishes. The Zuccardi Torrontés is highly aromatic and refreshing, ideal for spicy foods and warm weather. The Chardonnay is more versatile, while the Torrontés is uniquely Argentine."
+    }
+  }
+}
+

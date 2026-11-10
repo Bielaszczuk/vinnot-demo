@@ -1,0 +1,233 @@
+import { StyleSheet } from "react-native";
+import { layout, radii } from "@/shared/theme/tokens";
+import { vinnotColors, vinnotFonts } from "@/shared/theme/vinnotTheme";
+import { fontSizes } from "@/shared/theme/typography";
+
+export const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: vinnotColors.canvas,
+  },
+  content: {
+    gap: 16,
+    paddingHorizontal: layout.screenHorizontalPadding,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderWidth: 1,
+    borderColor: vinnotColors.borderSoft,
+    borderRadius: radii["2xl"],
+    padding: 18,
+    backgroundColor: vinnotColors.surface,
+    shadowColor: vinnotColors.brandDeep,
+    shadowOffset: { width: 0, height: 7 },
+    shadowOpacity: 0.05,
+    shadowRadius: 18,
+    elevation: 2,
+  },
+  headerIcon: {
+    width: 48,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.xl,
+    backgroundColor: vinnotColors.brandSoft,
+  },
+  headerText: {
+    flex: 1,
+    gap: 3,
+  },
+  title: {
+    fontFamily: vinnotFonts.bold,
+    fontSize: fontSizes["2xl"],
+    lineHeight: 30,
+    color: vinnotColors.ink,
+  },
+  subtitle: {
+    fontFamily: vinnotFonts.regular,
+    fontSize: fontSizes.sm,
+    lineHeight: 19,
+    color: vinnotColors.muted,
+  },
+  clearButton: {
+    width: 38,
+    height: 38,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.full,
+    backgroundColor: vinnotColors.canvas,
+  },
+  selectedGrid: {
+    gap: 12,
+  },
+  selectedCard: {
+    minHeight: 112,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: vinnotColors.border,
+    borderRadius: radii["2xl"],
+    padding: 14,
+    backgroundColor: vinnotColors.surface,
+  },
+  selectedCardHeader: {
+    minHeight: 28,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  selectedCardActive: {
+    borderColor: vinnotColors.brand,
+    backgroundColor: vinnotColors.brandSoft,
+  },
+  selectedCardDisabled: {
+    opacity: 0.48,
+  },
+  selectedLabel: {
+    fontFamily: vinnotFonts.semibold,
+    fontSize: fontSizes.meta,
+    lineHeight: 16,
+    color: vinnotColors.brand,
+  },
+  removeWineButton: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radii.xl,
+    backgroundColor: vinnotColors.canvas,
+  },
+  selectedBody: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  selectedImage: {
+    width: 52,
+    height: 72,
+    borderRadius: radii.md,
+    backgroundColor: vinnotColors.canvas,
+  },
+  selectedInfo: {
+    flex: 1,
+    gap: 3,
+  },
+  selectedName: {
+    fontFamily: vinnotFonts.semibold,
+    fontSize: fontSizes.lg,
+    lineHeight: 23,
+    color: vinnotColors.ink,
+  },
+  selectedMeta: {
+    fontFamily: vinnotFonts.regular,
+    fontSize: fontSizes.xs,
+    lineHeight: 17,
+    color: vinnotColors.muted,
+  },
+  selectedEmpty: {
+    fontFamily: vinnotFonts.regular,
+    fontSize: fontSizes.sm,
+    lineHeight: 19,
+    color: vinnotColors.muted,
+  },
+  emptySelectionButton: {
+    minHeight: 48,
+    justifyContent: "center",
+  },
+  searchCard: {
+    gap: 12,
+    borderWidth: 1,
+    borderColor: vinnotColors.borderSoft,
+    backgroundColor: vinnotColors.surface,
+  },
+  searchLabel: {
+    fontFamily: vinnotFonts.semibold,
+    fontSize: fontSizes.ui,
+    lineHeight: 20,
+    color: vinnotColors.ink,
+  },
+  results: {
+    gap: 8,
+  },
+  resultRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderWidth: 1,
+    borderColor: vinnotColors.borderSoft,
+    borderRadius: radii.xl,
+    padding: 10,
+    backgroundColor: vinnotColors.canvas,
+  },
+  resultImage: {
+    width: 42,
+    height: 58,
+    borderRadius: radii.md,
+    backgroundColor: vinnotColors.surface,
+  },
+  resultInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  resultName: {
+    fontFamily: vinnotFonts.medium,
+    fontSize: fontSizes.sm,
+    lineHeight: 19,
+    color: vinnotColors.ink,
+  },
+  resultMeta: {
+    fontFamily: vinnotFonts.regular,
+    fontSize: fontSizes.meta,
+    lineHeight: 16,
+    color: vinnotColors.muted,
+  },
+  compareAction: {
+    gap: 9,
+    borderWidth: 1,
+    borderColor: vinnotColors.borderSoft,
+    borderRadius: radii["2xl"],
+    padding: 14,
+    backgroundColor: vinnotColors.surface,
+  },
+  compareHint: {
+    textAlign: "center",
+    fontFamily: vinnotFonts.regular,
+    fontSize: fontSizes.xs,
+    lineHeight: 18,
+    color: vinnotColors.muted,
+  },
+  comparisonStack: {
+    gap: 12,
+  },
+  sectionCard: {
+    gap: 10,
+    borderWidth: 1,
+    borderColor: vinnotColors.borderSoft,
+    backgroundColor: vinnotColors.surface,
+  },
+  sectionTitle: {
+    fontFamily: vinnotFonts.semibold,
+    fontSize: fontSizes.lg,
+    lineHeight: 23,
+    color: vinnotColors.ink,
+  },
+  bodyText: {
+    flex: 1,
+    fontFamily: vinnotFonts.regular,
+    fontSize: fontSizes.sm,
+    lineHeight: 21,
+    color: vinnotColors.muted,
+  },
+  bulletRow: {
+    flexDirection: "row",
+    gap: 9,
+  },
+  bullet: {
+    width: 6,
+    height: 6,
+    borderRadius: radii.full,
+    marginTop: 7,
+    backgroundColor: vinnotColors.brand,
+  },
+});

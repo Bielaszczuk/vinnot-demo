@@ -1,0 +1,6 @@
+node_modules/
+build/
+.docusaurus/
+.cache-loader/
+# Generated from docs/en by scripts/sync-locales.mjs.
+i18n/en/docusaurus-plugin-content-docs/current/

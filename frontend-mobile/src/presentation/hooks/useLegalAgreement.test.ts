@@ -1,0 +1,90 @@
+import { act, renderHook, waitFor } from "@testing-library/react-native";
+import { useLegalAgreement } from "./useLegalAgreement";
+import { legalService } from "@/application/services/legal.service";
+import type { TermsDocument } from "@/domain/legal/agreement";
+let mockLanguage = "es";
+jest.mock("react-i18next", () => ({ useTranslation: () => ({ i18n: { language: mockLanguage } }) }));
+jest.mock("@/application/services/legal.service", () => ({
+  legalService: { current: jest.fn(), status: jest.fn(), accept: jest.fn() },
+}));
+const document: TermsDocument = { version: "v1", acceptanceRevision: "r1", locale: "es", contentHash: "a".repeat(64), title: "Terms", summary: "Summary", sections: [] };
+beforeEach(() => {
+  jest.resetAllMocks(); mockLanguage = "es";
+  jest.mocked(legalService.current).mockResolvedValue(document);
+  jest.mocked(legalService.status).mockResolvedValue({ document, required: true, acceptedAt: null });
+});
+it("never preselects consent; waits for the server, suppresses duplicate submits and unlocks only on confirmation", async () => {
+  const { result } = renderHook(() => useLegalAgreement("account", "one"));
+  expect(result.current.loading).toBe(true);
+  await waitFor(() => expect(result.current.document).toEqual(document));
+  expect(result.current.selection).toBeUndefined();
+  await act(async () => { await result.current.accept(); });
+  expect(legalService.accept).not.toHaveBeenCalled();
+  act(() => { result.current.setChecked(true); });
+  let complete!: (value: { document: TermsDocument; required: boolean; acceptedAt: string }) => void;
+  jest.mocked(legalService.accept).mockImplementationOnce(() => new Promise(resolve => { complete = resolve; }));
+  let pending!: Promise<void>;
+  act(() => { pending = result.current.accept(); });
+  await act(async () => { await result.current.accept(); });
+  expect(legalService.accept).toHaveBeenCalledTimes(1);
+  expect(result.current.required).toBe(true);
+  await act(async () => { complete({ document, required: false, acceptedAt: "server" }); await pending; });
+  expect(result.current.required).toBe(false);
+  expect(result.current.sending).toBe(false);
+});
+it("reloads after failed/stale acceptance without silently retrying, and resets the checkbox on language changes", async () => {
+  const { result, rerender } = renderHook(() => useLegalAgreement("account", "one"));
+  await waitFor(() => expect(result.current.document).toBeDefined());
+  act(() => { result.current.setChecked(true); });
+  jest.mocked(legalService.accept).mockRejectedValueOnce(new Error("TERMS_VERSION_CHANGED"));
+  await act(async () => { await result.current.accept(); });
+  expect(result.current.error).toBe(true);
+  expect(result.current.checked).toBe(false);
+  const updated = { ...document, version: "v2", contentHash: "b".repeat(64) };
+  jest.mocked(legalService.status).mockResolvedValueOnce({ document: updated, required: true, acceptedAt: null });
+  act(() => { result.current.retry(); });
+  await waitFor(() => expect(result.current.document).toEqual(updated));
+  expect(result.current.error).toBe(false);
+  act(() => { result.current.setChecked(true); });
+  mockLanguage = "en";
+  jest.mocked(legalService.status).mockResolvedValueOnce({ document: { ...updated, locale: "en" }, required: false, acceptedAt: "server" });
+  rerender({});
+  expect(result.current.checked).toBe(false);
+  await waitFor(() => expect(result.current.required).toBe(false));
+});
+it("fetches registration text without a session and recovers from an offline load", async () => {
+  jest.mocked(legalService.current).mockRejectedValueOnce(new Error("offline"));
+  const { result } = renderHook(() => useLegalAgreement("registration"));
+  await waitFor(() => expect(result.current.error).toBe(true));
+  act(() => { result.current.retry(); });
+  await waitFor(() => expect(result.current.document).toBeDefined());
+  act(() => { result.current.setChecked(true); });
+  expect(result.current.selection?.accepted).toBe(true);
+  act(() => { result.current.setChecked(false); });
+  expect(result.current.selection).toBeUndefined();
+  expect(legalService.status).not.toHaveBeenCalled();
+});
+it("ignores late loads and accepts from the previous account", async () => {
+  let complete!: (value: { document: TermsDocument; required: boolean; acceptedAt: string | null }) => void;
+  jest.mocked(legalService.status).mockImplementationOnce(() => new Promise(resolve => { complete = resolve; }));
+  const { result, rerender } = renderHook(({ id }) => useLegalAgreement("account", id), { initialProps: { id: "one" } });
+  rerender({ id: "two" });
+  await waitFor(() => expect(result.current.document).toBeDefined());
+  await act(async () => { complete({ document, required: false, acceptedAt: "old" }); });
+  expect(result.current.required).toBe(true);
+  let accept!: (value: { document: TermsDocument; required: boolean; acceptedAt: string }) => void;
+  jest.mocked(legalService.accept).mockImplementationOnce(() => new Promise(resolve => { accept = resolve; }));
+  act(() => { result.current.setChecked(true); });
+  let pending!: Promise<void>;
+  act(() => { pending = result.current.accept(); });
+  rerender({ id: "three" });
+  await waitFor(() => expect(legalService.status).toHaveBeenCalledTimes(3));
+  await act(async () => { accept({ document, required: false, acceptedAt: "old" }); await pending; });
+  expect(result.current.required).toBe(true);
+});
+it("does not request legal state for anonymous or exempt users", () => {
+  renderHook(() => useLegalAgreement("account"));
+  renderHook(() => useLegalAgreement("account", "one", false));
+  expect(legalService.status).not.toHaveBeenCalled();
+  expect(legalService.current).not.toHaveBeenCalled();
+});

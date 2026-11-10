@@ -1,0 +1,44 @@
+import RevenueSimulator from '@site/src/components/RevenueSimulator';
+
+# Revenue simulator
+
+Try how much Vinnot earns from the ticket commission and from the winery subscription,
+and whether that revenue covers the platform costs. Change the commission rate, the
+number of events and tickets, the average ticket price, the exchange rate and the number
+of wineries on the Pro plan.
+
+## How to use it
+
+1. Pick the commission rate: 3% (implemented), 8% or 12% (planned), or another one.
+2. Enter how many paid events there are per month, how many tickets each one sells and
+   their average price in pesos.
+3. Adjust the exchange rate. The starting value, ARS 1,450 per USD, is an assumption:
+   use the day's rate.
+4. Move the number of Pro wineries and pick the store fee: 15% with Apple's Small
+   Business Program or on Google Play, 30% in the App Store's first year without that
+   program.
+5. Pick the cost to cover: today's measured cost or the projected cost for 1,000, 5,000,
+   10,000 or 50,000 users.
+
+<RevenueSimulator />
+
+## What it calculates
+
+| Result | Calculation |
+|---|---|
+| Commission | events × tickets × price × rate, converted to dollars |
+| Net subscriptions | Pro wineries × price × (1 − store fee) |
+| Margin | total revenue − monthly cost |
+| Tickets to cover costs | monthly cost ÷ commission per ticket |
+| Wineries to cover costs | monthly cost ÷ net per winery |
+
+## Limits of the calculation
+
+- It is an **estimate**. It excludes taxes (VAT, gross income tax, income tax),
+  salaries and marketing.
+- The ticket seller pays Mercado Pago's fee, which does not reduce Vinnot's commission.
+- The 3% commission is implemented; 8%, 12% and the winery subscription are planned
+  ([Monetization and plans](monetization.md)).
+- The costs come from the same model as
+  [Capacity and cost projections](capacity-and-cost-projections.md) and the
+  [cost simulator by scale](cost-simulator.mdx).

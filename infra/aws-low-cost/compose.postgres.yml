@@ -1,0 +1,36 @@
+# Shared PostgreSQL engine settings. Credentials and health identities belong
+# to the environment-specific entry points, never to this reusable service.
+services:
+  postgres:
+    # Exact version + multi-arch index digest: `docker compose pull` in deploy
+    # scripts must never roll the database engine. Bump deliberately.
+    image: postgres:18.6-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+    restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - shared_buffers=96MB
+      - -c
+      - effective_cache_size=768MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - work_mem=2MB
+      - -c
+      - max_connections=20
+      - -c
+      - wal_buffers=4MB
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    mem_limit: 384m
+    cpus: 0.65
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
+    networks: [runtime]

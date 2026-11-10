@@ -1,0 +1,162 @@
+# =============================================================================
+# Vinnot - Docker Compose Configuration
+# =============================================================================
+# Local development environment with PostgreSQL and Backend services
+#
+# QUICK START:
+#   docker-compose up -d          # Start all services
+#   docker-compose down           # Stop all services
+#   docker-compose logs -f        # View logs
+#   docker-compose down -v        # Stop and remove volumes
+#
+# EXPOSED PORTS:
+#   - PostgreSQL: localhost:5432 (user: vinnot, pass: vinnot_secret, db: vinnot)
+#   - Backend API: http://localhost:8080/api
+#
+# FRONTEND SETUP:
+#   The frontend runs separately. After starting this compose:
+#   1. cd ../frontend-react
+#   2. cp .env.example .env.local
+#   3. Ensure .env.local has: VITE_API_BASE_URL=/api
+#   4. npm install && npm run dev
+#   5. Open http://localhost:3000
+#
+# TEST USERS (after backend starts):
+#   - admin@vinnot.local / Vinnot123! (ADMIN)
+#   - partner@vinnot.local / Vinnot123! (PARTNER)
+#   - user@vinnot.local / Vinnot123! (USER)
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:18-alpine
+    container_name: vinnot-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-vinnot}
+      POSTGRES_USER: ${POSTGRES_USER:-vinnot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vinnot_secret}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vinnot} -d ${POSTGRES_DB:-vinnot}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vinnot-network
+
+  # ---------------------------------------------------------------------------
+  # Vinnot Backend API
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: vinnot-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Spring Profile
+      SPRING_PROFILES_ACTIVE: local
+
+      # Database Configuration
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-vinnot}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-vinnot}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-vinnot_secret}
+
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-minimum-32-characters-long}
+      JWT_ISSUER: ${JWT_ISSUER:-vinnot-backend}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-900000}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
+
+      # Account lifecycle and transactional email
+      APP_AUTH_FRONTEND_BASE_URL: ${APP_AUTH_FRONTEND_BASE_URL:-http://localhost:3000}
+      EMAIL_VERIFICATION_TOKEN_MINUTES: ${EMAIL_VERIFICATION_TOKEN_MINUTES:-1440}
+      PASSWORD_RESET_TOKEN_MINUTES: ${PASSWORD_RESET_TOKEN_MINUTES:-60}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-log}
+      EMAIL_FROM: ${EMAIL_FROM:-no-reply@vinnot.com}
+      EMAIL_SES_REGION: ${EMAIL_SES_REGION:-us-east-1}
+
+      # Social identity provider verification
+      GOOGLE_OAUTH_AUDIENCES: ${GOOGLE_OAUTH_AUDIENCES:-}
+      APPLE_OAUTH_AUDIENCES: ${APPLE_OAUTH_AUDIENCES:-}
+      FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
+      FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
+      FACEBOOK_GRAPH_VERSION: ${FACEBOOK_GRAPH_VERSION:-v23.0}
+
+      # Server Configuration
+      SERVER_PORT: 8080
+
+      # Flyway
+      SPRING_FLYWAY_ENABLED: "true"
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+
+      # AI Configuration (Optional - for AI-powered features)
+      # Provider: 'mock' for development, 'openai' for real AI
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      AI_ENABLED: ${AI_ENABLED:-true}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-6-luna}
+
+      # Google Maps Configuration (Optional - for route maps)
+      GOOGLE_MAPS_ENABLED: ${GOOGLE_MAPS_ENABLED:-true}
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+
+      # JVM Options
+      JAVA_OPTS: >-
+        -Xms256m
+        -Xmx512m
+        -XX:+UseG1GC
+        -XX:+UseContainerSupport
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - vinnot-network
+
+  # ---------------------------------------------------------------------------
+  # Vinnot Frontend (Optional - uncomment when needed)
+  # ---------------------------------------------------------------------------
+  # frontend:
+  #   build:
+  #     context: ../frontend-react
+  #     dockerfile: Dockerfile
+  #   container_name: vinnot-frontend
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - backend
+  #   environment:
+  #     VITE_API_BASE_URL: http://backend:8080/api
+  #   ports:
+  #     - "${FRONTEND_PORT:-3000}:80"
+  #   networks:
+  #     - vinnot-network
+
+# -----------------------------------------------------------------------------
+# Volumes
+# -----------------------------------------------------------------------------
+volumes:
+  postgres_data:
+    driver: local
+
+# -----------------------------------------------------------------------------
+# Networks
+# -----------------------------------------------------------------------------
+networks:
+  vinnot-network:
+    driver: bridge

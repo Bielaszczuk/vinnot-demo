@@ -1,0 +1,14 @@
+Reference: VIN-43A38ED9D6C9
+Request ID: f0da7948-e767-458d-9681-43a38ed9d6c9
+Category: privacy
+Name: Name
+Reply email: reply@example.org
+
+<script>Text</script>
+Bcc: attacker@example.org
+
+---
+Vinnot
+Visit Vinnot: https://vinnot.example
+Contact: https://vinnot.example/contact
+Privacy: https://vinnot.example/privacy

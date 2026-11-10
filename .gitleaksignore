@@ -1,0 +1,21 @@
+# Reviewed 2026-09-28. Exact historical false positives, not path/rule exclusions.
+# EC private key generated in memory for the Apple revocation adapter test; PEM header concatenation.
+07c983c6e7e3132db1f4061b133d2dec1da1134a:backend/src/test/java/com/vinnot/user/infrastructure/identity/AppleAuthorizationRevocationAdapterTest.java:private-key:81
+# Deliberately invalid JWT used by the expired-token integration test.
+2b90e66c125e441d8c426acf54c3eb396581ee2d:backend/src/test/java/com/rewine/backend/integration/controller/SecurityIntegrationTest.java:generic-api-key:135
+# Explicit change-me development template, not a deployed credential.
+23af319e1c0db0233948ed1a1a8b67c00a43268a:infra/k8s/base/secret.yaml:generic-api-key:31
+# Truncated documentation examples (ellipsis), not usable tokens.
+1ab1b9e351e3547726eb69568e2ad660ede36fdd:backend/README.md:generic-api-key:169
+1ab1b9e351e3547726eb69568e2ad660ede36fdd:backend/README.md:generic-api-key:170
+1ab1b9e351e3547726eb69568e2ad660ede36fdd:backend/README.md:curl-auth-header:198
+1ab1b9e351e3547726eb69568e2ad660ede36fdd:backend/README.md:generic-api-key:208
+1ab1b9e351e3547726eb69568e2ad660ede36fdd:backend/README.md:generic-api-key:218
+# Spring-generated ephemeral test passwords in historical Surefire reports; no active credential.
+265fd1e53369395ad560cb9e179dd162bba3d443:backend/target/surefire-reports/TEST-com.rewine.backend.RewineBackendAppTests.xml:generic-api-key:232
+b6347978e2ca4d960454214c85b553ca85122dc5:backend/target/surefire-reports/TEST-com.rewine.backend.RewineBackendAppTests.xml:generic-api-key:232
+731c3dec945adcc779b33a1039f891fe1148634e:backend/target/surefire-reports/TEST-com.rewine.backend.RewineBackendAppTests.xml:generic-api-key:232
+eeffc4196a4d69f6a67b004c47fa822f3f148fec:backend/target/surefire-reports/TEST-com.rewine.backend.RewineBackendAppTests.xml:generic-api-key:232
+# Reviewed 2026-09-30, PROD-06: ordinary SES incident prose "API ... bounce/complaint"; no credential.
+96887b20883011e83eff504ea7dea537608f1fd2:docs/en/infra/operations/observability-and-incidents.md:generic-api-key:151
+96887b20883011e83eff504ea7dea537608f1fd2:docs/es/infra/operations/observability-and-incidents.md:generic-api-key:150

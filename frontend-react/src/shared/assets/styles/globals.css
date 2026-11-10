@@ -1,0 +1,277 @@
+/* App-wide global styles */
+
+/* Locally hosted Poppins, the same weights used by the native app. */
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/poppins/Poppins_400Regular.woff2') format('woff2'); }
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/poppins/Poppins_500Medium.woff2') format('woff2'); }
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/poppins/Poppins_600SemiBold.woff2') format('woff2'); }
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/poppins/Poppins_700Bold.woff2') format('woff2'); }
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+/* Google reserves logo space with content-box sizing; the global reset collapses it. */
+.vinnot-google-control [role="button"] div:has(> svg) {
+  box-sizing: content-box;
+}
+
+/* Keep anchor targets below the 56px sticky application header. */
+[id] { scroll-margin-top: 4.5rem; }
+
+/* Scrollbar in the palette: a warm thumb on the cream paper. */
+html {
+  scrollbar-color: var(--color-gray-300) var(--color-canvas);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-canvas);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gray-300);
+  border: 2px solid var(--color-canvas);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-wine-300);
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--color-wine-500);
+  outline-offset: 2px;
+}
+
+/* Transition defaults */
+.transition-default {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* iOS Safari zooms into any focused field smaller than 16px. On touch screens,
+   fields use 16px; this rule is unlayered so it wins over text-size utilities. */
+@media (hover: none) and (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+/* Range slider parity helpers (Vue-like alignment between thumb and fill). */
+.vinnot-range {
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 9999px;
+}
+
+.vinnot-range::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 9999px;
+}
+
+.vinnot-range::-moz-range-track {
+  height: 10px;
+  border-radius: 9999px;
+}
+
+.vinnot-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 2px solid var(--color-gray-400);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
+  margin-top: -3px;
+}
+
+.vinnot-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 2px solid var(--color-gray-400);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
+}
+
+/* Loading-only brand animation: the entire mark paints from base to leaves. */
+.vinnot-grape-mark { position: relative; display: inline-block; flex-shrink: 0; }
+.vinnot-grape-mark > span {
+  position: absolute; inset: 0; background: currentColor;
+  mask-size: contain; -webkit-mask-size: contain;
+  mask-repeat: no-repeat; -webkit-mask-repeat: no-repeat;
+  mask-position: center; -webkit-mask-position: center;
+}
+.vinnot-grape-base { opacity: .18; }
+.vinnot-grape-fill { animation: vinnot-grape-paint 3.4s linear infinite; }
+@keyframes vinnot-grape-paint {
+  0%, 8% { clip-path: inset(100% 0 0 0); opacity: 1; }
+  22% { clip-path: inset(85% 0 0 0); }
+  36% { clip-path: inset(68% 0 0 0); }
+  50% { clip-path: inset(51% 0 0 0); }
+  64% { clip-path: inset(34% 0 0 0); }
+  74%, 85% { clip-path: inset(0 0 0 0); opacity: 1; }
+  98%, 100% { clip-path: inset(0 0 0 0); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vinnot-grape-base { opacity: 1; }
+  .vinnot-grape-fill { display: none; animation: none; }
+}
+
+/* Wine color swatch: the brushstroke paints itself left to right, like a brush crossing the paper. */
+@keyframes wine-swatch-paint {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.wine-swatch-paint {
+  animation: wine-swatch-paint 900ms cubic-bezier(0.3, 0.7, 0.3, 1) both;
+}
+
+/* Reflections named in the color line ("reflejos violáceos"): a soft wash of that hue runs along the lower edge of
+   the stroke from left to right, one named tone per pass. The component blends it into the paint (color or soft
+   light), so the watercolor keeps its own shading and takes on the tone instead of being covered by it. */
+@keyframes wine-swatch-sheen {
+  0% {
+    background-position: 100% 0;
+    opacity: 0;
+  }
+  18%,
+  82% {
+    opacity: 1;
+  }
+  100% {
+    background-position: 0% 0;
+    opacity: 0;
+  }
+}
+
+.wine-swatch-sheen {
+  inset: 36% 0 0 0;
+  opacity: 0;
+  background-size: 260% 100%;
+  background-repeat: no-repeat;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 60%, #000 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 60%, #000 100%);
+  animation-name: wine-swatch-sheen;
+  animation-timing-function: cubic-bezier(0.45, 0, 0.4, 1);
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wine-swatch-paint {
+    animation: none;
+  }
+
+  .wine-swatch-sheen {
+    background-position: 20% 0;
+    animation-name: none;
+    opacity: 1;
+  }
+}
+
+/* AI profile art: each vignette fades in, holds and fades out in place while the next takes its spot.
+   The element sets its animation-duration to the rotation interval. */
+@keyframes profile-art-rotate {
+  0% {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  20%,
+  80% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.99);
+  }
+}
+
+@keyframes profile-art-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* The thermometer's mercury rises from the bulb; the palate bars fill from the left. */
+@keyframes profile-thermo-rise {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes profile-bar-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.profile-art-rotate {
+  animation: profile-art-rotate 4500ms ease-in-out both;
+}
+
+.profile-art-appear {
+  animation: profile-art-appear 500ms ease-out both;
+}
+
+.profile-thermo-rise {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: profile-thermo-rise 1200ms cubic-bezier(0.3, 0.7, 0.3, 1) 200ms both;
+}
+
+.profile-bar-fill {
+  transform-origin: left;
+  animation: profile-bar-fill 900ms cubic-bezier(0.3, 0.7, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-art-rotate,
+  .profile-art-appear,
+  .profile-thermo-rise,
+  .profile-bar-fill {
+    animation: none;
+  }
+}

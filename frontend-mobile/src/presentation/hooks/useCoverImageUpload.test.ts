@@ -1,0 +1,58 @@
+import { act, renderHook } from "@testing-library/react-native";
+import { useCoverImageUpload } from "./useCoverImageUpload";
+import { coverImagesService } from "@/application/services/coverImages.service";
+import { IMAGE_FRAMES } from "@/domain/media/imageAspect";
+import { PICKER_SETTLE_MS } from "./useImageCropRequest";
+jest.mock("react-i18next", () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+jest.mock("@/application/services/coverImages.service", () => ({ coverImagesService: { selectAndUpload: jest.fn(), preview: jest.fn() } }));
+beforeEach(() => jest.clearAllMocks());
+it("closing and reopening the editor cancels late results and permits a fresh upload", async () => {
+  let resolve!: (value: { id: string; imageUrl: string; width: number; height: number; size: number }) => void;
+  jest.mocked(coverImagesService.selectAndUpload).mockReturnValueOnce(new Promise(done => { resolve = done; }));
+  const changed = jest.fn(), busy = jest.fn();
+  const hook = renderHook(({ active }) => useCoverImageUpload("EVENT", null, active, changed, busy), { initialProps: { active: true } });
+  act(() => { void hook.result.current.upload(); void hook.result.current.upload(); });
+  expect(coverImagesService.selectAndUpload).toHaveBeenCalledTimes(1);
+  expect(coverImagesService.selectAndUpload).toHaveBeenCalledWith("EVENT", expect.any(AbortSignal), expect.any(Function));
+  expect(hook.result.current.busy).toBe(true);
+  hook.rerender({ active: false });
+  hook.rerender({ active: true });
+  expect(hook.result.current.busy).toBe(false);
+  await act(async () => resolve({ id: "id", imageUrl: "/api/uploads/covers/id.webp", width: 1, height: 1, size: 1 }));
+  expect(changed).not.toHaveBeenCalled();
+  jest.mocked(coverImagesService.selectAndUpload).mockResolvedValueOnce("cancelled");
+  await act(async () => hook.result.current.upload());
+  expect(coverImagesService.selectAndUpload).toHaveBeenCalledTimes(2);
+  expect(hook.result.current.busy).toBe(false);
+  expect(busy).toHaveBeenLastCalledWith(false);
+});
+it("failure preserves the previous cover and releases the save button", async () => {
+  jest.mocked(coverImagesService.selectAndUpload).mockRejectedValueOnce(new Error("network"));
+  const changed = jest.fn(), busy = jest.fn();
+  const hook = renderHook(() => useCoverImageUpload("WINE_ROUTE", "https://legacy.example/cover.jpg", true, changed, busy));
+  await act(async () => hook.result.current.upload());
+  expect(hook.result.current.error).toBe("media.failed");
+  expect(hook.result.current.preview).toBe("https://legacy.example/cover.jpg");
+  expect(changed).not.toHaveBeenCalled();
+  expect(hook.result.current.busy).toBe(false);
+});
+it("closing the editor during the adjust step cancels it and uploads nothing", async () => {
+  jest.useFakeTimers();
+  const photo = { uri: "file:///p.jpg", width: 400, height: 300 };
+  let outcome: unknown;
+  jest.mocked(coverImagesService.selectAndUpload).mockImplementationOnce(async (_kind, _signal, adjust) => {
+    outcome = await adjust(photo, IMAGE_FRAMES.COVER);
+    return "cancelled";
+  });
+  const changed = jest.fn(), busy = jest.fn();
+  const hook = renderHook(({ active }) => useCoverImageUpload("EVENT", null, active, changed, busy), { initialProps: { active: true } });
+  act(() => { void hook.result.current.upload(); });
+  act(() => jest.advanceTimersByTime(PICKER_SETTLE_MS));
+  expect(hook.result.current.crop.request).toEqual({ photo, frame: IMAGE_FRAMES.COVER });
+  await act(async () => hook.rerender({ active: false }));
+  expect(outcome).toBeNull();
+  expect(hook.result.current.crop.request).toBeNull();
+  expect(changed).not.toHaveBeenCalled();
+  expect(busy).toHaveBeenLastCalledWith(false);
+  jest.useRealTimers();
+});

@@ -1,0 +1,116 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Isolated Vinnot production foundation. No dev resources, NAT, ALB or scheduled shutdown.",
+  "Parameters": {
+    "ImageId": {"Type": "AWS::EC2::Image::Id", "Description": "Reviewed Amazon Linux 2023 x86_64 AMI in the deployment region"},
+    "WebDistributionId": {"Type": "String", "Default": "", "AllowedPattern": "^$|^E[A-Z0-9]{8,20}$", "Description": "Reviewed production distribution ID; empty keeps the web bucket inaccessible to CloudFront"}
+  },
+  "Conditions": {
+    "HasWebDistribution": {"Fn::Not": [{"Fn::Equals": [{"Ref": "WebDistributionId"}, ""]}]}
+  },
+  "Resources": {
+    "Vpc": {"Type": "AWS::EC2::VPC", "Properties": {"CidrBlock": "10.30.0.0/16", "EnableDnsSupport": true, "EnableDnsHostnames": true, "Tags": [{"Key":"Name","Value":"vinnot-prod"},{"Key":"Environment","Value":"production"}]}},
+    "InternetGateway": {"Type": "AWS::EC2::InternetGateway", "Properties": {"Tags": [{"Key":"Environment","Value":"production"}]}},
+    "GatewayAttachment": {"Type": "AWS::EC2::VPCGatewayAttachment", "Properties": {"VpcId":{"Ref":"Vpc"},"InternetGatewayId":{"Ref":"InternetGateway"}}},
+    "Subnet": {"Type":"AWS::EC2::Subnet","Properties":{"VpcId":{"Ref":"Vpc"},"CidrBlock":"10.30.1.0/24","MapPublicIpOnLaunch":false,"Tags":[{"Key":"Name","Value":"vinnot-prod-runtime"},{"Key":"Environment","Value":"production"}]}},
+    "RouteTable": {"Type":"AWS::EC2::RouteTable","Properties":{"VpcId":{"Ref":"Vpc"},"Tags":[{"Key":"Environment","Value":"production"}]}},
+    "InternetRoute": {"Type":"AWS::EC2::Route","DependsOn":"GatewayAttachment","Properties":{"RouteTableId":{"Ref":"RouteTable"},"DestinationCidrBlock":"0.0.0.0/0","GatewayId":{"Ref":"InternetGateway"}}},
+    "SubnetRoute": {"Type":"AWS::EC2::SubnetRouteTableAssociation","Properties":{"SubnetId":{"Ref":"Subnet"},"RouteTableId":{"Ref":"RouteTable"}}},
+    "SecurityGroup": {
+      "Type":"AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription":"Vinnot production: ACME HTTP and operator-only HTTPS; administration through SSM",
+        "VpcId":{"Ref":"Vpc"},
+        "SecurityGroupIngress":[
+          {"IpProtocol":"tcp","FromPort":80,"ToPort":80,"CidrIp":"173.245.48.0/20","Description":"Cloudflare edge: ACME HTTP-01 and HTTPS redirect"},
+          {"IpProtocol":"tcp","FromPort":80,"ToPort":80,"CidrIp":"103.21.244.0/22","Description":"Cloudflare edge: ACME HTTP-01 and HTTPS redirect"},
+          {"IpProtocol":"tcp","FromPort":80,"ToPort":80,"CidrIp":"103.22.200.0/22","Description":"Cloudflare edge: ACME HTTP-01 and HTTPS redirect"},
+          {"IpProtocol":"tcp","FromPort":80,"ToPort":80,"CidrIp":"103.31.4.0/22","Description":"Cloudflare edge: ACME HTTP-01 and HTTPS redirect"},
+          {"IpProtocol":"tcp","FromPort":80,"ToPort":80,"CidrIp":"141.101.64.0/18","Description":"Cloudflare edge: ACME HTTP-01 and HTTPS redirect"},
+          {"IpProtocol":"tcp","FromPort":80,"ToPort":80,"CidrIp":"108.162.192.0/18","Description":"Cloudflare edge: ACME HTTP-01 and HTTPS redirect"},
+          {"IpProtocol":"tcp","FromPort":80,"ToPort":80,"CidrIp":"190.93.240.0/20","Description":"Cloudflare edge: ACME HTTP-01 and HTTPS redirect"},
+          {"IpProtocol":"tcp","FromPort":80,"ToPort":80,"CidrIp":"188.114.96.0/20","Description":"Cloudflare edge: ACME HTTP-01 and HTTPS redirect"},
+          {"IpProtocol":"tcp","FromPort":80,"ToPort":80,"CidrIp":"197.234.240.0/22","Description":"Cloudflare edge: ACME HTTP-01 and HTTPS redirect"},
+          {"IpProtocol":"tcp","FromPort":80,"ToPort":80,"CidrIp":"198.41.128.0/17","Description":"Cloudflare edge: ACME HTTP-01 and HTTPS redirect"},
+          {"IpProtocol":"tcp","FromPort":80,"ToPort":80,"CidrIp":"162.158.0.0/15","Description":"Cloudflare edge: ACME HTTP-01 and HTTPS redirect"},
+          {"IpProtocol":"tcp","FromPort":80,"ToPort":80,"CidrIp":"104.16.0.0/13","Description":"Cloudflare edge: ACME HTTP-01 and HTTPS redirect"},
+          {"IpProtocol":"tcp","FromPort":80,"ToPort":80,"CidrIp":"104.24.0.0/14","Description":"Cloudflare edge: ACME HTTP-01 and HTTPS redirect"},
+          {"IpProtocol":"tcp","FromPort":80,"ToPort":80,"CidrIp":"172.64.0.0/13","Description":"Cloudflare edge: ACME HTTP-01 and HTTPS redirect"},
+          {"IpProtocol":"tcp","FromPort":80,"ToPort":80,"CidrIp":"131.0.72.0/22","Description":"Cloudflare edge: ACME HTTP-01 and HTTPS redirect"},
+          {"IpProtocol":"tcp","FromPort":443,"ToPort":443,"CidrIp":"173.245.48.0/20","Description":"Cloudflare edge: proxied HTTPS API; IPv4 only, the VPC has no IPv6"},
+          {"IpProtocol":"tcp","FromPort":443,"ToPort":443,"CidrIp":"103.21.244.0/22","Description":"Cloudflare edge: proxied HTTPS API; IPv4 only, the VPC has no IPv6"},
+          {"IpProtocol":"tcp","FromPort":443,"ToPort":443,"CidrIp":"103.22.200.0/22","Description":"Cloudflare edge: proxied HTTPS API; IPv4 only, the VPC has no IPv6"},
+          {"IpProtocol":"tcp","FromPort":443,"ToPort":443,"CidrIp":"103.31.4.0/22","Description":"Cloudflare edge: proxied HTTPS API; IPv4 only, the VPC has no IPv6"},
+          {"IpProtocol":"tcp","FromPort":443,"ToPort":443,"CidrIp":"141.101.64.0/18","Description":"Cloudflare edge: proxied HTTPS API; IPv4 only, the VPC has no IPv6"},
+          {"IpProtocol":"tcp","FromPort":443,"ToPort":443,"CidrIp":"108.162.192.0/18","Description":"Cloudflare edge: proxied HTTPS API; IPv4 only, the VPC has no IPv6"},
+          {"IpProtocol":"tcp","FromPort":443,"ToPort":443,"CidrIp":"190.93.240.0/20","Description":"Cloudflare edge: proxied HTTPS API; IPv4 only, the VPC has no IPv6"},
+          {"IpProtocol":"tcp","FromPort":443,"ToPort":443,"CidrIp":"188.114.96.0/20","Description":"Cloudflare edge: proxied HTTPS API; IPv4 only, the VPC has no IPv6"},
+          {"IpProtocol":"tcp","FromPort":443,"ToPort":443,"CidrIp":"197.234.240.0/22","Description":"Cloudflare edge: proxied HTTPS API; IPv4 only, the VPC has no IPv6"},
+          {"IpProtocol":"tcp","FromPort":443,"ToPort":443,"CidrIp":"198.41.128.0/17","Description":"Cloudflare edge: proxied HTTPS API; IPv4 only, the VPC has no IPv6"},
+          {"IpProtocol":"tcp","FromPort":443,"ToPort":443,"CidrIp":"162.158.0.0/15","Description":"Cloudflare edge: proxied HTTPS API; IPv4 only, the VPC has no IPv6"},
+          {"IpProtocol":"tcp","FromPort":443,"ToPort":443,"CidrIp":"104.16.0.0/13","Description":"Cloudflare edge: proxied HTTPS API; IPv4 only, the VPC has no IPv6"},
+          {"IpProtocol":"tcp","FromPort":443,"ToPort":443,"CidrIp":"104.24.0.0/14","Description":"Cloudflare edge: proxied HTTPS API; IPv4 only, the VPC has no IPv6"},
+          {"IpProtocol":"tcp","FromPort":443,"ToPort":443,"CidrIp":"172.64.0.0/13","Description":"Cloudflare edge: proxied HTTPS API; IPv4 only, the VPC has no IPv6"},
+          {"IpProtocol":"tcp","FromPort":443,"ToPort":443,"CidrIp":"131.0.72.0/22","Description":"Cloudflare edge: proxied HTTPS API; IPv4 only, the VPC has no IPv6"}
+        ],
+        "Tags":[{"Key":"Name","Value":"vinnot-prod-runtime"},{"Key":"Environment","Value":"production"}]
+      }
+    },
+    "HostRole": {
+      "Type":"AWS::IAM::Role",
+      "Properties": {
+        "RoleName":"vinnot-prod-low-cost-host-role",
+        "AssumeRolePolicyDocument":{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"ec2.amazonaws.com"},"Action":"sts:AssumeRole"}]},
+        "ManagedPolicyArns":["arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"],
+        "Policies":[{"PolicyName":"vinnot-prod-runtime","PolicyDocument":{"Version":"2012-10-17","Statement":[
+          {"Sid":"EcrAuthentication","Effect":"Allow","Action":"ecr:GetAuthorizationToken","Resource":"*"},
+          {"Sid":"PullProductionImage","Effect":"Allow","Action":["ecr:BatchCheckLayerAvailability","ecr:GetDownloadUrlForLayer","ecr:BatchGetImage"],"Resource":{"Fn::GetAtt":["Repository","Arn"]}},
+          {"Sid":"ReadRuntimeSecretOnly","Effect":"Allow","Action":"secretsmanager:GetSecretValue","Resource":{"Fn::Sub":"arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:vinnot/prod/backend-*"}},
+          {"Sid":"ListProductionMedia","Effect":"Allow","Action":"s3:ListBucket","Resource":{"Fn::GetAtt":["MediaBucket","Arn"]}},
+          {"Sid":"ProductionMediaObjects","Effect":"Allow","Action":["s3:GetObject","s3:PutObject","s3:DeleteObject"],"Resource":{"Fn::Sub":"${MediaBucket.Arn}/*"}},
+          {"Sid":"WriteAndVerifyBackupsWithoutDelete","Effect":"Allow","Action":["s3:PutObject","s3:GetObject"],"Resource":{"Fn::Sub":"${BackupBucket.Arn}/database-backups/*"}},
+          {"Sid":"TransactionalMail","Effect":"Allow","Action":"ses:SendEmail","Resource":{"Fn::Sub":"arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/vinnot.com"},"Condition":{"StringEquals":{"ses:FromAddress":"no-reply@vinnot.com"}}}
+        ]}}],
+        "Tags":[{"Key":"Environment","Value":"production"}]
+      }
+    },
+    "HostProfile":{"Type":"AWS::IAM::InstanceProfile","Properties":{"InstanceProfileName":"vinnot-prod-low-cost-host","Roles":[{"Ref":"HostRole"}]}},
+    "Host": {
+      "Type":"AWS::EC2::Instance","DeletionPolicy":"Retain","UpdateReplacePolicy":"Retain",
+      "Properties": {
+        "ImageId":{"Ref":"ImageId"},"InstanceType":"t3a.small","IamInstanceProfile":{"Ref":"HostProfile"},
+        "SubnetId":{"Ref":"Subnet"},"SecurityGroupIds":[{"Ref":"SecurityGroup"}],
+        "CreditSpecification":{"CPUCredits":"standard"},"DisableApiTermination":true,
+        "MetadataOptions":{"HttpTokens":"required","HttpEndpoint":"enabled","HttpPutResponseHopLimit":2},
+        "BlockDeviceMappings":[{"DeviceName":"/dev/xvda","Ebs":{"VolumeType":"gp3","VolumeSize":32,"Encrypted":true,"DeleteOnTermination":false}}],
+        "PropagateTagsToVolumeOnCreation":true,
+        "Tags":[{"Key":"Name","Value":"vinnot-prod-runtime"},{"Key":"Environment","Value":"production"},{"Key":"Project","Value":"Vinnot"}]
+      }
+    },
+    "Address":{"Type":"AWS::EC2::EIP","DeletionPolicy":"Retain","UpdateReplacePolicy":"Retain","DependsOn":"GatewayAttachment","Properties":{"Domain":"vpc","Tags":[{"Key":"Environment","Value":"production"}]}},
+    "AddressAssociation":{"Type":"AWS::EC2::EIPAssociation","Properties":{"AllocationId":{"Fn::GetAtt":["Address","AllocationId"]},"InstanceId":{"Ref":"Host"}}},
+    "Repository":{"Type":"AWS::ECR::Repository","DeletionPolicy":"Retain","UpdateReplacePolicy":"Retain","Properties":{"RepositoryName":"vinnot-backend-prod","ImageTagMutability":"IMMUTABLE","EncryptionConfiguration":{"EncryptionType":"AES256"},"ImageScanningConfiguration":{"ScanOnPush":true},"Tags":[{"Key":"Environment","Value":"production"}]}},
+    "MediaBucket": {
+      "Type":"AWS::S3::Bucket","DeletionPolicy":"Retain","UpdateReplacePolicy":"Retain",
+      "Properties":{"BucketName":{"Fn::Sub":"vinnot-prod-uploads-${AWS::AccountId}"},"BucketEncryption":{"ServerSideEncryptionConfiguration":[{"ServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]},"VersioningConfiguration":{"Status":"Enabled"},"PublicAccessBlockConfiguration":{"BlockPublicAcls":true,"IgnorePublicAcls":true,"BlockPublicPolicy":true,"RestrictPublicBuckets":true},"OwnershipControls":{"Rules":[{"ObjectOwnership":"BucketOwnerEnforced"}]},"LifecycleConfiguration":{"Rules":[{"Id":"BoundNonCurrentMedia","Status":"Enabled","NoncurrentVersionExpiration":{"NoncurrentDays":30},"AbortIncompleteMultipartUpload":{"DaysAfterInitiation":1}}]},"Tags":[{"Key":"Environment","Value":"production"}]}
+    },
+    "BackupBucket": {
+      "Type":"AWS::S3::Bucket","DeletionPolicy":"Retain","UpdateReplacePolicy":"Retain",
+      "Properties":{"BucketName":{"Fn::Sub":"vinnot-prod-backups-${AWS::AccountId}"},"BucketEncryption":{"ServerSideEncryptionConfiguration":[{"ServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]},"VersioningConfiguration":{"Status":"Enabled"},"PublicAccessBlockConfiguration":{"BlockPublicAcls":true,"IgnorePublicAcls":true,"BlockPublicPolicy":true,"RestrictPublicBuckets":true},"OwnershipControls":{"Rules":[{"ObjectOwnership":"BucketOwnerEnforced"}]},"LifecycleConfiguration":{"Rules":[{"Id":"ThirtyDailyBackups","Status":"Enabled","Prefix":"database-backups/","ExpirationInDays":30,"NoncurrentVersionExpiration":{"NoncurrentDays":30},"AbortIncompleteMultipartUpload":{"DaysAfterInitiation":1}}]},"Tags":[{"Key":"Environment","Value":"production"}]}
+    },
+    "WebBucket": {
+      "Type":"AWS::S3::Bucket","DeletionPolicy":"Retain","UpdateReplacePolicy":"Retain",
+      "Properties":{"BucketName":{"Fn::Sub":"vinnot-prod-web-${AWS::AccountId}"},"BucketEncryption":{"ServerSideEncryptionConfiguration":[{"ServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]},"VersioningConfiguration":{"Status":"Enabled"},"PublicAccessBlockConfiguration":{"BlockPublicAcls":true,"IgnorePublicAcls":true,"BlockPublicPolicy":true,"RestrictPublicBuckets":true},"OwnershipControls":{"Rules":[{"ObjectOwnership":"BucketOwnerEnforced"}]},"LifecycleConfiguration":{"Rules":[{"Id":"BoundNonCurrentArtifacts","Status":"Enabled","NoncurrentVersionExpiration":{"NoncurrentDays":30},"AbortIncompleteMultipartUpload":{"DaysAfterInitiation":1}}]},"Tags":[{"Key":"Environment","Value":"production"}]}
+    },
+    "MediaTlsPolicy":{"Type":"AWS::S3::BucketPolicy","Properties":{"Bucket":{"Ref":"MediaBucket"},"PolicyDocument":{"Version":"2012-10-17","Statement":[{"Sid":"DenyInsecureTransport","Effect":"Deny","Principal":"*","Action":"s3:*","Resource":[{"Fn::GetAtt":["MediaBucket","Arn"]},{"Fn::Sub":"${MediaBucket.Arn}/*"}],"Condition":{"Bool":{"aws:SecureTransport":"false"}}}]}}},
+    "BackupTlsPolicy":{"Type":"AWS::S3::BucketPolicy","Properties":{"Bucket":{"Ref":"BackupBucket"},"PolicyDocument":{"Version":"2012-10-17","Statement":[{"Sid":"DenyInsecureTransport","Effect":"Deny","Principal":"*","Action":"s3:*","Resource":[{"Fn::GetAtt":["BackupBucket","Arn"]},{"Fn::Sub":"${BackupBucket.Arn}/*"}],"Condition":{"Bool":{"aws:SecureTransport":"false"}}}]}}},
+    "WebTlsPolicy":{"Type":"AWS::S3::BucketPolicy","Properties":{"Bucket":{"Ref":"WebBucket"},"PolicyDocument":{"Version":"2012-10-17","Statement":[{"Sid":"DenyInsecureTransport","Effect":"Deny","Principal":"*","Action":"s3:*","Resource":[{"Fn::GetAtt":["WebBucket","Arn"]},{"Fn::Sub":"${WebBucket.Arn}/*"}],"Condition":{"Bool":{"aws:SecureTransport":"false"}}},{"Fn::If":["HasWebDistribution",{"Sid":"ReadOnlyFromProductionCloudFront","Effect":"Allow","Principal":{"Service":"cloudfront.amazonaws.com"},"Action":"s3:GetObject","Resource":{"Fn::Sub":"${WebBucket.Arn}/*"},"Condition":{"StringEquals":{"AWS:SourceArn":{"Fn::Sub":"arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${WebDistributionId}"}}}},{"Ref":"AWS::NoValue"}]}]}}}
+  },
+  "Outputs": {
+    "InstanceId":{"Value":{"Ref":"Host"}},"PublicIp":{"Value":{"Ref":"Address"}},
+    "VpcId":{"Value":{"Ref":"Vpc"}},"SecurityGroupId":{"Value":{"Ref":"SecurityGroup"}},
+    "RuntimeRoleArn":{"Value":{"Fn::GetAtt":["HostRole","Arn"]}},
+    "ImageRepository":{"Value":{"Fn::GetAtt":["Repository","RepositoryUri"]}},
+    "MediaBucket":{"Value":{"Ref":"MediaBucket"}},"BackupBucket":{"Value":{"Ref":"BackupBucket"}},"WebBucket":{"Value":{"Ref":"WebBucket"}}
+  }
+}

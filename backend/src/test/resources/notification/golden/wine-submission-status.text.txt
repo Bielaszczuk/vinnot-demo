@@ -1,0 +1,9 @@
+Hola Ana,
+
+Tu propuesta Reserva <Malbec> ahora tiene el estado «Rechazado». Falta la etiqueta {{title}}
+
+---
+Vinnot
+Visitar Vinnot: https://vinnot.example
+Contacto: https://vinnot.example/contact
+Privacidad: https://vinnot.example/privacy

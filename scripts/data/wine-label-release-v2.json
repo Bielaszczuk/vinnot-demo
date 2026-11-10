@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 2,
+  "datasetId": "wine-label-release-v2",
+  "extends": "wine-label-release-v1.json",
+  "description": "Production acceptance dataset: immutable catalog references plus deterministic negative controls.",
+  "expectedCohortSizes": {
+    "ARGENTINA": 30,
+    "GLOBAL": 30,
+    "NEGATIVE": 10
+  },
+  "acceptance": {
+    "minStability": 0.9,
+    "minRepetitions": 3,
+    "requireCostEstimate": true,
+    "maxEstimatedCostUsd": 2.5,
+    "cohorts": {
+      "ARGENTINA": {
+        "minExactPrecision": 0.9,
+        "minTopThreeRecall": 0.9,
+        "maxErrorRate": 0.02,
+        "maxP95DurationMs": 10000
+      },
+      "GLOBAL": {
+        "minExactPrecision": 0.9,
+        "minTopThreeRecall": 0.85,
+        "maxErrorRate": 0.02,
+        "maxP95DurationMs": 10000
+      },
+      "NEGATIVE": {
+        "minRejectionQuality": 0.9,
+        "maxFalseExactRate": 0.1,
+        "maxErrorRate": 0.02,
+        "maxP95DurationMs": 10000
+      }
+    },
+    "overall": {
+      "minExactPrecision": 0.9,
+      "minTopThreeRecall": 0.87,
+      "minRejectionQuality": 0.9,
+      "maxFalseExactRate": 0.1,
+      "maxErrorRate": 0.02,
+      "maxP95DurationMs": 10000
+    }
+  },
+  "cohorts": {
+    "NEGATIVE": [
+      {
+        "caseId": "negative-wine-01",
+        "cohort": "NEGATIVE",
+        "expectedWineName": "Zephyr Quartz Malbec",
+        "expectedOutcome": "NOT_IN_CATALOG",
+        "difficulty": "SYNTHETIC_NEGATIVE_WINE",
+        "fixture": {
+          "type": "SYNTHETIC_LABEL",
+          "lines": ["ZEPHYR QUARTZ", "MALBEC", "2022"]
+        }
+      },
+      {
+        "caseId": "negative-wine-02",
+        "cohort": "NEGATIVE",
+        "expectedWineName": "North Comet Cabernet Franc",
+        "expectedOutcome": "NOT_IN_CATALOG",
+        "difficulty": "SYNTHETIC_NEGATIVE_WINE",
+        "fixture": {
+          "type": "SYNTHETIC_LABEL",
+          "lines": ["NORTH COMET", "CABERNET FRANC", "2021"]
+        }
+      },
+      {
+        "caseId": "negative-wine-03",
+        "cohort": "NEGATIVE",
+        "expectedWineName": "Velvet Orbit Syrah",
+        "expectedOutcome": "NOT_IN_CATALOG",
+        "difficulty": "SYNTHETIC_NEGATIVE_WINE",
+        "fixture": {
+          "type": "SYNTHETIC_LABEL",
+          "lines": ["VELVET ORBIT", "SYRAH", "2020"]
+        }
+      },
+      {
+        "caseId": "negative-wine-04",
+        "cohort": "NEGATIVE",
+        "expectedWineName": "Ember Harbor Chardonnay",
+        "expectedOutcome": "NOT_IN_CATALOG",
+        "difficulty": "SYNTHETIC_NEGATIVE_WINE",
+        "fixture": {
+          "type": "SYNTHETIC_LABEL",
+          "lines": ["EMBER HARBOR", "CHARDONNAY", "2023"]
+        }
+      },
+      {
+        "caseId": "negative-wine-05",
+        "cohort": "NEGATIVE",
+        "expectedWineName": "Lunar Thistle Pinot Noir",
+        "expectedOutcome": "NOT_IN_CATALOG",
+        "difficulty": "SYNTHETIC_NEGATIVE_WINE",
+        "fixture": {
+          "type": "SYNTHETIC_LABEL",
+          "lines": ["LUNAR THISTLE", "PINOT NOIR", "2019"]
+        }
+      },
+      {
+        "caseId": "negative-non-wine-01",
+        "cohort": "NEGATIVE",
+        "expectedWineName": "Hand soap control",
+        "expectedOutcome": "NOT_WINE",
+        "difficulty": "SYNTHETIC_NON_WINE",
+        "fixture": {
+          "type": "SYNTHETIC_LABEL",
+          "lines": ["HAND SOAP", "LAVENDER"]
+        }
+      },
+      {
+        "caseId": "negative-non-wine-02",
+        "cohort": "NEGATIVE",
+        "expectedWineName": "Olive oil control",
+        "expectedOutcome": "NOT_WINE",
+        "difficulty": "SYNTHETIC_NON_WINE",
+        "fixture": {
+          "type": "SYNTHETIC_LABEL",
+          "lines": ["OLIVE OIL", "EXTRA VIRGIN"]
+        }
+      },
+      {
+        "caseId": "negative-non-wine-03",
+        "cohort": "NEGATIVE",
+        "expectedWineName": "Coffee control",
+        "expectedOutcome": "NOT_WINE",
+        "difficulty": "SYNTHETIC_NON_WINE",
+        "fixture": {
+          "type": "SYNTHETIC_LABEL",
+          "lines": ["DARK ROAST", "COFFEE"]
+        }
+      },
+      {
+        "caseId": "negative-non-wine-04",
+        "cohort": "NEGATIVE",
+        "expectedWineName": "Mineral water control",
+        "expectedOutcome": "NOT_WINE",
+        "difficulty": "SYNTHETIC_NON_WINE",
+        "fixture": {
+          "type": "SYNTHETIC_LABEL",
+          "lines": ["MINERAL WATER", "STILL"]
+        }
+      },
+      {
+        "caseId": "negative-non-wine-05",
+        "cohort": "NEGATIVE",
+        "expectedWineName": "Tomato sauce control",
+        "expectedOutcome": "NOT_WINE",
+        "difficulty": "SYNTHETIC_NON_WINE",
+        "fixture": {
+          "type": "SYNTHETIC_LABEL",
+          "lines": ["TOMATO SAUCE", "BASIL"]
+        }
+      }
+    ]
+  }
+}

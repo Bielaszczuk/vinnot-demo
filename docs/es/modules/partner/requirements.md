@@ -1,0 +1,27 @@
+# Requisitos funcionales
+
+Requisitos funcionales del módulo, separados por plataforma. La columna «ID anterior» conserva el identificador que tenían en la especificación por plataforma.
+
+## Web
+
+| ID | Requisito | Criterio de aceptación | Caso de uso | ID anterior |
+|---|---|---|---|---|
+| `RF-WEB-PAR-01` | Consultar y paginar eventos propios. | El organizerId procede de sesión, no de un campo arbitrario; no lista eventos de otros partners. | [`UC-PAR-01`](use-cases/uc-par-01-list-own-events.md) | `RF-WEB-PARTNER-001` |
+| `RF-WEB-PAR-02` | Crear un evento propio con datos completos. | Solicita título/tipo, descripción, fechas, ubicación, imagen, contacto, precio/cupo y settings de inscripción expuestos; el backend valida relaciones y fechas. | [`UC-PAR-02`](use-cases/uc-par-02-create-event.md) | `RF-WEB-PARTNER-002` |
+| `RF-WEB-PAR-03` | Editar evento propio desde detalle completo. | Carga datos por ID y guarda campos autorizados; no sobrescribe opciones no presentes en el borrador. | [`UC-PAR-03`](use-cases/uc-par-03-edit-event.md) | `RF-WEB-PARTNER-003` |
+| `RF-WEB-PAR-04` | Publicar o cambiar estado dentro de reglas de dominio. | Un evento cancelado no cambia más de estado; uno finalizado puede volver a publicado o borrador, pero no cancelarse ni posponerse; «agotado» lo calcula el sistema según el cupo y el editor lo muestra como publicado; el editor no ofrece «Cancelado» y la API rechaza ese cambio con 400 `USE_CANCEL_ENDPOINT`. | [`UC-PAR-03`](use-cases/uc-par-03-edit-event.md) | `RF-WEB-PARTNER-004` |
+| `RF-WEB-PAR-05` | Cancelar conservando trazabilidad. | La acción eliminar/cancelar propia modifica estado y libera inscripciones/cupos; no equivale a un delete físico. El diálogo de cancelación ofrece un selector de motivo con "Circunstancias imprevistas" preseleccionado (una nota opcional de hasta 280 caracteres aparece solo con "Otro motivo"), por lo que confirmar nunca exige escribir; el motivo viaja como cuerpo de `DELETE /partner/events/{id}` y los asistentes activos lo reciben por correo, junto con la información de devolución. El diálogo avisa que cancelar es definitivo y que los pagos online se devuelven automáticamente por Mercado Pago. | [`UC-PAR-04`](use-cases/uc-par-04-cancel-event.md) | `RF-WEB-PARTNER-005` |
+| `RF-WEB-PAR-06` | Revisar solicitudes con ownership. | Gestor lista/pagina/filtra estado y ofrece APPROVE, WAITLIST o REJECT según estado e importe; no accede a eventos ajenos por conocer un ID. | [`UC-PAR-05`](use-cases/uc-par-05-review-registrations.md) | `RF-WEB-REG-007` |
+| `RF-WEB-PAR-07` | Gestionar asistentes de sus eventos. | Accede al gestor de solicitudes/cupos/pagos online y devoluciones con las mismas reglas de inscripción y ownership. | [`UC-PAR-05`](use-cases/uc-par-05-review-registrations.md) | `RF-WEB-PARTNER-006` |
+
+## APK
+
+| ID | Requisito | Criterio de aceptación | Caso de uso | ID anterior |
+|---|---|---|---|---|
+| `RF-APK-PAR-01` | Consultar y paginar eventos propios. | El organizerId procede de sesión, no de un campo arbitrario; no lista eventos de otros partners. | [`UC-PAR-01`](use-cases/uc-par-01-list-own-events.md) | `RF-APK-PARTNER-001` |
+| `RF-APK-PAR-02` | Crear un evento propio con datos completos. | Solicita título/tipo, descripción, fechas, ubicación, imagen, contacto, precio/cupo y settings de inscripción expuestos; el backend valida relaciones y fechas. | [`UC-PAR-02`](use-cases/uc-par-02-create-event.md) | `RF-APK-PARTNER-002` |
+| `RF-APK-PAR-03` | Editar evento propio desde detalle completo. | Carga datos por ID y guarda campos autorizados; no sobrescribe opciones no presentes en el borrador. | [`UC-PAR-03`](use-cases/uc-par-03-edit-event.md) | `RF-APK-PARTNER-003` |
+| `RF-APK-PAR-04` | Publicar o cambiar estado dentro de reglas de dominio. | Un evento cancelado no cambia más de estado; uno finalizado puede volver a publicado o borrador, pero no cancelarse ni posponerse; «agotado» lo calcula el sistema según el cupo y guardar un evento agotado no cambia su estado; el editor no ofrece «Cancelado» y la API rechaza ese cambio con 400 `USE_CANCEL_ENDPOINT`. | [`UC-PAR-03`](use-cases/uc-par-03-edit-event.md) | `RF-APK-PARTNER-004` |
+| `RF-APK-PAR-05` | Cancelar conservando trazabilidad. | La acción eliminar/cancelar propia modifica estado y libera inscripciones/cupos; no equivale a un delete físico. La confirmación usa la hoja de cancelación compartida: chips de motivo de un toque con `UNFORESEEN_CIRCUMSTANCES` preseleccionado (confirmar sin elegir nunca muestra un error de campo obligatorio), una nota opcional de hasta 280 caracteres solo para `OTHER`, y el `DELETE` envía `{reason, note?}`. Las personas inscriptas reciben un correo con el motivo y la información sobre devoluciones; los pagos en línea se devuelven automáticamente por Mercado Pago. | [`UC-PAR-04`](use-cases/uc-par-04-cancel-event.md) | `RF-APK-PARTNER-005` |
+| `RF-APK-PAR-06` | Revisar solicitudes con ownership. | Gestor lista/pagina/filtra estado y ofrece aprobar, rechazar o espera según estado; no accede a eventos ajenos por conocer un ID. | [`UC-PAR-05`](use-cases/uc-par-05-review-registrations.md) | `RF-APK-REG-007` |
+| `RF-APK-PAR-07` | Gestionar asistentes de sus eventos. | Accede al gestor de solicitudes/cupos/pagos online y devoluciones con las mismas reglas de inscripción y ownership. | [`UC-PAR-05`](use-cases/uc-par-05-review-registrations.md) | `RF-APK-PARTNER-006` |

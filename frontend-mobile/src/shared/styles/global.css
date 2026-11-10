@@ -1,0 +1,7 @@
+/* NativeWind v4 global CSS entry point.
+   Imported by metro.config.js via withNativeWind({ input: ... }).
+   Add any global utility classes or CSS custom properties here. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+

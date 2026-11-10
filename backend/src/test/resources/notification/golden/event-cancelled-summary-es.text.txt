@@ -1,0 +1,11 @@
+<Cata> & maridaje
+El equipo de Vinnot canceló este evento. Ya avisamos a cada persona inscripta.
+Inscripciones canceladas: 3
+Fecha del evento: 20 oct 2026, 9:00:00 (America/Argentina/Buenos Aires)
+Gestionar eventos: https://vinnot.example/partner/events
+
+---
+Vinnot
+Visitar Vinnot: https://vinnot.example
+Contacto: https://vinnot.example/contact
+Privacidad: https://vinnot.example/privacy

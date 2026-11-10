@@ -1,0 +1,53 @@
+{
+  "name": "vinnot-docs-site",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "postinstall": "node ../frontend-mobile/scripts/apply-security-backports.mjs --project docs-site",
+    "sync:locales": "node scripts/sync-locales.mjs",
+    "start": "npm run sync:locales && docusaurus start",
+    "start:en": "npm run sync:locales && docusaurus start --locale en",
+    "build": "npm run sync:locales && docusaurus build",
+    "serve": "docusaurus serve",
+    "clear": "docusaurus clear",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-test-coverage --test-coverage-lines=100 --test-coverage-branches=100 --test-coverage-functions=100 --test-coverage-include=src/remark/repo-links.mjs --test-coverage-include=src/rehype/table-scroll.mjs --test-coverage-include=scripts/sync-locales.mjs --test-coverage-include=src/sidebar/chapter-labels.mjs --test-coverage-include=src/components/PourRating/pour.mjs --test-coverage-include=src/components/SealLadder/seals.mjs --test-coverage-include=src/components/RequestJourney/journey.mjs --test-coverage-include=src/components/DefenseLayers/layers.mjs --test-coverage-include=src/components/RevenueSimulator/revenue.mjs --test-coverage-include=src/components/CostProjection/projection.mjs --test-coverage-include=src/components/Presentation/deck.mjs --test-coverage-include=src/components/Presentation/content.mjs --test-coverage-include=src/components/Presentation/growth.mjs test/*.test.mjs"
+  },
+  "dependencies": {
+    "@docusaurus/core": "3.10.2",
+    "@docusaurus/preset-classic": "3.10.2",
+    "@docusaurus/theme-mermaid": "3.10.2",
+    "@easyops-cn/docusaurus-search-local": "0.55.3",
+    "@mdx-js/react": "3.1.1",
+    "clsx": "2.1.1",
+    "prism-react-renderer": "2.4.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@docusaurus/module-type-aliases": "3.10.2",
+    "@docusaurus/tsconfig": "3.10.2",
+    "@docusaurus/types": "3.10.2",
+    "@types/node": "22.20.5",
+    "typescript": "~6.0.3"
+  },
+  "browserslist": {
+    "production": [
+      ">0.5%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 3 chrome version",
+      "last 3 firefox version",
+      "last 5 safari version"
+    ]
+  },
+  "overrides": {
+    "serialize-javascript": "7.1.2",
+    "tinypool": "2.2.0"
+  }
+}

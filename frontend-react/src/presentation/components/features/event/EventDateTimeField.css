@@ -1,0 +1,83 @@
+.event-date-time-popover {
+  animation: event-date-time-enter 140ms ease-out;
+}
+
+/* react-day-picker declares its own variables on .rdp-root, so the brand values go on that element. */
+.event-date-time-popover .rdp-root {
+  --rdp-accent-color: var(--color-wine-700);
+  --rdp-accent-background-color: var(--color-wine-50);
+  --rdp-day_button-border-radius: 0.5rem;
+  --rdp-day_button-height: 2.25rem;
+  --rdp-day_button-width: 2.25rem;
+  --rdp-nav_button-height: 2rem;
+  --rdp-nav_button-width: 2rem;
+  margin: 0;
+}
+
+.event-date-time-popover .rdp-month {
+  width: 100%;
+}
+
+.event-date-time-popover .rdp-month_grid {
+  width: 100%;
+}
+
+.event-date-time-popover .rdp-month_caption {
+  height: 2.5rem;
+  padding-inline: 0.25rem;
+}
+
+.event-date-time-popover .rdp-caption_label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.event-date-time-popover .rdp-weekday {
+  color: var(--color-gray-500);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.event-date-time-popover .rdp-day_button {
+  font-size: 0.8125rem;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.event-date-time-popover .rdp-day_button:hover {
+  background: var(--color-wine-50);
+}
+
+.event-date-time-popover .rdp-selected .rdp-day_button {
+  background: var(--color-wine-700);
+  border-color: var(--color-wine-700);
+  color: var(--color-surface);
+  font-weight: 600;
+}
+
+.event-date-time-popover .rdp-today:not(.rdp-selected) .rdp-day_button {
+  color: var(--color-wine-800);
+  font-weight: 700;
+}
+
+.event-date-time-popover .rdp-outside {
+  opacity: 0.35;
+}
+
+@keyframes event-date-time-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-date-time-popover {
+    animation: none;
+  }
+}

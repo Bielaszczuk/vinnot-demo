@@ -1,0 +1,2 @@
+to: guest@example.test
+subject: Your Vinnot registration

@@ -1,0 +1,237 @@
+/* Defense layers (#482): nested bars from the edge to the core, a travelling request dot and a detail panel.
+   Colours come from the Infima variables, so light and dark themes both work. */
+
+.explorer {
+  --layer-implemented: var(--ifm-color-success-contrast-foreground);
+  --layer-implemented-bg: var(--ifm-color-success-contrast-background);
+  --layer-pending: var(--ifm-color-warning-contrast-foreground);
+  --layer-pending-bg: var(--ifm-color-warning-contrast-background);
+  --layer-mitigated: var(--ifm-color-info-contrast-foreground);
+  --layer-mitigated-bg: var(--ifm-color-info-contrast-background);
+  --layer-accepted: var(--ifm-color-secondary-contrast-foreground);
+  --layer-accepted-bg: var(--ifm-color-secondary-contrast-background);
+  margin: 1.5rem 0 2rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.hint {
+  margin: 0;
+  flex: 1 1 18rem;
+  font-size: 0.875rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.toggle {
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  background: var(--ifm-background-surface-color);
+  color: var(--ifm-font-color-base);
+  cursor: pointer;
+}
+
+.toggle:focus-visible,
+.layer:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+}
+
+.summary {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* Each inner layer is a little narrower than the one around it, so the stack reads as nested shells. */
+.layer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-inline: calc(var(--depth) * 2.5%);
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--ifm-color-primary) calc(4% + var(--depth) * 3%), var(--ifm-background-surface-color));
+  color: var(--ifm-font-color-base);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.layer:hover {
+  border-color: var(--ifm-color-primary-light);
+}
+
+.selected {
+  border-color: var(--ifm-color-primary);
+  box-shadow: 0 0 0 1px var(--ifm-color-primary);
+}
+
+.number {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: var(--ifm-color-primary);
+  color: var(--ifm-color-white);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.title {
+  flex: 1 1 auto;
+  font-weight: 600;
+}
+
+.pendingDot {
+  flex: none;
+  min-width: 1.4rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--layer-pending-bg);
+  color: var(--layer-pending);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* The request: crosses the layer it is in, then the next layer takes over. */
+.packet {
+  position: absolute;
+  inset-block-end: 0.2rem;
+  inset-inline-start: 0;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--ifm-color-primary);
+  box-shadow: 0 0 0.5rem var(--ifm-color-primary-light);
+  pointer-events: none;
+  animation: travel 1400ms ease-in-out both;
+}
+
+@keyframes travel {
+  from {
+    inset-inline-start: 0;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  to {
+    inset-inline-start: calc(100% - 0.55rem);
+    opacity: 0;
+  }
+}
+
+.panel {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 0.75rem;
+  background: var(--ifm-background-surface-color);
+}
+
+.position {
+  margin: 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.panelTitle {
+  margin: 0.15rem 0 0.35rem;
+}
+
+.panelSummary {
+  margin: 0 0 0.75rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.controls {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.6rem;
+}
+
+.badge {
+  flex: none;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.implemented {
+  background: var(--layer-implemented-bg);
+  color: var(--layer-implemented);
+}
+
+.pending {
+  background: var(--layer-pending-bg);
+  color: var(--layer-pending);
+}
+
+/* In the code and the templates, waiting for the owner to apply it in the account. */
+.mitigated {
+  background: var(--layer-mitigated-bg);
+  color: var(--layer-mitigated);
+}
+
+/* Kept on purpose, with a trigger to revisit it. */
+.accepted {
+  background: var(--layer-accepted-bg);
+  color: var(--layer-accepted);
+}
+
+@media (max-width: 480px) {
+  .layer {
+    margin-inline: calc(var(--depth) * 1.5%);
+    padding: 0.55rem 0.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .packet {
+    display: none;
+    animation: none;
+  }
+
+  .layer {
+    transition: none;
+  }
+}

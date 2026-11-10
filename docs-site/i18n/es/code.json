@@ -1,0 +1,42 @@
+{
+  "theme.SearchBar.label": {
+    "message": "Buscar",
+    "description": "The ARIA label and placeholder for search button"
+  },
+  "theme.SearchBar.noResultsText": {
+    "message": "Sin resultados",
+    "description": "The text for empty search result"
+  },
+  "theme.SearchBar.seeAll": {
+    "message": "Ver todos los resultados",
+    "description": "The text for see all search results"
+  },
+  "theme.SearchBar.searchInContext": {
+    "message": "Ver todos los resultados en \"{context}\"",
+    "description": "The text for search in context"
+  },
+  "theme.SearchBar.seeAllOutsideContext": {
+    "message": "Ver todos los resultados fuera de \"{context}\"",
+    "description": "The text for search outside context"
+  },
+  "theme.SearchPage.emptyResultsTitle": {
+    "message": "Buscar en la documentación",
+    "description": "The search page title for empty query"
+  },
+  "theme.SearchPage.existingResultsTitle": {
+    "message": "Resultados para \"{query}\"",
+    "description": "The search page title for non-empty query"
+  },
+  "theme.SearchPage.searchContext.everywhere": {
+    "message": "En todo el sitio",
+    "description": "The option for search context to search everywhere"
+  },
+  "theme.SearchPage.documentsFound.plurals": {
+    "message": "1 documento encontrado|{count} documentos encontrados",
+    "description": "Pluralized label for documents found"
+  },
+  "theme.SearchPage.noResultsText": {
+    "message": "No se encontraron documentos",
+    "description": "The paragraph for empty search result"
+  }
+}

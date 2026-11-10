@@ -1,0 +1,82 @@
+{
+  "cli": {
+    "version": ">= 24.9.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "environment": "development",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EAS_PROJECT_ID": "a66f49b9-eadc-4597-921f-df58219bcc37",
+        "EXPO_OWNER": "vinnot",
+        "EXPO_ENV": "development",
+        "EXPO_PUBLIC_EVENT_PAYMENTS_ENABLED": "true",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api-dev.vinnot.com/api",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "162159837919-ojvdkl55fsaovve22saral06m9a4rm1o.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "162159837919-5m0ojpq0ut7uct3n1s8sucgase0rqftn.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME": "com.googleusercontent.apps.162159837919-5m0ojpq0ut7uct3n1s8sucgase0rqftn",
+        "EXPO_PUBLIC_FACEBOOK_APP_ID": "984338657968690",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "162159837919-k1pmtt1hq04c070a6us3uh4hs1iau0bh.apps.googleusercontent.com"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "environment": "preview",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EAS_PROJECT_ID": "a66f49b9-eadc-4597-921f-df58219bcc37",
+        "EXPO_OWNER": "vinnot",
+        "EXPO_ENV": "development",
+        "EXPO_PUBLIC_EVENT_PAYMENTS_ENABLED": "true",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api-dev.vinnot.com/api",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "162159837919-ojvdkl55fsaovve22saral06m9a4rm1o.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "162159837919-5m0ojpq0ut7uct3n1s8sucgase0rqftn.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME": "com.googleusercontent.apps.162159837919-5m0ojpq0ut7uct3n1s8sucgase0rqftn",
+        "EXPO_PUBLIC_FACEBOOK_APP_ID": "984338657968690",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "162159837919-k1pmtt1hq04c070a6us3uh4hs1iau0bh.apps.googleusercontent.com"
+      }
+    },
+    "ios-simulator": {
+      "extends": "development",
+      "ios": {
+        "simulator": true
+      },
+      "env": {
+        "VINNOT_IOS_SIMULATOR": "1"
+      }
+    },
+    "production": {
+      "channel": "production",
+      "environment": "production",
+      "autoIncrement": true,
+      "env": {
+        "EAS_PROJECT_ID": "63ad50dd-2111-4c64-9150-ddbb9cb76d06",
+        "EXPO_OWNER": "vinnot",
+        "EXPO_ENV": "production",
+        "EXPO_PUBLIC_EVENT_PAYMENTS_ENABLED": "true",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api.vinnot.com/api",
+        "EXPO_PUBLIC_FACEBOOK_LOGIN_ENABLED": "false",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "1045017723540-o4209c2cokg2lblblnq4lktuqtscatvc.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "1045017723540-tl3gednpg1hgudr7hc0jl1l2ulpfa1cp.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "1045017723540-vqk17k2c7acnlb8bg3giravorlglq68i.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME": "com.googleusercontent.apps.1045017723540-tl3gednpg1hgudr7hc0jl1l2ulpfa1cp"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "6817992780"
+      }
+    }
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Independent Vinnot production web edge for the public site. A new stack starts disabled; never publishes application traffic implicitly.",
+  "Parameters": {
+    "CertificateArn": {"Type": "String", "AllowedPattern": "^arn:aws:acm:us-east-1:497675597655:certificate/[a-f0-9-]+$"},
+    "AcceptanceEnabled": {"Type": "String", "Default": "false", "AllowedValues": ["false", "true"], "Description": "Enable CDN only after artifact validation; the launched site keeps true (an update without this override keeps the previous value)"},
+    "SecurityFunctionArn": {"Type": "String", "Default": "", "AllowedPattern": "^$|^arn:aws:cloudfront::497675597655:function/vinnot-web-security-[a-z0-9]+$", "Description": "Published and tested function belonging to this distribution"}
+  },
+  "Conditions": {
+    "EnableAcceptance": {"Fn::Equals": [{"Ref": "AcceptanceEnabled"}, "true"]},
+    "HasSecurityFunction": {"Fn::Not": [{"Fn::Equals": [{"Ref": "SecurityFunctionArn"}, ""]}]}
+  },
+  "Rules": {
+    "AcceptanceRequiresSecurityFunction": {
+      "RuleCondition": {"Fn::Equals": [{"Ref": "AcceptanceEnabled"}, "true"]},
+      "Assertions": [{"Assert": {"Fn::Not": [{"Fn::Equals": [{"Ref": "SecurityFunctionArn"}, ""]}]}, "AssertDescription": "Acceptance requires a published and tested security/SPA function"}]
+    }
+  },
+  "Resources": {
+    "OriginAccess": {
+      "Type": "AWS::CloudFront::OriginAccessControl",
+      "Properties": {"OriginAccessControlConfig": {
+        "Name": "vinnot-prod-web", "Description": "Signed reads of the private production web bucket only",
+        "OriginAccessControlOriginType": "s3", "SigningBehavior": "always", "SigningProtocol": "sigv4"
+      }}
+    },
+    "WebAcl": {
+      "Type": "AWS::WAFv2::WebACL",
+      "Properties": {
+        "Name": "vinnot-prod-web", "Scope": "CLOUDFRONT", "DefaultAction": {"Allow": {}},
+        "VisibilityConfig": {"SampledRequestsEnabled": false, "CloudWatchMetricsEnabled": true, "MetricName": "vinnot-prod-web"},
+        "Rules": [
+          {"Name": "AmazonIpReputation", "Priority": 10, "Statement": {"ManagedRuleGroupStatement": {"VendorName": "AWS", "Name": "AWSManagedRulesAmazonIpReputationList"}}, "OverrideAction": {"None": {}}, "VisibilityConfig": {"SampledRequestsEnabled": false, "CloudWatchMetricsEnabled": true, "MetricName": "vinnot-prod-ip-reputation"}},
+          {"Name": "CommonRules", "Priority": 20, "Statement": {"ManagedRuleGroupStatement": {"VendorName": "AWS", "Name": "AWSManagedRulesCommonRuleSet"}}, "OverrideAction": {"None": {}}, "VisibilityConfig": {"SampledRequestsEnabled": false, "CloudWatchMetricsEnabled": true, "MetricName": "vinnot-prod-common"}},
+          {"Name": "KnownBadInputs", "Priority": 30, "Statement": {"ManagedRuleGroupStatement": {"VendorName": "AWS", "Name": "AWSManagedRulesKnownBadInputsRuleSet"}}, "OverrideAction": {"None": {}}, "VisibilityConfig": {"SampledRequestsEnabled": false, "CloudWatchMetricsEnabled": true, "MetricName": "vinnot-prod-bad-inputs"}}
+        ],
+        "Tags": [{"Key": "Environment", "Value": "production"}]
+      }
+    },
+    "Distribution": {
+      "Type": "AWS::CloudFront::Distribution",
+      "Properties": {
+        "DistributionConfig": {
+          "Comment": "Vinnot production web SPA — public isolated edge",
+          "Enabled": {"Fn::If": ["EnableAcceptance", true, false]}, "Aliases": ["vinnot.com"], "DefaultRootObject": "index.html",
+          "HttpVersion": "http2and3", "IPV6Enabled": true, "PriceClass": "PriceClass_All",
+          "WebACLId": {"Fn::GetAtt": ["WebAcl", "Arn"]},
+          "Origins": [{
+            "Id": "vinnot-prod-web", "DomainName": {"Fn::Sub": "vinnot-prod-web-${AWS::AccountId}.s3.us-east-1.amazonaws.com"},
+            "S3OriginConfig": {"OriginAccessIdentity": ""},
+            "OriginAccessControlId": {"Ref": "OriginAccess"}
+          }],
+          "DefaultCacheBehavior": {
+            "TargetOriginId": "vinnot-prod-web", "ViewerProtocolPolicy": "redirect-to-https",
+            "AllowedMethods": ["GET", "HEAD"], "CachedMethods": ["GET", "HEAD"], "Compress": true,
+            "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+            "FunctionAssociations": {"Fn::If": ["HasSecurityFunction", [
+              {"EventType": "viewer-request", "FunctionARN": {"Ref": "SecurityFunctionArn"}},
+              {"EventType": "viewer-response", "FunctionARN": {"Ref": "SecurityFunctionArn"}}
+            ], {"Ref": "AWS::NoValue"}]},
+            "ResponseHeadersPolicyId": "67f7725c-6f97-4210-82d7-5512b31e9d03"
+          },
+          "ViewerCertificate": {
+            "AcmCertificateArn": {"Ref": "CertificateArn"},
+            "SslSupportMethod": "sni-only", "MinimumProtocolVersion": "TLSv1.2_2021"
+          }
+        },
+        "Tags": [{"Key": "Environment", "Value": "production"}]
+      }
+    },
+    "FreePlan": {
+      "Type": "AWS::PricingPlanManager::Subscription",
+      "Properties": {
+        "PlanFamily": "CloudFront", "PlanTier": "FREE", "UsageLevel": "DEFAULT",
+        "ResourceArns": [
+          {"Fn::Sub": "arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${Distribution}"},
+          {"Fn::GetAtt": ["WebAcl", "Arn"]}
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "DistributionId": {"Value": {"Ref": "Distribution"}},
+    "DistributionDomain": {"Value": {"Fn::GetAtt": ["Distribution", "DomainName"]}},
+    "OriginAccessId": {"Value": {"Ref": "OriginAccess"}},
+    "PlanStatus": {"Value": {"Fn::GetAtt": ["FreePlan", "Status"]}},
+    "PlanTier": {"Value": {"Fn::GetAtt": ["FreePlan", "CurrentPlanTier"]}}
+  }
+}

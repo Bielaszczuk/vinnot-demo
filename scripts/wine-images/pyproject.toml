@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wine-script"
+version = "0.1.0"
+description = "Manifest-bound Argentina wine image migration with guarded database promotion"
+requires-python = ">=3.14"
+dependencies = [
+  "Pillow>=12.2,<13",
+  "psycopg[binary]>=3.3,<4",
+  "boto3>=1.42,<2",
+  "requests>=2.32,<3",
+  "python-dotenv>=1.2,<2",
+  "defusedxml>=0.7,<1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=9,<10"]
+
+[project.scripts]
+wine-images = "wine_script.cli:main"
+wine-image-release = "wine_script.release_cli:main"
+user-media-release = "wine_script.user_media_cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.pyright]
+include = ["src", "tests"]
+venvPath = "."
+venv = ".venv"
+extraPaths = ["src", ".venv/lib/python3.14/site-packages"]
+executionEnvironments = [
+  { root = "tests", extraPaths = ["src", ".venv/lib/python3.14/site-packages"] },
+  { root = "src", extraPaths = ["src", ".venv/lib/python3.14/site-packages"] },
+]

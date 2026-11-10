@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "datasetId": "wine-label-variety-regression-v1",
+  "description": "Catalog-reference regressions for reported labels and same-producer varietal siblings. Expected identities are fixed before provider evaluation.",
+  "expectedCohortSizes": { "VARIETIES": 10 },
+  "acceptance": {
+    "minRepetitions": 3,
+    "minStability": 0.9,
+    "cohorts": { "VARIETIES": { "minExactPrecision": 1, "minTopOneRecall": 0.9, "minTopThreeRecall": 0.9, "maxErrorRate": 0.02, "maxP95DurationMs": 10000 } },
+    "overall": { "minExactPrecision": 1, "minTopOneRecall": 0.9, "minTopThreeRecall": 0.9, "maxErrorRate": 0.02, "maxP95DurationMs": 10000 }
+  },
+  "cohorts": {
+    "VARIETIES": [
+      { "caseId": "variety-black-tears", "cohort": "VARIETIES", "expectedOutcome": "KNOWN_CATALOG", "difficulty": "REPORTED_LABEL", "expectedWineId": "ab4d5cd2-3b49-4a81-bb47-2c76edb55368", "expectedWineName": "Black Tears Malbec", "expectedWinery": "Tapiz", "imageUrl": "https://images.vivino.com/thumbs/blwCXNKDTpKlKKK_6DPN5A_pl_375x500.png" },
+      { "caseId": "variety-tapiz-reserva", "cohort": "VARIETIES", "expectedOutcome": "KNOWN_CATALOG", "difficulty": "SAME_PRODUCER", "expectedWineId": "31ece666-2679-42aa-af20-623064e5b1e1", "expectedWineName": "Reserva Premium Malbec", "expectedWinery": "Tapiz", "imageUrl": "https://images.vivino.com/thumbs/rok0tTMjSBSSrYUjVB_Z5w_375x500.jpg" },
+      { "caseId": "variety-riccitelli-father", "cohort": "VARIETIES", "expectedOutcome": "KNOWN_CATALOG", "difficulty": "REPORTED_LABEL", "expectedWineId": "2c4472d7-1fe3-47b3-959b-0ba284a5ed8e", "expectedWineName": "Father Malbec - Cabernet Franc", "expectedWinery": "Matías Riccitelli", "imageUrl": "https://images.vivino.com/thumbs/dSTNmvaeQpeE74TSaz39Kw_pl_375x500.png" },
+      { "caseId": "variety-esteco-cabernet", "cohort": "VARIETIES", "expectedOutcome": "KNOWN_CATALOG", "difficulty": "REPORTED_LABEL", "expectedWineId": "f260dcbf-c3d8-475d-b62b-c66eaac0768b", "expectedWineName": "Cabernet Sauvignon", "expectedWinery": "El Esteco", "imageUrl": "https://images.vivino.com/thumbs/tX67tJSIQTmoKdoF9fSnNQ_pl_375x500.png" },
+      { "caseId": "variety-esteco-malbec", "cohort": "VARIETIES", "expectedOutcome": "KNOWN_CATALOG", "difficulty": "SAME_PRODUCER", "expectedWineId": "71d090e3-410c-4400-a20e-b060454ec3b7", "expectedWineName": "Malbec", "expectedWinery": "El Esteco", "imageUrl": "https://images.vivino.com/thumbs/ja6tS_t1Rt2G8763itDWRA_pl_375x500.png" },
+      { "caseId": "variety-mariflor-franc", "cohort": "VARIETIES", "expectedOutcome": "KNOWN_CATALOG", "difficulty": "REPORTED_LABEL", "expectedWineId": "e8731e45-511a-463e-93a7-37dc53eab69b", "expectedWineName": "Cabernet Franc", "expectedWinery": "Mariflor", "imageUrl": "https://images.vivino.com/thumbs/9CyxRtMmRYWS4WQD59TUJA_375x500.jpg" },
+      { "caseId": "variety-mariflor-cabernet", "cohort": "VARIETIES", "expectedOutcome": "KNOWN_CATALOG", "difficulty": "SAME_PRODUCER", "expectedWineId": "28763d53-aa73-48fb-bca6-1c37ee9d02d9", "expectedWineName": "Cabernet Sauvignon", "expectedWinery": "Mariflor", "imageUrl": "https://images.vivino.com/thumbs/vVcjitJtQ5u6BhRBNG24Xg_375x500.jpg" },
+      { "caseId": "variety-mariflor-malbec", "cohort": "VARIETIES", "expectedOutcome": "KNOWN_CATALOG", "difficulty": "SAME_PRODUCER", "expectedWineId": "372ce65e-f114-49d3-ab30-701af125dfd3", "expectedWineName": "Malbec", "expectedWinery": "Mariflor", "imageUrl": "https://images.vivino.com/thumbs/UX2_KUw_SIG2HJltbSTiZQ_pl_375x500.png" },
+      { "caseId": "variety-mariflor-merlot", "cohort": "VARIETIES", "expectedOutcome": "KNOWN_CATALOG", "difficulty": "SAME_PRODUCER", "expectedWineId": "30ecb2e0-0b54-45c3-ba68-863d677ae156", "expectedWineName": "Merlot", "expectedWinery": "Mariflor", "imageUrl": "https://images.vivino.com/thumbs/KB1TtbwjQny3sN-laGPfCg_pl_375x500.png" },
+      { "caseId": "variety-mariflor-blanc", "cohort": "VARIETIES", "expectedOutcome": "KNOWN_CATALOG", "difficulty": "SAME_PRODUCER", "expectedWineId": "30092683-6965-4c2f-b871-2c90e1950d26", "expectedWineName": "Sauvignon Blanc", "expectedWinery": "Mariflor", "imageUrl": "https://images.vivino.com/thumbs/OeZYcikqTdSRNGJ7FPrX9Q_pl_375x500.png" }
+    ]
+  }
+}

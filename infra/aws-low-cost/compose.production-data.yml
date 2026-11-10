@@ -1,0 +1,30 @@
+# Database-only entry point: no application/OAuth secret is needed to provision
+# or restore the database. The full production overlay reuses this definition.
+name: vinnot-production
+
+services:
+  postgres:
+    extends:
+      file: compose.postgres.yml
+      service: postgres
+    container_name: vinnot-prod-postgres-local
+    environment:
+      POSTGRES_DB: vinnot_prod
+      POSTGRES_USER: vinnot_prod_bootstrap
+      POSTGRES_PASSWORD: !reset null
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-bootstrap-password
+    secrets:
+      - postgres-bootstrap-password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U vinnot_prod_bootstrap -d vinnot_prod"]
+
+secrets:
+  postgres-bootstrap-password:
+    file: ./secrets/postgres-bootstrap-password
+
+volumes:
+  postgres_data:
+
+networks:
+  runtime:
+    name: vinnot-production-runtime

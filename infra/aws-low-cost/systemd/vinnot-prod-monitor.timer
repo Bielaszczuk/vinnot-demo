@@ -1,0 +1,11 @@
+[Unit]
+Description=Check Vinnot production every five minutes
+
+[Timer]
+OnBootSec=180
+OnUnitActiveSec=300
+AccuracySec=10
+Unit=vinnot-prod-monitor.service
+
+[Install]
+WantedBy=timers.target

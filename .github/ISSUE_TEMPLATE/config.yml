@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Vinnot documentation
+    url: https://github.com/Bielaszczuk/vinnot/tree/development/docs
+    about: Review the architecture and current contracts before opening an issue.

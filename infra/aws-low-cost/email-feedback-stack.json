@@ -1,0 +1,100 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Vinnot SES bounce and complaint feedback: configuration set -> SNS -> SQS (+DLQ), polled by the backend. One stack per environment; deploy in the SES region (us-east-1).",
+  "Parameters": {
+    "Environment": {"Type": "String", "AllowedValues": ["dev", "prod"], "Description": "Names every resource and selects the host role vinnot-<env>-low-cost-host-role"},
+    "AlarmTopicArn": {"Type": "String", "Default": "", "AllowedPattern": "^$|^arn:aws:sns:us-east-1:[0-9]{12}:[A-Za-z0-9_-]+$", "Description": "Optional operations topic notified when feedback lands in the dead-letter queue"}
+  },
+  "Conditions": {
+    "HasAlarmTopic": {"Fn::Not": [{"Fn::Equals": [{"Ref": "AlarmTopicArn"}, ""]}]}
+  },
+  "Resources": {
+    "ConfigurationSet": {
+      "Type": "AWS::SES::ConfigurationSet",
+      "Properties": {
+        "Name": {"Fn::Sub": "vinnot-${Environment}"},
+        "SuppressionOptions": {"SuppressedReasons": ["BOUNCE", "COMPLAINT"]},
+        "ReputationOptions": {"ReputationMetricsEnabled": true},
+        "SendingOptions": {"SendingEnabled": true}
+      }
+    },
+    "FeedbackTopic": {"Type": "AWS::SNS::Topic", "Properties": {"TopicName": {"Fn::Sub": "vinnot-${Environment}-email-feedback"}, "Tags": [{"Key": "Environment", "Value": {"Ref": "Environment"}}]}},
+    "FeedbackTopicPolicy": {
+      "Type": "AWS::SNS::TopicPolicy",
+      "Properties": {
+        "Topics": [{"Ref": "FeedbackTopic"}],
+        "PolicyDocument": {"Version": "2012-10-17", "Statement": [{
+          "Sid": "OnlyThisConfigurationSetPublishes", "Effect": "Allow", "Principal": {"Service": "ses.amazonaws.com"},
+          "Action": "sns:Publish", "Resource": {"Ref": "FeedbackTopic"},
+          "Condition": {"StringEquals": {"aws:SourceAccount": {"Ref": "AWS::AccountId"}},
+            "ArnLike": {"aws:SourceArn": {"Fn::Sub": "arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:configuration-set/vinnot-${Environment}"}}}
+        }]}
+      }
+    },
+    "DeadLetterQueue": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {"QueueName": {"Fn::Sub": "vinnot-${Environment}-email-feedback-dlq"}, "MessageRetentionPeriod": 1209600, "SqsManagedSseEnabled": true, "Tags": [{"Key": "Environment", "Value": {"Ref": "Environment"}}]}
+    },
+    "FeedbackQueue": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "QueueName": {"Fn::Sub": "vinnot-${Environment}-email-feedback"},
+        "MessageRetentionPeriod": 1209600, "VisibilityTimeout": 120, "SqsManagedSseEnabled": true,
+        "RedrivePolicy": {"deadLetterTargetArn": {"Fn::GetAtt": ["DeadLetterQueue", "Arn"]}, "maxReceiveCount": 5},
+        "Tags": [{"Key": "Environment", "Value": {"Ref": "Environment"}}]
+      }
+    },
+    "FeedbackQueuePolicy": {
+      "Type": "AWS::SQS::QueuePolicy",
+      "Properties": {
+        "Queues": [{"Ref": "FeedbackQueue"}],
+        "PolicyDocument": {"Version": "2012-10-17", "Statement": [{
+          "Sid": "OnlyTheFeedbackTopicSends", "Effect": "Allow", "Principal": {"Service": "sns.amazonaws.com"},
+          "Action": "sqs:SendMessage", "Resource": {"Fn::GetAtt": ["FeedbackQueue", "Arn"]},
+          "Condition": {"ArnEquals": {"aws:SourceArn": {"Ref": "FeedbackTopic"}}}
+        }]}
+      }
+    },
+    "FeedbackSubscription": {
+      "Type": "AWS::SNS::Subscription",
+      "DependsOn": "FeedbackQueuePolicy",
+      "Properties": {"Protocol": "sqs", "TopicArn": {"Ref": "FeedbackTopic"}, "Endpoint": {"Fn::GetAtt": ["FeedbackQueue", "Arn"]}, "RawMessageDelivery": true}
+    },
+    "FeedbackEvents": {
+      "Type": "AWS::SES::ConfigurationSetEventDestination",
+      "DependsOn": ["FeedbackTopicPolicy", "FeedbackSubscription"],
+      "Properties": {
+        "ConfigurationSetName": {"Ref": "ConfigurationSet"},
+        "EventDestination": {"Name": "bounces-and-complaints", "Enabled": true, "MatchingEventTypes": ["bounce", "complaint"], "SnsDestination": {"TopicARN": {"Ref": "FeedbackTopic"}}}
+      }
+    },
+    "HostFeedbackPolicy": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": {"Fn::Sub": "vinnot-${Environment}-email-feedback"},
+        "Roles": [{"Fn::Sub": "vinnot-${Environment}-low-cost-host-role"}],
+        "PolicyDocument": {"Version": "2012-10-17", "Statement": [
+          {"Sid": "ReadFeedbackQueue", "Effect": "Allow", "Action": ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"], "Resource": {"Fn::GetAtt": ["FeedbackQueue", "Arn"]}},
+          {"Sid": "SendThroughConfigurationSet", "Effect": "Allow", "Action": "ses:SendEmail", "Resource": {"Fn::Sub": "arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:configuration-set/${ConfigurationSet}"}}
+        ]}
+      }
+    },
+    "DeadLetterAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmName": {"Fn::Sub": "vinnot-${Environment}-EmailFeedbackDeadLetters"},
+        "AlarmDescription": "Bounce or complaint feedback the backend could not read; inspect the dead-letter queue",
+        "Namespace": "AWS/SQS", "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Dimensions": [{"Name": "QueueName", "Value": {"Fn::GetAtt": ["DeadLetterQueue", "QueueName"]}}],
+        "Statistic": "Maximum", "Period": 300, "EvaluationPeriods": 1, "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold", "TreatMissingData": "notBreaching",
+        "AlarmActions": {"Fn::If": ["HasAlarmTopic", [{"Ref": "AlarmTopicArn"}], {"Ref": "AWS::NoValue"}]}
+      }
+    }
+  },
+  "Outputs": {
+    "ConfigurationSetName": {"Value": {"Ref": "ConfigurationSet"}, "Description": "EMAIL_SES_CONFIGURATION_SET"},
+    "FeedbackQueueUrl": {"Value": {"Ref": "FeedbackQueue"}, "Description": "EMAIL_FEEDBACK_QUEUE_URL"},
+    "DeadLetterQueueUrl": {"Value": {"Ref": "DeadLetterQueue"}}
+  }
+}

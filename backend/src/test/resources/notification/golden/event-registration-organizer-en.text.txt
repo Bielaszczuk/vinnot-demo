@@ -1,0 +1,15 @@
+Tasting
+Registration status: Awaiting payment
+Payment status: Payment pending
+Guests: 4
+Event date: Oct 20, 2026, 9:00:00 AM (America/Argentina/Buenos Aires)
+Confirm before: Oct 19, 2026, 3:45:00 PM (America/Argentina/Buenos Aires)
+Reservation contact: Guest
++541100000000
+Manage registrations: https://vinnot.example/partner/events
+
+---
+Vinnot
+Visit Vinnot: https://vinnot.example
+Contact: https://vinnot.example/contact
+Privacy: https://vinnot.example/privacy

@@ -1,0 +1,28 @@
+import CostProjection from '@site/src/components/CostProjection';
+
+# Cost simulator by scale
+
+Move the number of monthly active users and see which plan each service needs, what it
+costs per month and per year, and which limits of the current plans are crossed. The
+first bottleneck is highlighted.
+
+## How to use it
+
+1. Move the scale control, from 500 to 60,000 monthly active users, or pick one of the
+   reference scales: 1,000, 5,000, 10,000 or 50,000.
+2. Read the total cost per month and per year, and the bar with the cost breakdown.
+3. Check the table: it gives the plan each service needs and its cost.
+4. Check the limits crossed and what each one takes: a paid plan, a configuration
+   change or a variable cost.
+
+<CostProjection />
+
+## Where the numbers come from
+
+- The plans, prices and limits are those of
+  [Capacity and cost projections](capacity-and-cost-projections.md), with the same
+  assumptions and the same date: 2026-10-29. The simulator and that page share one
+  model, and an automated test pins its values.
+- The fixed costs (development environment, other AWS services, Apple and domain) come
+  from [Current costs](costs.md).
+- Above 60,000 users the model is no longer valid: a load test is needed.

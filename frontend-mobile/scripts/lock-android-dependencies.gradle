@@ -1,0 +1,21 @@
+// Release inventory only: used by the security job in a generated native project.
+// Included Gradle plugin builds have no :app and are intentionally left unchanged.
+gradle.projectsEvaluated {
+    def application = rootProject.findProject(':app')
+    if (application != null) {
+        application.dependencyLocking { lockAllConfigurations() }
+        application.tasks.register('vinnotLockReleaseDependencies') {
+            doLast {
+                def configuration = application.configurations.getByName('releaseRuntimeClasspath')
+                def unresolved = configuration.incoming.resolutionResult.allDependencies.findAll {
+                    it instanceof org.gradle.api.artifacts.result.UnresolvedDependencyResult
+                }
+                if (!unresolved.empty) {
+                    throw new GradleException('Cannot inventory unresolved release dependencies: '
+                        + unresolved.collect { it.attempted.displayName }.join(', '))
+                }
+                logger.lifecycle('Release runtime dependency graph resolved for security inventory')
+            }
+        }
+    }
+}

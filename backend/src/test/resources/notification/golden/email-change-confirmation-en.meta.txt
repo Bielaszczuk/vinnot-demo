@@ -1,0 +1,2 @@
+to: new@example.test
+subject: Confirm your new Vinnot email

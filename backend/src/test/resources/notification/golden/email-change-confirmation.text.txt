@@ -1,0 +1,9 @@
+Hola Ana,
+
+Usa este enlace para confirmar tu nuevo correo: https://vinnot.example/confirm-email-change?token=demo-change
+
+---
+Vinnot
+Visitar Vinnot: https://vinnot.example
+Contacto: https://vinnot.example/contact
+Privacidad: https://vinnot.example/privacy

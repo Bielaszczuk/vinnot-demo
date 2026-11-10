@@ -1,0 +1,9 @@
+{
+  "Content-Security-Policy": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com https://appleid.apple.com https://www.facebook.com; script-src 'self' https://accounts.google.com https://appleid.cdn-apple.com https://connect.facebook.net https://maps.googleapis.com https://maps.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://api.vinnot.com https://api-dev.vinnot.com https://accounts.google.com https://appleid.apple.com https://www.facebook.com https://graph.facebook.com https://maps.googleapis.com https://maps.gstatic.com https://places.googleapis.com; frame-src https://www.google.com https://maps.google.com https://accounts.google.com https://www.facebook.com https://staticxx.facebook.com https://appleid.apple.com; worker-src 'self' blob:; upgrade-insecure-requests",
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Strict-Transport-Security": "max-age=15552000",
+  "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(self), payment=()"
+}

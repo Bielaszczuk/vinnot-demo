@@ -1,0 +1,554 @@
+spring:
+  application:
+    name: vinnot-backend
+    version: 0.0.1-SNAPSHOT
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/vinnot
+    username: ${DB_USERNAME:vinnot}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      auto-commit: true
+      connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:3000}
+      validation-timeout: ${DB_VALIDATION_TIMEOUT_MS:1000}
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      pool-name: VinnotHikariPool
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 15MB
+
+  jackson:
+    # Keep the Jackson 2 wire format (property order, null primitives, trailing tokens) on Jackson 3.
+    use-jackson2-defaults: true
+    datatype:
+      datetime:
+        write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+  task:
+    scheduling:
+      pool:
+        # Threads shared by every @Scheduled job without its own scheduler (outbox, receipts, digests, retention).
+        # One thread let a long outbox drain or receipts check delay every other job (#405).
+        size: ${SCHEDULING_POOL_SIZE:4}
+
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
+  servlet:
+    context-path: /api
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+      roles: ADMIN
+      # Boot 4 enables liveness/readiness groups by default; keep the Boot 3 health payload.
+      probes:
+        enabled: false
+
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:true}
+    path: /api-docs
+  swagger-ui:
+    enabled: ${SPRINGDOC_SWAGGER_UI_ENABLED:true}
+    path: /swagger-ui.html
+    operationsSorter: method
+
+logging:
+  level:
+    root: INFO
+    com.vinnot: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF
+    org.hibernate.type.descriptor.sql.BasicBinder: OFF
+    org.hibernate.orm.connections.pooling: WARN
+    org.hibernate.orm.deprecation: ERROR
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:900000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
+# Application Configuration
+app:
+  effects:
+    # Shared outbox (external_effects). The poll is the fallback; a LISTEN/NOTIFY wake-up drains due jobs at once.
+    poll-ms: ${EFFECTS_POLL_MS:30000}
+    listen-enabled: ${EFFECTS_LISTEN_ENABLED:true}
+    # Jobs claimed per transaction, run at once per instance (virtual threads), and the claim lease (longer than any job).
+    batch-size: ${EFFECTS_BATCH_SIZE:20}
+    concurrency: ${EFFECTS_CONCURRENCY:4}
+    lease: ${EFFECTS_LEASE:15m}
+    # One drain keeps claiming while a backlog remains, up to this long.
+    drain-budget: ${EFFECTS_DRAIN_BUDGET:60s}
+  sharing:
+    api-origin: ${APP_SHARING_API_ORIGIN:http://localhost:8080}
+    android-available: ${APP_SHARING_ANDROID_AVAILABLE:true}
+  support:
+    recipient: ${SUPPORT_RECIPIENT:vinnotapp@gmail.com}
+  # Engagement signals (#405): detail views, app opens and push opens, kept for personalised suggestions.
+  activity:
+    app-open-gap: ${APP_ACTIVITY_APP_OPEN_GAP:30m}
+    usual-hour-window: ${APP_ACTIVITY_USUAL_HOUR_WINDOW:30d}
+    retention: ${APP_ACTIVITY_RETENTION:180d}
+    push-open-retention: ${APP_ACTIVITY_PUSH_OPEN_RETENTION:180d}
+    purge-batch-size: ${APP_ACTIVITY_PURGE_BATCH_SIZE:5000}
+    retention-delay-ms: ${APP_ACTIVITY_RETENTION_DELAY_MS:86400000}
+  # Engagement pushes (#405): the planner, the shared budget, fatigue, holdout and measurement.
+  engagement:
+    # Hourly planner; each account is planned once a day from its local planning hour (catching up for a few hours).
+    enabled: ${ENGAGEMENT_ENABLED:true}
+    initial-delay-ms: ${ENGAGEMENT_INITIAL_DELAY_MS:600000}
+    delay-ms: ${ENGAGEMENT_DELAY_MS:3600000}
+    planning-hour: ${ENGAGEMENT_PLANNING_HOUR:4}
+    catch-up-hours: ${ENGAGEMENT_CATCH_UP_HOURS:6}
+    # Accounts per keyset page and pages planned at once per run (virtual threads; each uses one connection at a time).
+    page-size: ${ENGAGEMENT_PAGE_SIZE:1000}
+    concurrency: ${ENGAGEMENT_CONCURRENCY:4}
+    # How long one run may hold the cluster-wide planner lease.
+    lease: ${ENGAGEMENT_LEASE:2h}
+    # Budget: per rolling 7 days, per local day, and the minimum time between two engagement pushes.
+    weekly-limit: ${ENGAGEMENT_WEEKLY_LIMIT:2}
+    daily-limit: ${ENGAGEMENT_DAILY_LIMIT:1}
+    minimum-gap: ${ENGAGEMENT_MINIMUM_GAP:48h}
+    # A second push in the same week needs at least this score (0-1); the first one is owed whatever its score.
+    second-push-min-score: ${ENGAGEMENT_SECOND_PUSH_MIN_SCORE:0.6}
+    # Fatigue: after this many unopened pushes in a row, at most this many a week; paused after this long unopened.
+    fatigue-streak: ${ENGAGEMENT_FATIGUE_STREAK:3}
+    fatigued-weekly-limit: ${ENGAGEMENT_FATIGUED_WEEKLY_LIMIT:1}
+    pause-after: ${ENGAGEMENT_PAUSE_AFTER:28d}
+    # Share of accounts (by a hash of their id) that never get engagement pushes, to measure lift; 0 turns it off.
+    holdout-percent: ${ENGAGEMENT_HOLDOUT_PERCENT:5}
+    ledger-retention: ${ENGAGEMENT_LEDGER_RETENTION:365d}
+    retention-delay-ms: ${ENGAGEMENT_RETENTION_DELAY_MS:86400000}
+    auto-pause:
+      # A type whose opt-outs per send exceed the rate over the window (with at least min-sends) is switched off.
+      enabled: ${ENGAGEMENT_AUTO_PAUSE_ENABLED:true}
+      window: ${ENGAGEMENT_AUTO_PAUSE_WINDOW:7d}
+      opt-out-window: ${ENGAGEMENT_AUTO_PAUSE_OPT_OUT_WINDOW:48h}
+      opt-out-rate: ${ENGAGEMENT_AUTO_PAUSE_OPT_OUT_RATE:0.02}
+      min-sends: ${ENGAGEMENT_AUTO_PAUSE_MIN_SENDS:200}
+      delay-ms: ${ENGAGEMENT_AUTO_PAUSE_DELAY_MS:3600000}
+  legal:
+    terms-version: ${LEGAL_TERMS_VERSION:2026-10-29.1}
+    enforce-acceptance: ${LEGAL_ENFORCE_ACCEPTANCE:false}
+  name: Vinnot
+  version: 1.0.0
+  wine-label:
+    recognition:
+      timeout: ${WINE_LABEL_RECOGNITION_TIMEOUT:12s}
+      detail: ${WINE_LABEL_RECOGNITION_DETAIL:HIGH}
+      max-tokens: ${WINE_LABEL_RECOGNITION_MAX_TOKENS:500}
+      max-attempts: ${WINE_LABEL_RECOGNITION_MAX_ATTEMPTS:1}
+    aliases:
+      wineries: {}
+      grapes:
+        cab-sauv: Cabernet Sauvignon
+        cabernet-sauv: Cabernet Sauvignon
+        pinot-grigio: Pinot Gris
+        shiraz: Syrah
+      regions:
+        uco-valley: Valle de Uco
+        napa: Napa Valley
+        rioja-alta: Rioja Alta
+  observability:
+    slow-request-threshold-ms: ${SLOW_REQUEST_THRESHOLD_MS:1000}
+  security:
+    # Per-account password sign-in lock (S13 of #482): after max-failures wrong passwords, password sign-in pauses for lock-duration.
+    login-lockout:
+      max-failures: ${LOGIN_LOCKOUT_MAX_FAILURES:5}
+      lock-duration: ${LOGIN_LOCKOUT_DURATION:PT15M}
+    # A rotated refresh token replayed after this window is treated as stolen and ends every session.
+    refresh-reuse:
+      grace-period: ${REFRESH_REUSE_GRACE_PERIOD:PT30S}
+    events:
+      retention: ${SECURITY_EVENTS_RETENTION:P180D}
+      purge-batch-size: ${SECURITY_EVENTS_PURGE_BATCH_SIZE:5000}
+      retention-enabled: true
+      retention-initial-delay-ms: 900000
+      retention-delay-ms: 86400000
+    rate-limit:
+      enabled: ${RATE_LIMIT_ENABLED:true}
+      trust-forwarded-for: ${RATE_LIMIT_TRUST_FORWARDED_FOR:false}
+      maximum-buckets: ${RATE_LIMIT_MAXIMUM_BUCKETS:100000}
+      bucket-idle-expiration: ${RATE_LIMIT_BUCKET_IDLE_EXPIRATION:25h}
+      credential:
+        capacity: ${RATE_LIMIT_CREDENTIAL_CAPACITY:10}
+        refill-tokens: ${RATE_LIMIT_CREDENTIAL_REFILL_TOKENS:10}
+        refill-period: ${RATE_LIMIT_CREDENTIAL_REFILL_PERIOD:1m}
+      account-action:
+        capacity: ${RATE_LIMIT_ACCOUNT_ACTION_CAPACITY:5}
+        refill-tokens: ${RATE_LIMIT_ACCOUNT_ACTION_REFILL_TOKENS:5}
+        refill-period: ${RATE_LIMIT_ACCOUNT_ACTION_REFILL_PERIOD:15m}
+      registration:
+        capacity: ${RATE_LIMIT_REGISTRATION_CAPACITY:5}
+        refill-tokens: ${RATE_LIMIT_REGISTRATION_REFILL_TOKENS:5}
+        refill-period: ${RATE_LIMIT_REGISTRATION_REFILL_PERIOD:1h}
+      report:
+        capacity: ${RATE_LIMIT_REPORT_CAPACITY:10}
+        refill-tokens: ${RATE_LIMIT_REPORT_REFILL_TOKENS:10}
+        refill-period: ${RATE_LIMIT_REPORT_REFILL_PERIOD:1h}
+      refresh:
+        capacity: ${RATE_LIMIT_REFRESH_CAPACITY:60}
+        refill-tokens: ${RATE_LIMIT_REFRESH_REFILL_TOKENS:60}
+        refill-period: ${RATE_LIMIT_REFRESH_REFILL_PERIOD:1m}
+      ai:
+        capacity: ${RATE_LIMIT_AI_CAPACITY:20}
+        refill-tokens: ${RATE_LIMIT_AI_REFILL_TOKENS:20}
+        refill-period: ${RATE_LIMIT_AI_REFILL_PERIOD:1h}
+      wine-scan:
+        capacity: ${RATE_LIMIT_WINE_SCAN_CAPACITY:30}
+        refill-tokens: ${RATE_LIMIT_WINE_SCAN_REFILL_TOKENS:30}
+        refill-period: ${RATE_LIMIT_WINE_SCAN_REFILL_PERIOD:1h}
+      wine-submission:
+        capacity: ${RATE_LIMIT_WINE_SUBMISSION_CAPACITY:10}
+        refill-tokens: ${RATE_LIMIT_WINE_SUBMISSION_REFILL_TOKENS:10}
+        refill-period: ${RATE_LIMIT_WINE_SUBMISSION_REFILL_PERIOD:1d}
+      wine-catalog:
+        capacity: ${RATE_LIMIT_WINE_CATALOG_CAPACITY:60}
+        refill-tokens: ${RATE_LIMIT_WINE_CATALOG_REFILL_TOKENS:60}
+        refill-period: ${RATE_LIMIT_WINE_CATALOG_REFILL_PERIOD:1m}
+      public-catalog:
+        capacity: ${RATE_LIMIT_PUBLIC_CATALOG_CAPACITY:180}
+        refill-tokens: ${RATE_LIMIT_PUBLIC_CATALOG_REFILL_TOKENS:180}
+        refill-period: ${RATE_LIMIT_PUBLIC_CATALOG_REFILL_PERIOD:1m}
+      # Daily caps on top of the catalog minute limits; a signed-in account that runs out is locked (#431).
+      wine-catalog-daily:
+        capacity: ${RATE_LIMIT_WINE_CATALOG_DAILY_CAPACITY:1500}
+        refill-tokens: ${RATE_LIMIT_WINE_CATALOG_DAILY_REFILL_TOKENS:1500}
+        refill-period: ${RATE_LIMIT_WINE_CATALOG_DAILY_REFILL_PERIOD:1d}
+      public-catalog-daily:
+        capacity: ${RATE_LIMIT_PUBLIC_CATALOG_DAILY_CAPACITY:1500}
+        refill-tokens: ${RATE_LIMIT_PUBLIC_CATALOG_DAILY_REFILL_TOKENS:1500}
+        refill-period: ${RATE_LIMIT_PUBLIC_CATALOG_DAILY_REFILL_PERIOD:1d}
+      api-documentation:
+        capacity: ${RATE_LIMIT_API_DOCUMENTATION_CAPACITY:30}
+        refill-tokens: ${RATE_LIMIT_API_DOCUMENTATION_REFILL_TOKENS:30}
+        refill-period: ${RATE_LIMIT_API_DOCUMENTATION_REFILL_PERIOD:1m}
+      general:
+        capacity: ${RATE_LIMIT_GENERAL_CAPACITY:300}
+        refill-tokens: ${RATE_LIMIT_GENERAL_REFILL_TOKENS:300}
+        refill-period: ${RATE_LIMIT_GENERAL_REFILL_PERIOD:1m}
+  uploads:
+    max-concurrent-image-processing: ${IMAGE_PROCESSING_MAX_CONCURRENT:2}
+    avatar-dir: ${AVATAR_UPLOAD_DIR:uploads/avatars}
+    wine-label-dir: ${WINE_LABEL_UPLOAD_DIR:uploads/wine-labels}
+    wine-label-quarantine-dir: ${WINE_LABEL_QUARANTINE_DIR:uploads/wine-label-quarantine}
+  wine-submissions:
+    retention:
+      rejected: ${WINE_SUBMISSION_REJECTED_RETENTION:30d}
+      corrections: ${WINE_SUBMISSION_CORRECTIONS_RETENTION:90d}
+      batch-size: ${WINE_SUBMISSION_RETENTION_BATCH_SIZE:100}
+      cron: ${WINE_SUBMISSION_RETENTION_CRON:0 25 3 * * *}
+  storage:
+    provider: ${APP_STORAGE_PROVIDER:local}
+    r2:
+      writes-enabled: ${APP_STORAGE_R2_WRITES_ENABLED:true}
+      account-id: ${APP_STORAGE_R2_ACCOUNT_ID:}
+      access-key-id: ${APP_STORAGE_R2_ACCESS_KEY_ID:}
+      secret-access-key: ${APP_STORAGE_R2_SECRET_ACCESS_KEY:}
+      bucket: ${APP_STORAGE_R2_BUCKET:}
+      environment: ${APP_STORAGE_R2_ENVIRONMENT:development}
+      public-base-url: ${APP_STORAGE_R2_PUBLIC_BASE_URL:https://images.vinnot.com}
+      max-reserved-bytes: ${APP_STORAGE_R2_MAX_RESERVED_BYTES:536870912}
+      max-monthly-writes: ${APP_STORAGE_R2_MAX_MONTHLY_WRITES:5000}
+      max-monthly-reads: ${APP_STORAGE_R2_MAX_MONTHLY_READS:100000}
+      # Rendered social media (slides and hero images) has its own monthly byte allowance, max 4 GiB.
+      social-max-monthly-bytes: ${APP_STORAGE_R2_SOCIAL_MAX_MONTHLY_BYTES:1073741824}
+    s3:
+      bucket: ${APP_STORAGE_S3_BUCKET:}
+      region: ${APP_STORAGE_S3_REGION:us-east-1}
+      avatar-prefix: ${APP_STORAGE_S3_AVATAR_PREFIX:avatars}
+      wine-label-prefix: ${APP_STORAGE_S3_WINE_LABEL_PREFIX:wine-labels}
+      wine-label-quarantine-prefix: ${APP_STORAGE_S3_WINE_LABEL_QUARANTINE_PREFIX:wine-label-quarantine}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+    allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+    allowed-headers: "*"
+    allow-credentials: true
+  payments:
+    environment: ${EVENT_PAYMENTS_ENVIRONMENT:SANDBOX}
+    pilot-seller-id: ${EVENT_PAYMENTS_PILOT_SELLER_ID:}
+    platform-owner-id: ${EVENT_PAYMENTS_PLATFORM_OWNER_ID:}
+    checkout-enabled: ${EVENT_PAYMENTS_CHECKOUT_ENABLED:${EVENT_PAYMENTS_SANDBOX_CHECKOUT_ENABLED:false}}
+    checkout-return-uri: ${EVENT_PAYMENTS_CHECKOUT_RETURN_URI:${EVENT_PAYMENTS_SANDBOX_CHECKOUT_RETURN_URI:}}
+    notification-uri: ${EVENT_PAYMENTS_NOTIFICATION_URI:${EVENT_PAYMENTS_SANDBOX_NOTIFICATION_URI:}}
+    settlement-enabled: ${EVENT_PAYMENTS_SETTLEMENT_ENABLED:${EVENT_PAYMENTS_SANDBOX_SETTLEMENT_ENABLED:false}}
+    webhook-secret: ${EVENT_PAYMENTS_WEBHOOK_SECRET:${EVENT_PAYMENTS_SANDBOX_WEBHOOK_SECRET:}}
+    enabled: ${EVENT_PAYMENTS_ENABLED:${EVENT_PAYMENTS_SANDBOX_ENABLED:false}}
+    client-id: ${EVENT_PAYMENTS_CLIENT_ID:${EVENT_PAYMENTS_SANDBOX_CLIENT_ID:}}
+    client-secret: ${EVENT_PAYMENTS_CLIENT_SECRET:${EVENT_PAYMENTS_SANDBOX_CLIENT_SECRET:}}
+    encryption-key: ${EVENT_PAYMENTS_ENCRYPTION_KEY:}
+    redirect-uri: ${EVENT_PAYMENTS_REDIRECT_URI:${EVENT_PAYMENTS_SANDBOX_REDIRECT_URI:}}
+    # Commission on new ticket checkouts. Both values change together (e.g. 800 / VINNOT_8_PERCENT_V1) or startup fails.
+    commission:
+      basis-points: ${EVENT_PAYMENTS_COMMISSION_BASIS_POINTS:300}
+      policy: ${EVENT_PAYMENTS_COMMISSION_POLICY:VINNOT_3_PERCENT_V1}
+  # Social media agent (#489): the Monday planner, its posting schedule (#513) and the copy generation retry.
+  marketing:
+    enabled: ${MARKETING_ENABLED:true}
+    planner:
+      # Plans the next window every Monday at 09:00 in the zone below; the admin page can also run it on demand.
+      cron: ${MARKETING_PLANNER_CRON:0 0 9 * * MON}
+      zone: ${MARKETING_PLANNER_ZONE:America/Argentina/Buenos_Aires}
+      # Rotating posts (#513): these weekdays at this local time, over this many days from the run. One post per date.
+      slot-days: ${MARKETING_PLANNER_SLOT_DAYS:TUESDAY,WEDNESDAY,THURSDAY}
+      slot-time: ${MARKETING_PLANNER_SLOT_TIME:12:30}
+      window-days: ${MARKETING_PLANNER_WINDOW_DAYS:14}
+      # Wine days post on their own day at this local time; on a slot day they take that day's slot.
+      wine-day-time: ${MARKETING_PLANNER_WINE_DAY_TIME:09:30}
+      # A wine day on another day is an extra post: priority 1 always, priority 2 and 3 only while the week (Monday to
+      # Sunday) has fewer posts than this.
+      max-posts-per-week: ${MARKETING_PLANNER_MAX_POSTS_PER_WEEK:4}
+    generation:
+      # Drafts whose copy the AI provider could not write are retried on this cadence.
+      initial-delay-ms: ${MARKETING_GENERATION_INITIAL_DELAY_MS:300000}
+      delay-ms: ${MARKETING_GENERATION_DELAY_MS:1800000}
+    metrics:
+      # Daily reading of the metrics of the publications of the last window-days (#510); off until the networks are connected.
+      enabled: ${MARKETING_METRICS_ENABLED:false}
+      # Runs in the planner zone above.
+      cron: ${MARKETING_METRICS_CRON:0 0 6 * * *}
+      window-days: ${MARKETING_METRICS_WINDOW_DAYS:30}
+    weighting:
+      # The planner weighs each pillar by its engagement per view over this many days (#510).
+      window-days: ${MARKETING_WEIGHTING_WINDOW_DAYS:90}
+    auto-approve:
+      # The system approves pending posts of pillars with auto-approval on, this long before their slot (#510).
+      enabled: ${MARKETING_AUTO_APPROVE_ENABLED:false}
+      lead: ${MARKETING_AUTO_APPROVE_LEAD:24h}
+      delay-ms: ${MARKETING_AUTO_APPROVE_DELAY_MS:900000}
+    networks:
+      # Network adapters (#510). Passive: publishing itself is switched on under app.marketing.publishing.
+      # Tokens never go here; Meta's come from app.marketing.accounts, Threads and TikTok from the admin connection.
+      connect-timeout: ${MARKETING_NETWORKS_CONNECT_TIMEOUT:10s}
+      request-timeout: ${MARKETING_NETWORKS_REQUEST_TIMEOUT:30s}
+      # While a network processes the images: check every poll-interval, give up after poll-timeout (Meta: about
+      # once a minute, at most 5 minutes). A give-up is retried later by the publishing outbox.
+      poll-interval: ${MARKETING_NETWORKS_POLL_INTERVAL:15s}
+      poll-timeout: ${MARKETING_NETWORKS_POLL_TIMEOUT:5m}
+      meta:
+        base-url: ${MARKETING_META_BASE_URL:https://graph.facebook.com}
+        version: ${MARKETING_META_GRAPH_VERSION:v27.0}
+        # Every metric must be valid for carousels or Meta refuses the whole read; add follows once confirmed.
+        instagram-metrics: ${MARKETING_INSTAGRAM_METRICS:views,reach,likes,comments,saved,shares}
+        instagram-alt-text: ${MARKETING_INSTAGRAM_ALT_TEXT:true}
+      threads:
+        base-url: ${MARKETING_THREADS_BASE_URL:https://graph.threads.com}
+        version: ${MARKETING_THREADS_VERSION:v1.0}
+      tiktok:
+        base-url: ${MARKETING_TIKTOK_BASE_URL:https://open.tiktokapis.com}
+    publishing:
+      # Approved posts publish themselves at their time (#510). Off by default: nothing is published until this and at
+      # least one network below are enabled.
+      enabled: ${MARKETING_PUBLISHING_ENABLED:false}
+      # The sweep that starts due posts runs on this cadence.
+      initial-delay-ms: ${MARKETING_PUBLISHING_INITIAL_DELAY_MS:60000}
+      delay-ms: ${MARKETING_PUBLISHING_DELAY_MS:300000}
+      # An approved post whose images are still not ready this long after its slot fails with MEDIA_NOT_READY.
+      media-grace: ${MARKETING_PUBLISHING_MEDIA_GRACE:PT6H}
+      # not-before (#513): a local time in the planner zone; on the post's day the network publishes no earlier than it.
+      # Empty publishes at the post time. "Publish now" ignores it.
+      networks:
+        instagram:
+          enabled: ${MARKETING_PUBLISHING_INSTAGRAM_ENABLED:false}
+          not-before: ${MARKETING_PUBLISHING_INSTAGRAM_NOT_BEFORE:}
+        facebook:
+          enabled: ${MARKETING_PUBLISHING_FACEBOOK_ENABLED:false}
+          not-before: ${MARKETING_PUBLISHING_FACEBOOK_NOT_BEFORE:}
+        threads:
+          enabled: ${MARKETING_PUBLISHING_THREADS_ENABLED:false}
+          not-before: ${MARKETING_PUBLISHING_THREADS_NOT_BEFORE:}
+        tiktok:
+          enabled: ${MARKETING_PUBLISHING_TIKTOK_ENABLED:false}
+          not-before: ${MARKETING_PUBLISHING_TIKTOK_NOT_BEFORE:19:30}
+      tiktok:
+        # MEDIA_UPLOAD sends the post as a draft to the TikTok inbox; DIRECT_POST publishes it (only after TikTok's audit).
+        mode: ${MARKETING_PUBLISHING_TIKTOK_MODE:MEDIA_UPLOAD}
+      draft-sync:
+        # TikTok inbox drafts the creator posts from the app become PUBLISHED (#516). The sweep checks drafts sent in the
+        # last window-days, oldest first, at most max-per-sweep per run (TikTok allows 30 status checks per minute).
+        initial-delay-ms: ${MARKETING_PUBLISHING_DRAFT_SYNC_INITIAL_DELAY_MS:120000}
+        delay-ms: ${MARKETING_PUBLISHING_DRAFT_SYNC_DELAY_MS:900000}
+        window-days: ${MARKETING_PUBLISHING_DRAFT_SYNC_WINDOW_DAYS:14}
+        max-per-sweep: ${MARKETING_PUBLISHING_DRAFT_SYNC_MAX_PER_SWEEP:20}
+    # Network connections of the publishing agent (#510). Every value is empty by default: the application starts and the
+    # admin page shows each network as not configured. Secrets come from the environment only.
+    accounts:
+      # AES-256-GCM key for the stored Threads/TikTok tokens: base64 of 32 random bytes (openssl rand -base64 32).
+      encryption-key: ${MARKETING_ACCOUNTS_ENCRYPTION_KEY:}
+      http:
+        connect-timeout: ${MARKETING_ACCOUNTS_CONNECT_TIMEOUT:5s}
+        read-timeout: ${MARKETING_ACCOUNTS_READ_TIMEOUT:15s}
+      refresh:
+        # Tokens near their end are refreshed on this cadence (Threads: last 10 days; TikTok: last 30 minutes).
+        initial-delay-ms: ${MARKETING_ACCOUNTS_REFRESH_INITIAL_DELAY_MS:120000}
+        delay-ms: ${MARKETING_ACCOUNTS_REFRESH_DELAY_MS:3600000}
+      # Instagram and the Facebook Page: a Meta business system-user token (does not expire) and the account ids.
+      meta:
+        access-token: ${MARKETING_META_ACCESS_TOKEN:}
+        instagram-user-id: ${MARKETING_META_INSTAGRAM_USER_ID:}
+        page-id: ${MARKETING_META_PAGE_ID:}
+        # Optional: the Page's own token; empty reads it from the Graph API with the system-user token.
+        page-access-token: ${MARKETING_META_PAGE_ACCESS_TOKEN:}
+        graph-base-url: ${MARKETING_META_BASE_URL:https://graph.facebook.com}/${MARKETING_META_GRAPH_VERSION:v27.0}
+      # Threads app (OAuth from the admin). The redirect URI is <public API>/public/social-accounts/threads/callback.
+      threads:
+        client-id: ${MARKETING_THREADS_CLIENT_ID:}
+        client-secret: ${MARKETING_THREADS_CLIENT_SECRET:}
+        redirect-uri: ${MARKETING_THREADS_REDIRECT_URI:}
+        authorize-url: ${MARKETING_THREADS_AUTHORIZE_URL:https://threads.com/oauth/authorize}
+        api-base-url: ${MARKETING_THREADS_API_BASE_URL:https://graph.threads.com}
+      # TikTok app (Login Kit for Web, OAuth from the admin). The redirect URI is <public API>/public/social-accounts/tiktok/callback.
+      tiktok:
+        client-key: ${MARKETING_TIKTOK_CLIENT_KEY:}
+        client-secret: ${MARKETING_TIKTOK_CLIENT_SECRET:}
+        redirect-uri: ${MARKETING_TIKTOK_REDIRECT_URI:}
+        authorize-url: ${MARKETING_TIKTOK_AUTHORIZE_URL:https://www.tiktok.com/v2/auth/authorize/}
+        api-base-url: ${MARKETING_TIKTOK_API_BASE_URL:https://open.tiktokapis.com}
+  notifications:
+    # Public API address for links that mail providers call directly (RFC 8058 one-click unsubscribe).
+    public-api-base-url: ${APP_PUBLIC_API_BASE_URL:http://localhost:8080/api}
+    # Exhausted notifications are never replayed; their personal data is discarded after this window.
+    exhausted-retention: ${NOTIFICATIONS_EXHAUSTED_RETENTION:30d}
+    push:
+      # expo sends through the Expo Push API; log (default) only logs counts.
+      provider: ${PUSH_PROVIDER:log}
+      # Optional Expo access token (enhanced push security); a secret from the environment.
+      expo-access-token: ${EXPO_ACCESS_TOKEN:}
+      # Non-transactional pushes per account per rolling 24 hours.
+      daily-cap: ${PUSH_DAILY_CAP:3}
+      # Device messages per second for this instance (Expo allows 600 per second per project).
+      rate-per-second: ${PUSH_RATE_PER_SECOND:500}
+      # In-place retries of a 429 or 5xx answer (honoring Retry-After) before the outbox retries the job.
+      http-retries: ${PUSH_HTTP_RETRIES:3}
+      # A receipts run drains every due ticket in chunks of 1000, up to this long (runs every 5 minutes).
+      receipts-budget: ${PUSH_RECEIPTS_BUDGET:4m}
+      # Devices the app has not registered for this long are forgotten (daily purge).
+      device-retention: ${PUSH_DEVICE_RETENTION:120d}
+    feedback:
+      # SQS queue fed by the SES configuration set (bounces and complaints). Empty disables the poller.
+      queue-url: ${EMAIL_FEEDBACK_QUEUE_URL:}
+      poll-ms: ${EMAIL_FEEDBACK_POLL_MS:60000}
+  auth:
+    frontend-base-url: ${APP_AUTH_FRONTEND_BASE_URL:http://localhost:5173}
+    email-verification-token-minutes: ${EMAIL_VERIFICATION_TOKEN_MINUTES:1440}
+    email-change-token-minutes: ${EMAIL_CHANGE_TOKEN_MINUTES:60}
+    password-reset-token-minutes: ${PASSWORD_RESET_TOKEN_MINUTES:60}
+    email:
+      provider: ${EMAIL_PROVIDER:log}
+      from: ${EMAIL_FROM:no-reply@vinnot.com}
+      ses-region: ${EMAIL_SES_REGION:us-east-1}
+      # Empty sends without one; set it so bounces and complaints reach the feedback queue.
+      ses-configuration-set: ${EMAIL_SES_CONFIGURATION_SET:}
+    social:
+      connect-timeout: ${SOCIAL_HTTP_CONNECT_TIMEOUT:3s}
+      read-timeout: ${SOCIAL_HTTP_READ_TIMEOUT:5s}
+      google:
+        audiences: ${GOOGLE_OAUTH_AUDIENCES:}
+      apple:
+        audiences: ${APPLE_OAUTH_AUDIENCES:}
+        team-id: ${APPLE_TEAM_ID:}
+        key-id: ${APPLE_KEY_ID:}
+        private-key: ${APPLE_PRIVATE_KEY:}
+        redirect-uris: ${APPLE_REDIRECT_URIS:}
+      facebook:
+        app-id: ${FACEBOOK_APP_ID:}
+        app-secret: ${FACEBOOK_APP_SECRET:}
+        graph-version: ${FACEBOOK_GRAPH_VERSION:v23.0}
+
+# External Services
+services:
+  aws:
+    call-timeout: ${AWS_API_CALL_TIMEOUT:15s}
+    attempt-timeout: ${AWS_API_ATTEMPT_TIMEOUT:12s}
+  google:
+    maps:
+      api-key: ${GOOGLE_MAPS_API_KEY:}
+      connect-timeout: ${GOOGLE_MAPS_CONNECT_TIMEOUT:3s}
+      read-timeout: ${GOOGLE_MAPS_READ_TIMEOUT:5s}
+  openai:
+    api-key: ${OPENAI_API_KEY:}
+    base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1/chat/completions}
+    moderation-url: ${OPENAI_MODERATION_URL:https://api.openai.com/v1/moderations}
+    images-url: ${OPENAI_IMAGES_URL:https://api.openai.com/v1/images/edits}
+    moderation-model: ${OPENAI_MODERATION_MODEL:omni-moderation-latest}
+    model: ${OPENAI_MODEL:gpt-6-luna}
+    # gpt-6-luna is a reasoning model: no sampling temperature, an explicit effort instead.
+    reasoning-effort: ${OPENAI_REASONING_EFFORT:none}
+    # Fast (priority) processing keeps a full bilingual profile around 10 s instead of ~20 s.
+    service-tier: ${OPENAI_SERVICE_TIER:priority}
+    vision-model: ${OPENAI_VISION_MODEL:gpt-4o-mini}
+    pricing:
+      models: ${OPENAI_PRICED_MODELS:gpt-6-luna,gpt-4o-mini,gpt-4o-mini-2024-07-18}
+      # One conservative price pair: the most expensive accepted tier of the priced models
+      # (gpt-4o-mini fast input USD 0.25, both fast outputs USD 1.00 per million tokens).
+      input-per-million-usd: ${OPENAI_INPUT_PER_MILLION_USD:0.25}
+      output-per-million-usd: ${OPENAI_OUTPUT_PER_MILLION_USD:1.00}
+      service-tiers: ${OPENAI_SERVICE_TIERS:default,priority,fast}
+    connect-timeout: ${OPENAI_CONNECT_TIMEOUT:10s}
+    read-timeout: ${OPENAI_READ_TIMEOUT:30s}
+    retry:
+      max-attempts: ${OPENAI_RETRY_MAX_ATTEMPTS:2}
+      initial-backoff-ms: ${OPENAI_RETRY_INITIAL_BACKOFF_MS:250}
+
+# AI Feature Flags
+ai:
+  provider: ${AI_PROVIDER:openai}
+  enabled: ${AI_ENABLED:true}
+  admission:
+    maximum-concurrent: ${AI_MAXIMUM_CONCURRENT_REQUESTS:3}
+    lease-duration: 2m
+  spending:
+    monthly-limit-usd: ${AI_MONTHLY_LIMIT_USD:10}
+    daily-limit-usd: ${AI_DAILY_LIMIT_USD:0}
+    paid-calls-enabled: ${AI_PAID_CALLS_ENABLED:true}
+  profile-refresh:
+    # Background regeneration of stored profiles made with an older prompt (fingerprint version) or older
+    # catalog facts. Manual profiles are never touched, mock mode never runs it, and it stops for the month
+    # once spending reaches budget-share of monthly-limit-usd so user requests keep the rest.
+    enabled: ${AI_PROFILE_REFRESH_ENABLED:true}
+    interval: ${AI_PROFILE_REFRESH_INTERVAL:2m}
+    profiles-per-run: ${AI_PROFILE_REFRESH_PROFILES_PER_RUN:1}
+    budget-share: ${AI_PROFILE_REFRESH_BUDGET_SHARE:0.5}
+  images:
+    # Paid illustrations (OpenAI images edits). Off until enabled; each attempt reserves max-cost-usd
+    # against the monthly/daily AI caps above and settles that flat cost when the provider bills it.
+    enabled: ${AI_IMAGES_ENABLED:false}
+    model: ${AI_IMAGES_MODEL:gpt-image-1}
+    quality: ${AI_IMAGES_QUALITY:medium}
+    size: ${AI_IMAGES_SIZE:1024x1536}
+    max-cost-usd: ${AI_IMAGES_MAX_COST_USD:0.25}
+    # Whole call including retries; at most 115s so a permit never outlives its 2-minute admission lease.
+    timeout: ${AI_IMAGES_TIMEOUT:110s}
+    max-attempts: ${AI_IMAGES_MAX_ATTEMPTS:2}
+    initial-backoff-ms: ${AI_IMAGES_INITIAL_BACKOFF_MS:500}

@@ -1,0 +1,4 @@
+#!/bin/sh
+# Opt in once per clone: git config core.hooksPath .githooks
+# Runs the local preflight for the pushed commits; skip once with VINNOT_SKIP_PREFLIGHT=1 or --no-verify.
+exec node scripts/pre-push.mjs

@@ -1,0 +1,12 @@
+<Cata> & maridaje
+Estado de la inscripción: Inscripción confirmada
+Estado del pago: Pago confirmado
+Personas: 2
+Fecha del evento: 20 oct 2026, 9:00:00 (America/Argentina/Buenos Aires)
+Ver mi entrada: https://vinnot.example/my-tickets/11111111-2222-3333-4444-555555555555
+
+---
+Vinnot
+Visitar Vinnot: https://vinnot.example
+Contacto: https://vinnot.example/contact
+Privacidad: https://vinnot.example/privacy

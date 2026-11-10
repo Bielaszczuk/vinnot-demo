@@ -1,0 +1,44 @@
+import RevenueSimulator from '@site/src/components/RevenueSimulator';
+
+# Simulador de ingresos
+
+Prueba cuánto ingresa Vinnot con la comisión sobre entradas y con la suscripción para
+bodegas, y si ese ingreso cubre los costos de plataforma. Cambia la tasa de comisión,
+la cantidad de eventos y entradas, el precio medio de la entrada, el tipo de cambio y la
+cantidad de bodegas en el plan Pro.
+
+## Cómo usarlo
+
+1. Elige la tasa de comisión: 3 % (implementado), 8 % u 12 % (planificados), u otra.
+2. Indica cuántos eventos pagos hay por mes, cuántas entradas vende cada uno y su precio
+   medio en pesos.
+3. Ajusta el tipo de cambio. El valor inicial, ARS 1.450 por USD, es un supuesto: usa la
+   cotización del día.
+4. Mueve la cantidad de bodegas Pro y elige la comisión de la tienda: 15 % con el Small
+   Business Program de Apple o en Google Play, 30 % el primer año en App Store sin ese
+   programa.
+5. Elige el costo a cubrir: el costo medido hoy o el proyectado para 1.000, 5.000,
+   10.000 o 50.000 usuarios.
+
+<RevenueSimulator />
+
+## Qué calcula
+
+| Resultado | Cálculo |
+|---|---|
+| Comisión | eventos × entradas × precio × tasa, convertido a dólares |
+| Suscripciones netas | bodegas Pro × precio × (1 − comisión de la tienda) |
+| Margen | ingreso total − costo mensual |
+| Entradas para cubrir costos | costo mensual ÷ comisión por entrada |
+| Bodegas para cubrir costos | costo mensual ÷ neto por bodega |
+
+## Límites del cálculo
+
+- Es una **estimación**. No incluye impuestos (IVA, Ingresos Brutos, Ganancias), sueldos
+  ni marketing.
+- La tarifa de Mercado Pago la paga el vendedor de las entradas y no reduce la comisión
+  de Vinnot.
+- La comisión del 3 % está implementada; el 8 %, el 12 % y la suscripción para bodegas
+  están planificados ([Monetización y planes](monetization.md)).
+- Los costos salen del mismo modelo que [Capacidad y proyección de costos](capacity-and-cost-projections.md)
+  y que el [simulador de costos por escala](cost-simulator.mdx).

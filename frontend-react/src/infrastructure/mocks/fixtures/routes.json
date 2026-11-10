@@ -1,0 +1,239 @@
+{
+  "routes": [
+    {
+      "id": "route-001",
+      "name": "Classic Mendoza Wine Route",
+      "description": "Discover the heart of Argentine wine country with visits to legendary wineries in Luján de Cuyo and Maipú.",
+      "region": "Mendoza",
+      "country": "Argentina",
+      "difficulty": "easy",
+      "duration": 8,
+      "distance": 45,
+      "image_url": "/images/routes/mendoza-classic.jpg",
+      "rating": 4.8,
+      "review_count": 156,
+      "tags": ["classic", "malbec", "historic"],
+      "is_published": true,
+      "created_by": "user-admin",
+      "stops": [
+        {
+          "id": "stop-001",
+          "order": 1,
+          "name": "Bodega Trapiche",
+          "type": "winery",
+          "description": "One of Argentina's oldest and most prestigious wineries, established in 1883.",
+          "location": {
+            "address": "Mitre 2850",
+            "city": "Maipú",
+            "latitude": -32.9667,
+            "longitude": -68.7667
+          },
+          "duration": 90,
+          "winery": {
+            "id": "winery-001",
+            "name": "Trapiche",
+            "wines": ["Gran Medalla Malbec", "Medalla Cabernet"]
+          }
+        },
+        {
+          "id": "stop-002",
+          "order": 2,
+          "name": "Lunch at Francis Mallmann Restaurant",
+          "type": "restaurant",
+          "description": "World-renowned restaurant featuring traditional Argentine asado with wine pairings.",
+          "location": {
+            "address": "Roque Sáenz Peña 3999",
+            "city": "Luján de Cuyo",
+            "latitude": -33.0333,
+            "longitude": -68.8667
+          },
+          "duration": 120,
+          "winery": null
+        },
+        {
+          "id": "stop-003",
+          "order": 3,
+          "name": "Bodega Norton",
+          "type": "winery",
+          "description": "Beautiful winery with stunning Andes views and award-winning wines.",
+          "location": {
+            "address": "Ruta 15 Km 23.5",
+            "city": "Luján de Cuyo",
+            "latitude": -33.0167,
+            "longitude": -68.9000
+          },
+          "duration": 90,
+          "winery": {
+            "id": "winery-002",
+            "name": "Bodega Norton",
+            "wines": ["Reserva Malbec", "Altura Chardonnay"]
+          }
+        },
+        {
+          "id": "stop-004",
+          "order": 4,
+          "name": "Cerro de los Siete Viewpoint",
+          "type": "viewpoint",
+          "description": "Spectacular panoramic view of the Andes mountains and surrounding vineyards.",
+          "location": {
+            "address": "Ruta 86",
+            "city": "Vista Flores",
+            "latitude": -33.5500,
+            "longitude": -69.2333
+          },
+          "duration": 30,
+          "winery": null
+        }
+      ],
+      "created_at": "2024-06-01T10:00:00Z",
+      "updated_at": "2025-01-05T14:00:00Z"
+    },
+    {
+      "id": "route-002",
+      "name": "Valle de Uco Premium Experience",
+      "description": "Explore the high-altitude vineyards of Valle de Uco, home to Argentina's most prestigious wines.",
+      "region": "Valle de Uco",
+      "country": "Argentina",
+      "difficulty": "moderate",
+      "duration": 10,
+      "distance": 85,
+      "image_url": "/images/routes/valle-uco.jpg",
+      "rating": 4.9,
+      "review_count": 89,
+      "tags": ["premium", "high-altitude", "boutique"],
+      "is_published": true,
+      "created_by": "user-admin",
+      "stops": [
+        {
+          "id": "stop-005",
+          "order": 1,
+          "name": "Bodega Salentein",
+          "type": "winery",
+          "description": "Architecturally stunning winery with art gallery and premium wine experiences.",
+          "location": {
+            "address": "Ruta 89 s/n",
+            "city": "Tunuyán",
+            "latitude": -33.5667,
+            "longitude": -69.2500
+          },
+          "duration": 120,
+          "winery": {
+            "id": "winery-003",
+            "name": "Bodega Salentein",
+            "wines": ["Numina", "Primus Malbec"]
+          }
+        },
+        {
+          "id": "stop-006",
+          "order": 2,
+          "name": "Zuccardi Valle de Uco",
+          "type": "winery",
+          "description": "Award-winning winery with innovative architecture and exceptional terroir-driven wines.",
+          "location": {
+            "address": "Ruta 89 s/n",
+            "city": "Paraje Altamira",
+            "latitude": -33.7000,
+            "longitude": -69.1333
+          },
+          "duration": 120,
+          "winery": {
+            "id": "winery-004",
+            "name": "Familia Zuccardi",
+            "wines": ["Piedra Infinita", "Aluvional"]
+          }
+        },
+        {
+          "id": "stop-007",
+          "order": 3,
+          "name": "The Vines Resort & Spa",
+          "type": "accommodation",
+          "description": "Luxury resort with private villas overlooking vineyards. Optional overnight stay.",
+          "location": {
+            "address": "Ruta 94 Km 11",
+            "city": "Tunuyán",
+            "latitude": -33.6167,
+            "longitude": -69.1500
+          },
+          "duration": 180,
+          "winery": null
+        }
+      ],
+      "created_at": "2024-07-15T12:00:00Z",
+      "updated_at": "2025-01-08T09:00:00Z"
+    },
+    {
+      "id": "route-003",
+      "name": "Salta Wine Adventure",
+      "description": "Journey through the world's highest vineyards in the Calchaquí Valleys of Salta.",
+      "region": "Salta",
+      "country": "Argentina",
+      "difficulty": "challenging",
+      "duration": 12,
+      "distance": 150,
+      "image_url": "/images/routes/salta-route.jpg",
+      "rating": 4.7,
+      "review_count": 67,
+      "tags": ["adventure", "high-altitude", "torrontés"],
+      "is_published": true,
+      "created_by": "user-admin",
+      "stops": [
+        {
+          "id": "stop-008",
+          "order": 1,
+          "name": "Bodega Colomé",
+          "type": "winery",
+          "description": "Historic winery at 2,300m altitude with James Turrell museum.",
+          "location": {
+            "address": "Ruta 40",
+            "city": "Molinos",
+            "latitude": -25.4333,
+            "longitude": -66.3000
+          },
+          "duration": 180,
+          "winery": {
+            "id": "winery-005",
+            "name": "Bodega Colomé",
+            "wines": ["Estate Malbec", "Auténtico"]
+          }
+        },
+        {
+          "id": "stop-009",
+          "order": 2,
+          "name": "Cafayate Town Square",
+          "type": "attraction",
+          "description": "Charming colonial town center with artisan shops and local cuisine.",
+          "location": {
+            "address": "Plaza Principal",
+            "city": "Cafayate",
+            "latitude": -26.0833,
+            "longitude": -65.9667
+          },
+          "duration": 90,
+          "winery": null
+        },
+        {
+          "id": "stop-010",
+          "order": 3,
+          "name": "Bodega El Esteco",
+          "type": "winery",
+          "description": "Renowned for exceptional Torrontés and bold red wines.",
+          "location": {
+            "address": "Ruta 40 s/n",
+            "city": "Cafayate",
+            "latitude": -26.0500,
+            "longitude": -65.9833
+          },
+          "duration": 90,
+          "winery": {
+            "id": "winery-006",
+            "name": "El Esteco",
+            "wines": ["Don David Torrontés", "Altimus"]
+          }
+        }
+      ],
+      "created_at": "2024-08-20T14:00:00Z",
+      "updated_at": "2025-01-10T11:00:00Z"
+    }
+  ]
+}
+

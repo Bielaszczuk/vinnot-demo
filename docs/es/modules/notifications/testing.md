@@ -1,0 +1,65 @@
+# Pruebas
+
+Casos de prueba del módulo: uno por el flujo principal de cada caso de uso y uno por cada flujo alternativo. Se pueden ejecutar a mano en la web y en la app; la columna de tests automáticos indica qué tests ejercen el caso de uso.
+
+## Casos de prueba
+
+| ID | Caso de uso | Pasos | Resultado esperado |
+|---|---|---|---|
+| `CP-NOT-01` | [`UC-NOT-01`](use-cases/uc-not-01-manage-preferences.md) | 1) La persona abre Perfil → Notificaciones en la web o la hoja de notificaciones en la app. 2) El cliente pide `GET /users/me/notification-preferences`. 3) La API devuelve el consentimiento de marketing y nueve categorías con su estado de correo y push y si se pueden cambiar. 4) La persona cambia un canal de una categoría o el consentimiento. 5) El cliente envía `PUT /users/me/notification-preferences` con la fuente `WEB` o `MOBILE`. 6) La API guarda primero el consentimiento y después cada elección, y devuelve el estado final. | Sus preferencias quedan guardadas y los envíos siguientes las respetan. |
+| `CP-NOT-28` | [`UC-NOT-01`](use-cases/uc-not-01-manage-preferences.md) | Flujo principal → 3b. Una categoría nunca envía por un canal, como el correo en una categoría que solo usa push | La web muestra «—» en lugar del interruptor y la app no muestra ese interruptor. |
+| `CP-NOT-02` | [`UC-NOT-01`](use-cases/uc-not-01-manage-preferences.md) | Flujo principal → 4a. La categoría es obligatoria (cuenta, seguridad, pagos o entradas) | El control está deshabilitado y la API rechaza el cambio. |
+| `CP-NOT-03` | [`UC-NOT-01`](use-cases/uc-not-01-manage-preferences.md) | Flujo principal → 4b. Se enciende una categoría promocional con el consentimiento retirado | La API rechaza el cambio. |
+| `CP-NOT-04` | [`UC-NOT-01`](use-cases/uc-not-01-manage-preferences.md) | Flujo principal → 4c. En la app se enciende un push y el teléfono nunca pidió permiso | Se abre el aviso del sistema. |
+| `CP-NOT-05` | [`UC-NOT-01`](use-cases/uc-not-01-manage-preferences.md) | Flujo principal → 3a. En la app el permiso del sistema falta o está bloqueado | La hoja ofrece «Permitir notificaciones» o «Abrir ajustes». |
+| `CP-NOT-06` | [`UC-NOT-02`](use-cases/uc-not-02-unsubscribe.md) | 1) La persona toca «Darse de baja» en el correo. 2) La web abre `/unsubscribe?token=…` y pide confirmar. 3) La persona confirma. 4) La web envía `POST /notifications/unsubscribe` con el token, sin sesión. 5) La API apaga el correo de esa categoría y devuelve cuál fue. 6) La web confirma la baja y ofrece ir a las preferencias. | Esa categoría deja de enviarle correos. |
+| `CP-NOT-07` | [`UC-NOT-02`](use-cases/uc-not-02-unsubscribe.md) | Flujo principal → 1a. El cliente de correo ofrece la baja de un clic | Envía el mismo pedido sin abrir la web. |
+| `CP-NOT-08` | [`UC-NOT-02`](use-cases/uc-not-02-unsubscribe.md) | Flujo principal → 5a. El token es inválido o es de una categoría obligatoria | La API rechaza la baja y la web muestra un error. |
+| `CP-NOT-09` | [`UC-NOT-03`](use-cases/uc-not-03-allow-push.md) | 1) La persona abre la app por primera vez en ese teléfono, con o sin sesión. 2) La app crea los canales de notificación de Android y muestra la hoja «Activá las notificaciones». 3) La persona toca «Activar» y el sistema muestra su aviso de permiso. 4) La persona permite las notificaciones. 5) Si hay sesión, la app registra el teléfono ([UC-NOT-04](use-cases/uc-not-04-register-device.md)). | El teléfono tiene permiso para mostrar notificaciones y queda registrado si hay sesión. |
+| `CP-NOT-10` | [`UC-NOT-03`](use-cases/uc-not-03-allow-push.md) | Flujo principal → 3a. La persona toca «Ahora no» | No aparece el aviso del sistema ni otra hoja hasta la próxima apertura desde cero. |
+| `CP-NOT-11` | [`UC-NOT-03`](use-cases/uc-not-03-allow-push.md) | Flujo principal → 4a. La persona rechaza | La app no registra el teléfono y quita de la cuenta el registro que ese teléfono haya dejado. |
+| `CP-NOT-12` | [`UC-NOT-03`](use-cases/uc-not-03-allow-push.md) | Flujo principal → 2a. Android 12 o anterior concede el permiso por defecto | No aparece ni la hoja ni el aviso. |
+| `CP-NOT-29` | [`UC-NOT-03`](use-cases/uc-not-03-allow-push.md) | Flujo principal → 1a. Las notificaciones están apagadas y la persona tiene sesión | Cada apertura desde cero muestra «Tus notificaciones están apagadas»; «Activar notificaciones» abre el aviso del sistema o «Abrir ajustes» los ajustes del teléfono; volver desde segundo plano no la muestra. |
+| `CP-NOT-30` | [`UC-NOT-03`](use-cases/uc-not-03-allow-push.md) | Flujo principal → 1b. Una entrada confirmada mientras el sistema todavía puede preguntar | Una hoja explica los avisos del evento, salvo que otra hoja ya apareció en esa apertura. |
+| `CP-NOT-13` | [`UC-NOT-04`](use-cases/uc-not-04-register-device.md) | 1) La app obtiene el token push de Expo del teléfono. 2) Envía `PUT /users/me/push-devices` con el token, la plataforma y el idioma de la app; en Android agrega `channels: true` cuando ya creó los canales. 3) La API valida el token y lo guarda para esa cuenta. 4) La app vuelve a registrarlo en cada apertura desde cero, al iniciar sesión, cambiar el idioma o cambiar el token, y al volver a primer plano mientras no quedó registrado. | El teléfono queda asociado a la cuenta para recibir push. |
+| `CP-NOT-14` | [`UC-NOT-04`](use-cases/uc-not-04-register-device.md) | Flujo principal → 3a. El token no tiene el formato de Expo | La API responde 400. |
+| `CP-NOT-15` | [`UC-NOT-04`](use-cases/uc-not-04-register-device.md) | Flujo principal → 3b. El token ya estaba en otra cuenta | Pasa a la cuenta actual. |
+| `CP-NOT-16` | [`UC-NOT-04`](use-cases/uc-not-04-register-device.md) | Flujo principal → 4a. La persona cierra sesión | La app envía el token con el cierre de sesión y la API lo da de baja. |
+| `CP-NOT-17` | [`UC-NOT-04`](use-cases/uc-not-04-register-device.md) | Flujo principal → 2a. El registro falla | Se reintenta al volver a primer plano. |
+| `CP-NOT-31` | [`UC-NOT-04`](use-cases/uc-not-04-register-device.md) | Flujo principal → 1a. El teléfono no tiene permiso de notificaciones | La app no registra nada y quita de la cuenta el último token que registró ese teléfono. |
+| `CP-NOT-18` | [`UC-NOT-05`](use-cases/uc-not-05-receive-push.md) | 1) El módulo que originó el aviso lo deja en la cola de envíos. 2) La tarea de envío revisa el interruptor del tipo, el vencimiento, los duplicados, la cuenta y las preferencias. 3) Revisa el horario de descanso y los topes diarios. 4) Envía el push por Expo y luego revisa los recibos. 5) La persona toca la notificación. 6) La app valida la ruta y abre la sección: una entrada, un evento, un vino, una ruta, una bodega o los eventos de partner. | La persona recibió el push y, si lo tocó, está en la sección correspondiente. |
+| `CP-NOT-19` | [`UC-NOT-05`](use-cases/uc-not-05-receive-push.md) | Flujo principal → 2a. El tipo está apagado por el equipo, el aviso venció, ya se envió, la cuenta está inactiva o la persona lo apagó | No se envía. |
+| `CP-NOT-20` | [`UC-NOT-05`](use-cases/uc-not-05-receive-push.md) | Flujo principal → 3a. Son entre las 22 y las 8 en la zona horaria de la cuenta y el aviso puede esperar | Se posterga hasta las 8. |
+| `CP-NOT-21` | [`UC-NOT-05`](use-cases/uc-not-05-receive-push.md) | Flujo principal → 3b. Se alcanzó el tope del día o de la categoría | Se descarta. |
+| `CP-NOT-22` | [`UC-NOT-05`](use-cases/uc-not-05-receive-push.md) | Flujo principal → 6a. La ruta no está permitida | La app la ignora. |
+| `CP-NOT-23` | [`UC-NOT-05`](use-cases/uc-not-05-receive-push.md) | Flujo principal → 5a. La app estaba cerrada | La ruta se abre al arrancar, cuando la navegación está lista. |
+| `CP-NOT-32` | [`UC-NOT-05`](use-cases/uc-not-05-receive-push.md) | Flujo principal → 5b. No hay sesión | La app no navega; abre la sección después de iniciar sesión e informa la apertura. |
+| `CP-NOT-33` | [`UC-NOT-05`](use-cases/uc-not-05-receive-push.md) | Flujo principal → 6b. El push no trae `ref` ni `type` | La app abre la sección sin informar la apertura. |
+| `CP-NOT-24` | [`UC-NOT-06`](use-cases/uc-not-06-receive-email.md) | 1) El módulo que originó el aviso lo deja en la cola de envíos, una sola vez por clave. 2) La tarea de envío vuelve a revisar las preferencias, la dirección actual y el idioma de la cuenta. 3) Arma el correo HTML con marca y su versión de texto. 4) Si es promocional, agrega el enlace de baja y la baja de un clic. 5) Lo envía por el proveedor de correo. | La persona recibió el correo en su idioma, o el envío quedó descartado por una regla. |
+| `CP-NOT-25` | [`UC-NOT-06`](use-cases/uc-not-06-receive-email.md) | Flujo principal → 2a. La persona apagó esa categoría | No se envía. |
+| `CP-NOT-26` | [`UC-NOT-06`](use-cases/uc-not-06-receive-email.md) | Flujo principal → 2b. La dirección rebotó de forma permanente o marcó spam | No se envía, ni siquiera los obligatorios. |
+| `CP-NOT-27` | [`UC-NOT-06`](use-cases/uc-not-06-receive-email.md) | Flujo principal → 5a. El proveedor falla | Se reintenta hasta 10 veces con espera creciente. |
+| `CP-NOT-34` | [`UC-NOT-07`](use-cases/uc-not-07-receive-suggestions.md) | 1) Con sesión, la persona abre la app y el detalle de un vino. 2) La app envía `POST /users/me/activity/app-open` y `POST /users/me/activity/views`. 3) El planificador, entre las 4 y las 10 de la zona horaria de la cuenta, junta sus candidatos y elige el de mayor puntaje. 4) Fija la hora de envío en su hora habitual de apertura o a las 19:30 (12:30 los fines de semana). 5) A esa hora, el presupuesto de sugerencias lo admite y se envía el push. 6) La persona lo toca y la app abre el contenido sugerido. | La persona recibió una sugerencia a su hora habitual y, al tocarla, está en el contenido sugerido. |
+| `CP-NOT-35` | [`UC-NOT-07`](use-cases/uc-not-07-receive-suggestions.md) | Flujo principal → 1a. No hay sesión | La app no informa ninguna señal. |
+| `CP-NOT-36` | [`UC-NOT-07`](use-cases/uc-not-07-receive-suggestions.md) | Flujo principal → 1b. El pedido de la señal falla | La pantalla sigue igual y la apertura se vuelve a informar en la próxima apertura. |
+| `CP-NOT-37` | [`UC-NOT-07`](use-cases/uc-not-07-receive-suggestions.md) | Flujo principal → 3a. Otra instancia tiene el turno del planificador | Esta corrida no planifica. |
+| `CP-NOT-38` | [`UC-NOT-07`](use-cases/uc-not-07-receive-suggestions.md) | Flujo principal → 4a. La persona no abre la app hace 14 días | Solo compiten los pushes de regreso, como mucho dos por ausencia. |
+| `CP-NOT-39` | [`UC-NOT-07`](use-cases/uc-not-07-receive-suggestions.md) | Flujo principal → 4b. No hay candidatos | Ese día no se envía nada. |
+| `CP-NOT-40` | [`UC-NOT-07`](use-cases/uc-not-07-receive-suggestions.md) | Flujo principal → 5a. La cuenta está en el grupo de control | La sugerencia se registra, pero no se envía. |
+| `CP-NOT-41` | [`UC-NOT-07`](use-cases/uc-not-07-receive-suggestions.md) | Flujo principal → 7a. Ya recibió 2 en 7 días, una ese día o una hace menos de 48 horas | No se envía. |
+| `CP-NOT-42` | [`UC-NOT-07`](use-cases/uc-not-07-receive-suggestions.md) | Flujo principal → 7b. Las últimas 3 sugerencias quedaron sin abrir | Recibe como mucho 1 por semana; tras 28 días sin abrir ninguna, ninguna salvo las de regreso. |
+| `CP-NOT-43` | [`UC-NOT-07`](use-cases/uc-not-07-receive-suggestions.md) | Flujo principal → 7c. Ya recibió una esa semana y la nueva tiene un puntaje menor a 0,6 | No se envía. |
+
+## Matriz de trazabilidad
+
+| Caso de uso | Requisitos | Casos de prueba | Backend | Web | App |
+|---|---|---|---|---|---|
+| [`UC-NOT-01`](use-cases/uc-not-01-manage-preferences.md) | RF-WEB-NOT-01, RF-WEB-NOT-02, RF-APK-NOT-01, RF-APK-NOT-02 | CP-NOT-01, CP-NOT-28, CP-NOT-02, CP-NOT-03, CP-NOT-04, CP-NOT-05 | 4 | 4 | 5 |
+| [`UC-NOT-02`](use-cases/uc-not-02-unsubscribe.md) | RF-WEB-NOT-03 | CP-NOT-06, CP-NOT-07, CP-NOT-08 | 3 | 1 | n/a |
+| [`UC-NOT-03`](use-cases/uc-not-03-allow-push.md) | RF-APK-NOT-03 | CP-NOT-09, CP-NOT-10, CP-NOT-11, CP-NOT-12, CP-NOT-29, CP-NOT-30 | 0 | n/a | 9 |
+| [`UC-NOT-04`](use-cases/uc-not-04-register-device.md) | RF-APK-NOT-04 | CP-NOT-13, CP-NOT-14, CP-NOT-15, CP-NOT-16, CP-NOT-17, CP-NOT-31 | 4 | n/a | 4 |
+| [`UC-NOT-05`](use-cases/uc-not-05-receive-push.md) | RF-APK-NOT-05, RF-APK-NOT-06 | CP-NOT-18, CP-NOT-19, CP-NOT-20, CP-NOT-21, CP-NOT-22, CP-NOT-23, CP-NOT-32, CP-NOT-33 | 15 | n/a | 5 |
+| [`UC-NOT-06`](use-cases/uc-not-06-receive-email.md) | RF-WEB-NOT-04, RF-WEB-NOT-05, RF-WEB-NOT-06, RF-WEB-NOT-07, RF-WEB-NOT-08, RF-WEB-NOT-09, RF-APK-NOT-07, RF-APK-NOT-08, RF-APK-NOT-09, RF-APK-NOT-10, RF-APK-NOT-11, RF-APK-NOT-12 | CP-NOT-24, CP-NOT-25, CP-NOT-26, CP-NOT-27 | 6 | 0 | 0 |
+| [`UC-NOT-07`](use-cases/uc-not-07-receive-suggestions.md) | RF-APK-NOT-13, RF-APK-NOT-14 | CP-NOT-34, CP-NOT-35, CP-NOT-36, CP-NOT-37, CP-NOT-38, CP-NOT-39, CP-NOT-40, CP-NOT-41, CP-NOT-42, CP-NOT-43 | 26 | n/a | 5 |
+
+Las columnas Backend, Web y App cuentan los archivos de test que ejercen el caso; el detalle está en cada caso de uso. «n/a» indica que el caso no aplica a esa plataforma.

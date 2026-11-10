@@ -1,0 +1,171 @@
+/* Vinnot theme for the documentation site. Colors come from the web app's wine palette
+   (frontend-react/src/shared/assets/styles/tailwind.css) and its Poppins typeface. */
+
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 400; font-display: swap; src: url('../fonts/poppins/Poppins_400Regular.ttf') format('truetype'); }
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 500; font-display: swap; src: url('../fonts/poppins/Poppins_500Medium.ttf') format('truetype'); }
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 600; font-display: swap; src: url('../fonts/poppins/Poppins_600SemiBold.ttf') format('truetype'); }
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 700; font-display: swap; src: url('../fonts/poppins/Poppins_700Bold.ttf') format('truetype'); }
+
+:root {
+  --vinnot-wine-50: #fdf2f4;
+  --vinnot-wine-100: #fce7eb;
+  --vinnot-wine-200: #f9d0d9;
+  --vinnot-wine-300: #f4a9ba;
+  --vinnot-wine-400: #ec7794;
+  --vinnot-wine-500: #df4d72;
+  --vinnot-wine-600: #cb2d5d;
+  --vinnot-wine-700: #ab214c;
+  --vinnot-wine-800: #8f1e43;
+  --vinnot-wine-900: #7a1d3e;
+  --vinnot-wine-950: #440b1e;
+  --vinnot-cream: #fcf8f6;
+  --vinnot-ink: #30262c;
+
+  --ifm-color-primary: var(--vinnot-wine-700);
+  --ifm-color-primary-dark: #9a1e44;
+  --ifm-color-primary-darker: var(--vinnot-wine-800);
+  --ifm-color-primary-darkest: var(--vinnot-wine-900);
+  --ifm-color-primary-light: var(--vinnot-wine-600);
+  --ifm-color-primary-lighter: var(--vinnot-wine-500);
+  --ifm-color-primary-lightest: var(--vinnot-wine-400);
+
+  --ifm-font-family-base: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ifm-heading-font-weight: 600;
+  --ifm-background-color: var(--vinnot-cream);
+  --ifm-background-surface-color: #ffffff;
+  --ifm-font-color-base: var(--vinnot-ink);
+  --ifm-navbar-background-color: rgba(252, 248, 246, 0.92);
+  --ifm-footer-background-color: var(--vinnot-wine-950);
+  --ifm-code-font-size: 92%;
+  --ifm-global-radius: 0.6rem;
+  --ifm-menu-color-background-active: var(--vinnot-wine-50);
+  --ifm-toc-border-color: var(--vinnot-wine-100);
+  --docusaurus-highlighted-code-line-bg: rgba(171, 33, 76, 0.1);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: var(--vinnot-wine-400);
+  --ifm-color-primary-dark: var(--vinnot-wine-500);
+  --ifm-color-primary-darker: var(--vinnot-wine-600);
+  --ifm-color-primary-darkest: var(--vinnot-wine-700);
+  --ifm-color-primary-light: var(--vinnot-wine-300);
+  --ifm-color-primary-lighter: var(--vinnot-wine-200);
+  --ifm-color-primary-lightest: var(--vinnot-wine-100);
+
+  --ifm-background-color: #1a1316;
+  --ifm-background-surface-color: #231a1e;
+  --ifm-font-color-base: #f3ecee;
+  --ifm-navbar-background-color: rgba(26, 19, 22, 0.92);
+  --ifm-footer-background-color: #120d0f;
+  --ifm-menu-color-background-active: rgba(236, 119, 148, 0.12);
+  --ifm-toc-border-color: rgba(236, 119, 148, 0.18);
+  --docusaurus-highlighted-code-line-bg: rgba(236, 119, 148, 0.15);
+}
+
+/* The dark footer variant sets its own background; keep it on the brand's deepest wine. */
+.footer--dark {
+  --ifm-footer-background-color: var(--vinnot-wine-950);
+}
+
+[data-theme='dark'] .footer--dark {
+  --ifm-footer-background-color: #120d0f;
+}
+
+.navbar {
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+  box-shadow: none;
+}
+
+.vinnot-navbar-logo {
+  height: 1.6rem;
+  width: auto;
+}
+
+/* The wordmark is dark ink on transparent; lighten it on dark backgrounds. */
+[data-theme='dark'] .vinnot-navbar-logo {
+  filter: invert(1) brightness(1.6);
+}
+
+.navbar__title {
+  font-weight: 500;
+  color: var(--ifm-color-primary);
+}
+
+.menu__link--active:not(.menu__link--sublist) {
+  font-weight: 600;
+}
+
+.theme-doc-markdown h1 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.theme-doc-markdown table {
+  display: table;
+  width: 100%;
+}
+
+/* Wraps every table (src/rehype/table-scroll.mjs): a table wider than the column scrolls inside it. */
+.theme-doc-markdown .table-scroll {
+  overflow-x: auto;
+  margin-bottom: var(--ifm-spacing-vertical);
+}
+
+.theme-doc-markdown .table-scroll > table {
+  margin-bottom: 0;
+}
+
+.docusaurus-mermaid-container {
+  background: var(--ifm-background-surface-color);
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: var(--ifm-global-radius);
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.header-github-link::before {
+  content: '';
+  width: 24px;
+  height: 24px;
+  display: flex;
+  background-color: var(--ifm-navbar-link-color);
+  mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12'/%3E%3C/svg%3E") no-repeat center / contain;
+}
+
+.header-github-link:hover::before {
+  background-color: var(--ifm-color-primary);
+}
+
+/* Manual screenshots: the alt text prefix marks them (Markdown has no classes). */
+.markdown img[alt^='Captura:'],
+.markdown img[alt^='Screenshot:'],
+.markdown img[alt^='Pantalla de la app:'],
+.markdown img[alt^='App screen:'] {
+  display: block;
+  margin: 1rem auto 1.5rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 8%);
+}
+
+.markdown img[alt^='Pantalla de la app:'],
+.markdown img[alt^='App screen:'] {
+  max-width: min(300px, 100%);
+  border-radius: 24px;
+}
+
+/* "View the full diagram" links under Mermaid blocks open the full-size image. */
+.markdown p:has(> a[href^='https://images.vinnot.com/docs/diagrams/']:only-child) {
+  margin-top: -0.5rem;
+  text-align: right;
+}
+
+.markdown a[href^='https://images.vinnot.com/docs/diagrams/'] {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.markdown a[href^='https://images.vinnot.com/docs/diagrams/']::after {
+  content: ' ↗';
+}

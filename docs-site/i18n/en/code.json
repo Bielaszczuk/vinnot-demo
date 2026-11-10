@@ -1,0 +1,95 @@
+{
+  "home.meta.title": {
+    "message": "Documentation"
+  },
+  "home.meta.description": {
+    "message": "Vinnot technical and functional documentation, verified against the code."
+  },
+  "home.hero.title": {
+    "message": "Vinnot documentation"
+  },
+  "home.hero.subtitle": {
+    "message": "What Vinnot is, how to use it and how it is built, verified against the code."
+  },
+  "home.hero.cta": {
+    "message": "Start reading"
+  },
+  "home.section.intro.title": {
+    "message": "Meet Vinnot"
+  },
+  "home.section.intro.description": {
+    "message": "What Vinnot is, what you can do, who uses it and how it is built."
+  },
+  "home.section.manuals.title": {
+    "message": "Manuals"
+  },
+  "home.section.manuals.description": {
+    "message": "How to use Vinnot on the web and in the app, by role."
+  },
+  "home.section.modules.title": {
+    "message": "Modules"
+  },
+  "home.section.modules.description": {
+    "message": "Each part of the product: use cases, requirements, architecture and tests."
+  },
+  "home.section.architecture.title": {
+    "message": "Architecture"
+  },
+  "home.section.architecture.description": {
+    "message": "How the parts connect and which technologies are used."
+  },
+  "home.section.backend.title": {
+    "message": "Backend"
+  },
+  "home.section.backend.description": {
+    "message": "Hexagonal Spring Boot API: modules, data, diagrams and tests."
+  },
+  "home.section.web.title": {
+    "message": "Web"
+  },
+  "home.section.web.description": {
+    "message": "React frontend: navigation, state, flows and diagrams."
+  },
+  "home.section.mobile.title": {
+    "message": "Mobile app"
+  },
+  "home.section.mobile.description": {
+    "message": "Expo / React Native app: conventions, flows, label scanning and tests."
+  },
+  "home.section.infra.title": {
+    "message": "Infrastructure"
+  },
+  "home.section.infra.description": {
+    "message": "AWS deployment, operations, CI/CD and environments."
+  },
+  "home.section.governance.title": {
+    "message": "Governance"
+  },
+  "home.section.governance.description": {
+    "message": "Documentation standards, workflow and this site."
+  },
+  "home.section.project.title": {
+    "message": "Project"
+  },
+  "home.section.project.description": {
+    "message": "Objectives, scope, deliverables, access and repository organization."
+  },
+  "home.section.business.title": {
+    "message": "Business model"
+  },
+  "home.section.business.description": {
+    "message": "Value proposition, competitors, SWOT, monetization, costs and scale."
+  },
+  "home.section.security.title": {
+    "message": "Security"
+  },
+  "home.section.security.description": {
+    "message": "Passwords, authentication, defenses per layer, external services and known limits."
+  },
+  "home.section.quality.title": {
+    "message": "Software quality"
+  },
+  "home.section.quality.description": {
+    "message": "ISO 25010 model, non-functional requirements, metrics, risks and test plan."
+  }
+}

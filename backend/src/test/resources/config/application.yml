@@ -1,0 +1,5 @@
+# Test-only overrides layered on top of src/main/resources/application.yml (classpath:/config/ wins).
+# Background jobs that can call paid providers stay off unless a test turns them on explicitly.
+ai:
+  profile-refresh:
+    enabled: false

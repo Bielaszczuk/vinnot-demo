@@ -1,0 +1,840 @@
+{
+  "version": "2026-10-29",
+  "pages": [
+    {
+      "slug": "about",
+      "category": "about",
+      "image": "legal",
+      "title": {
+        "es": "Acerca de Vinnot",
+        "en": "About Vinnot"
+      },
+      "summary": {
+        "es": "El vino, con más contexto y menos complicaciones.",
+        "en": "Wine, with more context and fewer complications."
+      },
+      "sections": [
+        {
+          "id": "discover",
+          "title": {
+            "es": "Descubrir y decidir",
+            "en": "Discover and decide"
+          },
+          "body": {
+            "es": "Vinnot reúne vinos, bodegas, experiencias y rutas en un mismo lugar. Podés explorar el catálogo, consultar reseñas y organizar tu cava para recordar qué probaste y qué te gustaría descubrir.",
+            "en": "Vinnot brings wines, wineries, experiences and routes together. Explore the catalogue, read reviews and organise your cellar to remember what you have tried and what you would like to discover."
+          }
+        },
+        {
+          "id": "tools",
+          "title": {
+            "es": "Herramientas para explorar",
+            "en": "Tools for exploration"
+          },
+          "body": {
+            "es": "La app mobile permite reconocer etiquetas con la cámara y revisar posibles coincidencias. Los perfiles y las comparaciones con IA ayudan a interpretar estilos y maridajes; no sustituyen la ficha del productor ni garantizan una identificación exacta.",
+            "en": "The mobile app lets you recognise labels with your camera and review possible matches. AI profiles and comparisons help explain styles and pairings; they do not replace the producer's technical sheet or guarantee an exact identification."
+          }
+        },
+        {
+          "id": "community",
+          "title": {
+            "es": "Una comunidad con criterio propio",
+            "en": "A community with its own perspective"
+          },
+          "body": {
+            "es": "Las reseñas y aportes de la comunidad acompañan la información del catálogo. Cada experiencia es personal: una puntuación no reemplaza tus gustos. Los eventos y rutas permiten conocer propuestas de organizadores y bodegas, con sus condiciones particulares.",
+            "en": "Community reviews and contributions complement catalogue information. Each experience is personal: a rating does not replace your preferences. Events and routes introduce organisers and wineries, with their own conditions."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "help",
+      "category": "help",
+      "title": {
+        "es": "Ayuda y preguntas frecuentes",
+        "en": "Help and frequently asked questions"
+      },
+      "summary": {
+        "es": "Respuestas claras para aprovechar Vinnot.",
+        "en": "Clear answers to make the most of Vinnot."
+      },
+      "sections": [
+        {
+          "id": "account",
+          "title": {
+            "es": "¿Cómo activo o recupero mi cuenta?",
+            "en": "How do I activate or recover my account?"
+          },
+          "body": {
+            "es": "Después de registrarte, abrí el enlace del correo de verificación. Revisá también spam. Si olvidaste tu contraseña, usá la opción de recuperación en el inicio de sesión. No compartas contraseñas ni enlaces de verificación con otras personas.",
+            "en": "After registering, open the verification link in your email. Check your spam folder too. If you forgot your password, use password recovery on the sign-in screen. Never share passwords or verification links."
+          }
+        },
+        {
+          "id": "scan",
+          "title": {
+            "es": "¿Dónde escaneo una etiqueta?",
+            "en": "Where can I scan a label?"
+          },
+          "body": {
+            "es": "El escaneo está disponible en la app mobile, desde Vinos. Encuadrá la etiqueta completa, evitá reflejos y revisá el nombre, la bodega y la cepa del resultado. En web podés explorar el catálogo y acceder a la invitación para usar la app.",
+            "en": "Scanning is available in the mobile app under Wines. Frame the entire label, avoid reflections and check the result's name, winery and grape variety. On the web you can explore the catalogue and find the invitation to use the app."
+          }
+        },
+        {
+          "id": "matches",
+          "title": {
+            "es": "¿Qué significa una posible coincidencia?",
+            "en": "What does a possible match mean?"
+          },
+          "body": {
+            "es": "Es un candidato del catálogo, no una confirmación. Compará la línea y la variedad antes de seleccionarlo. Si no corresponde, buscá manualmente por nombre o bodega. Si el vino falta, podés enviarlo para revisión mediante el flujo de propuestas.",
+            "en": "It is a catalogue candidate, not a confirmation. Compare the product line and variety before selecting it. If it is not right, search manually by name or winery. If a wine is missing, submit it for review through the wine submission flow."
+          }
+        },
+        {
+          "id": "ai",
+          "title": {
+            "es": "¿Cómo uso los perfiles y comparaciones?",
+            "en": "How do I use profiles and comparisons?"
+          },
+          "body": {
+            "es": "En el detalle de un vino podés consultar o solicitar su perfil. Para comparar, seleccioná dos vinos. El análisis generado puede contener estimaciones o errores; para alcohol, alérgenos y características verificables, consultá la etiqueta o al productor. Los resultados guardados se reutilizan cuando corresponde.",
+            "en": "Open a wine's detail page to view or request its profile. Select two wines to compare them. Generated analysis can contain estimates or errors; check the label or producer for alcohol, allergens and verifiable characteristics. Stored results are reused when applicable."
+          }
+        },
+        {
+          "id": "cellar",
+          "title": {
+            "es": "¿Cómo organizo mi cava?",
+            "en": "How do I organise my cellar?"
+          },
+          "body": {
+            "es": "Iniciá sesión y agregá vinos desde el catálogo o tu cava. Podés gestionar las entradas y sus datos desde esa sección. Una cava vacía no significa que falten vinos en el catálogo.",
+            "en": "Sign in and add wines from the catalogue or your cellar. Manage entries and their details in that section. An empty cellar does not mean there are no wines in the catalogue."
+          }
+        },
+        {
+          "id": "events",
+          "title": {
+            "es": "¿La inscripción confirma el pago?",
+            "en": "Does registration confirm payment?"
+          },
+          "body": {
+            "es": "No necesariamente. Revisá el estado de la inscripción y las instrucciones del evento. Cuando el pago requiere confirmación del organizador, informar el pago no equivale a tener una plaza confirmada. Ante cancelaciones o consultas, usá los datos de contacto del evento.",
+            "en": "Not necessarily. Check your registration status and the event instructions. Where payment requires organiser confirmation, reporting payment does not mean your place is confirmed. For cancellations or questions, use the event's contact details."
+          }
+        },
+        {
+          "id": "routes",
+          "title": {
+            "es": "¿Una ruta reserva las visitas?",
+            "en": "Does a route book the visits?"
+          },
+          "body": {
+            "es": "Una ruta reúne paradas e información para planificar el recorrido. Consultá disponibilidad, horarios, reservas y condiciones con cada establecimiento antes de viajar; no supongas una reserva por guardar o consultar una ruta.",
+            "en": "A route brings together stops and information to plan a journey. Check availability, opening hours, bookings and conditions with each establishment before travelling; viewing or saving a route does not imply a reservation."
+          }
+        },
+        {
+          "id": "language",
+          "title": {
+            "es": "¿Puedo cambiar el idioma?",
+            "en": "Can I change the language?"
+          },
+          "body": {
+            "es": "Usá el selector de idioma disponible en la aplicación. Los nombres propios de vinos y bodegas se conservan. Un contenido escrito por otro usuario puede mantener su idioma original.",
+            "en": "Use the language selector in the application. Wine and winery names are preserved. Content written by another user may remain in its original language."
+          }
+        },
+        {
+          "id": "privacy",
+          "title": {
+            "es": "¿Cómo gestiono mi cuenta y mis datos?",
+            "en": "How do I manage my account and data?"
+          },
+          "body": {
+            "es": "Desde tu perfil podés gestionar tu cuenta y las opciones de eliminación disponibles. Para consultas de privacidad o problemas de acceso, usá Contacto. No incluyas contraseñas, códigos de sesión ni documentos sensibles en el mensaje.",
+            "en": "From your profile you can manage your account and the available deletion options. For privacy questions or access problems, use Contact. Do not include passwords, session codes or sensitive documents in your message."
+          }
+        },
+        {
+          "id": "problem",
+          "title": {
+            "es": "¿Qué hago si algo falla?",
+            "en": "What should I do if something fails?"
+          },
+          "body": {
+            "es": "Reintentá la consulta si se trata de una carga de información. Si estabas enviando una inscripción, pago o propuesta, verificá primero su estado antes de repetir. Al contactar soporte, indicá pantalla y pasos del problema, sin compartir información sensible.",
+            "en": "Retry if you were loading information. If you were submitting a registration, payment report or wine proposal, check its status before repeating it. When contacting support, describe the screen and steps without sharing sensitive information."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "ranking",
+      "category": "platform",
+      "title": {
+        "es": "Cómo se ordena la información",
+        "en": "How information is ordered"
+      },
+      "summary": {
+        "es": "Búsqueda, reseñas y reconocimiento: indicadores diferentes.",
+        "en": "Search, reviews and recognition: different signals."
+      },
+      "sections": [
+        {
+          "id": "search",
+          "title": {
+            "es": "Búsqueda y filtros",
+            "en": "Search and filters"
+          },
+          "body": {
+            "es": "La búsqueda del catálogo utiliza el texto ingresado para recuperar coincidencias de nombre e identidad del vino y bodega. Los filtros disponibles acotan la selección. Los resultados de una búsqueda no son una recomendación de calidad ni una clasificación universal de los mejores vinos.",
+            "en": "Catalogue search uses your text to retrieve matches for wine names, identity and wineries. Available filters narrow the selection. Search results are not a quality recommendation or a universal ranking of the best wines."
+          }
+        },
+        {
+          "id": "ratings",
+          "title": {
+            "es": "Reseñas y puntuaciones",
+            "en": "Reviews and ratings"
+          },
+          "body": {
+            "es": "Las puntuaciones de usuarios resumen opiniones compartidas en la plataforma. No son un análisis de laboratorio ni una valoración de Vinnot sobre seguridad, autenticidad o calidad objetiva. Considerá también el contenido y contexto de las reseñas.",
+            "en": "User ratings summarise opinions shared on the platform. They are not laboratory analysis or a Vinnot assessment of safety, authenticity or objective quality. Consider the content and context of reviews too."
+          }
+        },
+        {
+          "id": "recognition",
+          "title": {
+            "es": "Coincidencia de una etiqueta",
+            "en": "Label matching"
+          },
+          "body": {
+            "es": "El reconocimiento combina la información extraída de la imagen y las identidades presentes en el catálogo. El porcentaje ayuda a ordenar candidatos: no es una probabilidad estadística certificada de que sea tu botella. Una variedad o línea comercial distinta puede impedir la confirmación incluso cuando hay similitud visual.",
+            "en": "Recognition combines information extracted from the image with catalogue identities. The percentage helps order candidates: it is not a certified statistical probability of identifying your bottle. A different variety or product line may prevent confirmation even where there is visual similarity."
+          }
+        },
+        {
+          "id": "location",
+          "title": {
+            "es": "Ubicación y experiencias",
+            "en": "Location and experiences"
+          },
+          "body": {
+            "es": "Las funciones de cercanía utilizan la ubicación que compartís o seleccionás para mostrar experiencias relevantes al lugar. Revisá distancia, horarios y condiciones con el organizador. La proximidad no supone una recomendación de seguridad ni una reserva.",
+            "en": "Nearby features use the location you share or select to show experiences relevant to the area. Check distance, hours and conditions with the organiser. Proximity does not imply a safety recommendation or booking."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "terms",
+      "category": "terms",
+      "image": "legal",
+      "title": {
+        "es": "Términos de uso",
+        "en": "Terms of use"
+      },
+      "summary": {
+        "es": "El alcance del servicio y las reglas para utilizar Vinnot.",
+        "en": "The scope of the service and the rules for using Vinnot."
+      },
+      "sections": [
+        {
+          "id": "service",
+          "title": {
+            "es": "Qué ofrece Vinnot",
+            "en": "What Vinnot offers"
+          },
+          "body": {
+            "es": "Vinnot es una plataforma de descubrimiento y gestión de vinos, reseñas, cava personal, bodegas, eventos y rutas. El titular identificado en el centro legal opera la plataforma. Estos términos describen el uso de sus funciones; las condiciones específicas de cada evento deben consultarse antes de inscribirse.",
+            "en": "Vinnot is a platform for wine discovery and management, reviews, personal cellars, wineries, events and routes. The operator identified in the legal centre runs the platform. These terms describe the use of its features; the conditions of each event should be checked before registering."
+          }
+        },
+        {
+          "id": "account",
+          "title": {
+            "es": "Tu cuenta y su seguridad",
+            "en": "Your account and its security"
+          },
+          "body": {
+            "es": "Utilizá datos de contacto propios y mantenelos actualizados. Protegé tus credenciales y no uses cuentas ajenas ni suplantes a otras personas. Los permisos de administración, moderación y organización se limitan a las acciones autorizadas para cada rol. Si sospechás un acceso no autorizado, cambiá la contraseña y contactanos.",
+            "en": "Use your own contact details and keep them up to date. Protect your credentials and do not use other people's accounts or impersonate others. Administration, moderation and organiser permissions are limited to the actions authorised for each role. If you suspect unauthorised access, change your password and contact us."
+          }
+        },
+        {
+          "id": "responsible",
+          "title": {
+            "es": "Uso responsable",
+            "en": "Responsible use"
+          },
+          "body": {
+            "es": "Las funciones vinculadas con bebidas alcohólicas no deben utilizarse para promover su consumo por menores ni para eludir controles de edad de un organizador o establecimiento. Respetá las restricciones aplicables en tu lugar de residencia y en cada actividad. Vinnot no es un servicio médico ni una recomendación para consumir alcohol.",
+            "en": "Features relating to alcoholic beverages must not be used to promote consumption by minors or bypass an organiser's or establishment's age controls. Follow restrictions applicable where you live and at each activity. Vinnot is not a medical service or a recommendation to consume alcohol."
+          }
+        },
+        {
+          "id": "content",
+          "title": {
+            "es": "Contenido y aportes",
+            "en": "Content and contributions"
+          },
+          "body": {
+            "es": "Conservás los derechos que te correspondan sobre tus aportes. Al enviar una reseña, foto o propuesta, autorizás el uso necesario para alojarla, mostrarla y revisarla dentro del servicio. No publiques material sobre el que no tengas derechos, datos privados de terceros o contenido engañoso. Las normas de comunidad y moderación explican los criterios aplicables.",
+            "en": "You retain the rights you hold in your contributions. When you submit a review, photo or proposal, you authorise the use necessary to host, display and review it within the service. Do not publish material you have no right to use, private information about others or misleading content. The community and moderation policies explain the applicable criteria."
+          }
+        },
+        {
+          "id": "information",
+          "title": {
+            "es": "Catálogo, escaneo e inteligencia artificial",
+            "en": "Catalogue, scanning and artificial intelligence"
+          },
+          "body": {
+            "es": "La información puede estar incompleta o desactualizada. Revisá la etiqueta y la ficha del productor para datos como alcohol, alérgenos, origen y composición. Un resultado de escaneo requiere verificar nombre, línea y variedad. El contenido generado con IA puede contener inferencias y errores; no constituye una certificación, diagnóstico ni garantía sobre una botella.",
+            "en": "Information may be incomplete or outdated. Check the label and producer's technical sheet for details such as alcohol, allergens, origin and composition. A scan result requires checking the name, product line and variety. AI-generated content may contain inferences and errors; it is not certification, a diagnosis or a guarantee about a bottle."
+          }
+        },
+        {
+          "id": "transactions",
+          "title": {
+            "es": "Eventos, entradas y pagos",
+            "en": "Events, tickets and payments"
+          },
+          "body": {
+            "es": "Vinnot permite que los organizadores vendan entradas para sus eventos. El pago lo procesa Mercado Pago según sus propios términos y condiciones; Vinnot no almacena datos de tarjetas. Vinnot retiene una comisión sobre el total de cada compra de entradas, que el organizador ve en su cuenta antes de empezar a vender. La tasa vigente figura en la sección Cobros de eventos de la cuenta de organizador; si cambia, se avisa con anticipación y el cambio se aplica solo a las ventas nuevas. Cada organizador es responsable de su evento, de las condiciones de devolución y de las cancelaciones. Las devoluciones se procesan a través de Mercado Pago. Si un organizador cobra por otro medio, como transferencia o pago en el lugar, gestiona ese cobro directamente y Vinnot no lo procesa ni cobra comisión. Consultá precio, disponibilidad, requisitos y condiciones de cancelación antes de comprar. Actualmente Vinnot no vende botellas ni ofrece suscripciones pagas.",
+            "en": "Vinnot lets organisers sell tickets for their events. Payments are processed by Mercado Pago under its own terms and conditions; Vinnot does not store card details. Vinnot keeps a commission on the total of each ticket purchase, which the organiser sees in their account before they start selling. The current rate is shown in the Event payments section of the organiser account; if it changes, the change is announced in advance and applies only to new sales. Each organiser is responsible for their event, its refund conditions and cancellations. Refunds are processed through Mercado Pago. When an organiser collects payment another way, such as a bank transfer or payment at the venue, they handle it directly and Vinnot neither processes it nor charges a commission. Check price, availability, requirements and cancellation conditions before buying. Vinnot currently does not sell bottles or offer paid subscriptions."
+          }
+        },
+        {
+          "id": "restrictions",
+          "title": {
+            "es": "Restricciones y revisión",
+            "en": "Restrictions and review"
+          },
+          "body": {
+            "es": "No intentes acceder sin autorización, automatizar abuso, manipular puntuaciones ni interferir con el servicio. Ante incumplimientos pueden revisarse contenidos o restringirse accesos conforme a la política de moderación. Podés solicitar revisión por Contacto identificando la decisión. Una restricción no elimina los derechos que te reconozca la legislación aplicable.",
+            "en": "Do not attempt unauthorised access, automate abuse, manipulate ratings or interfere with the service. Breaches may result in content review or access restrictions under the moderation policy. You can request review through Contact by identifying the decision. A restriction does not remove rights granted by applicable law."
+          }
+        },
+        {
+          "id": "changes",
+          "title": {
+            "es": "Cambios, baja y consultas",
+            "en": "Changes, account closure and questions"
+          },
+          "body": {
+            "es": "Podés gestionar la baja de tu cuenta desde las opciones disponibles en el perfil o consultar por Contacto. Las modificaciones del servicio o de estos términos se identificarán mediante una versión actualizada; no se atribuye una aceptación retroactiva a usuarios existentes. Ninguna disposición pretende excluir derechos irrenunciables ni las responsabilidades que legalmente correspondan.",
+            "en": "You can manage account closure through the available profile options or ask through Contact. Changes to the service or these terms will be identified through an updated version; no retroactive acceptance is attributed to existing users. No provision is intended to exclude mandatory rights or responsibilities imposed by law."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "privacy",
+      "category": "privacy",
+      "image": "privacy",
+      "title": {
+        "es": "Privacidad y datos personales",
+        "en": "Privacy and personal data"
+      },
+      "summary": {
+        "es": "Qué información interviene en el servicio y cómo consultar sobre tus datos.",
+        "en": "What information is involved in the service and how to ask about your data."
+      },
+      "sections": [
+        {
+          "id": "responsible",
+          "title": {
+            "es": "Responsable y contacto",
+            "en": "Controller and contact"
+          },
+          "body": {
+            "es": "El responsable es Vinnot. Podés enviar consultas de privacidad a vinnotapp@gmail.com o seleccionar Privacidad en Contacto. Para proteger tu cuenta, podemos necesitar verificar tu identidad de forma proporcional antes de atender solicitudes sobre datos personales.",
+            "en": "The controller is Vinnot. Send privacy enquiries to vinnotapp@gmail.com or select Privacy in Contact. To protect your account, proportionate identity verification may be needed before handling personal-data requests."
+          }
+        },
+        {
+          "id": "account-deletion",
+          "title": {
+            "es": "Eliminar tu cuenta de Vinnot",
+            "en": "Delete your Vinnot account"
+          },
+          "body": {
+            "es": "Podés solicitar la eliminación de tu cuenta y los datos asociados aunque hayas desinstalado la app. Escribí a vinnotapp@gmail.com desde el correo de tu cuenta con el asunto «Eliminar cuenta de Vinnot», o abrí Contacto y elegí Privacidad. Indicá el correo o nombre de usuario y que querés eliminar la cuenta; no envíes contraseñas, códigos ni documentos sensibles. Verificamos que la solicitud corresponda al titular antes de ejecutarla. Revisamos las solicitudes diariamente, habitualmente alrededor de las 18:00 de Argentina; la recepción no significa que el borrado ya se haya realizado. Si podés entrar, también tenés la opción Eliminar cuenta en Perfil → Cuenta. Desactivar la cuenta no es eliminarla. Consultá Conservación y eliminación y Datos de moderación y bloqueos en esta página para conocer qué información puede conservarse y durante cuánto tiempo.",
+            "en": "You can request deletion of your account and associated data even after uninstalling the app. Email vinnotapp@gmail.com from your account email with the subject “Delete Vinnot account”, or open Contact and choose Privacy. Include your email or username and state that you want the account deleted; do not send passwords, codes or sensitive documents. We verify that the request comes from the account holder before acting on it. Requests are reviewed daily, usually around 18:00 Argentina time; receipt does not mean deletion has already been completed. If you can sign in, you can also choose Delete account in Profile → Account. Deactivation is not deletion. See Retention and deletion and Moderation data and blocks on this page for information that may be retained and how long it is kept."
+          }
+        },
+        {
+          "id": "data",
+          "title": {
+            "es": "Datos que utilizás en Vinnot",
+            "en": "Data you use in Vinnot"
+          },
+          "body": {
+            "es": "El servicio procesa los datos de registro y perfil que suministrás, información necesaria para autenticar tu sesión, aportes como reseñas y propuestas, entradas de tu cava, inscripciones a eventos y compras de entradas. Los datos de contacto de una inscripción se utilizan para su gestión. No incluyas información sensible innecesaria en textos o imágenes. Para acreditar tu aceptación de los términos guardamos la versión, el idioma, la huella del documento y la fecha del servidor asociados a tu cuenta. Esta aceptación no activa permisos opcionales ni publicidad.",
+            "en": "The service processes the registration and profile details you provide, information needed to authenticate your session, contributions such as reviews and proposals, cellar entries, event registrations and ticket purchases. Registration contact details are used to manage the registration. Do not include unnecessary sensitive information in text or images. To evidence your terms acceptance we store the version, language, document hash and server timestamp linked to your account. Acceptance does not enable optional permissions or advertising."
+          }
+        },
+        {
+          "id": "ticket-payments",
+          "title": {
+            "es": "Pagos de entradas",
+            "en": "Ticket payments"
+          },
+          "body": {
+            "es": "Si comprás una entrada paga, el pago se hace en Mercado Pago, que lo procesa según sus propios términos y su política de privacidad. Para iniciar el cobro le enviamos el nombre del evento, la cantidad, el precio, la moneda, la comisión de Vinnot y una referencia interna de la operación; no le enviamos tu nombre ni tu correo. Los datos que ingresás para pagar, como la tarjeta, los cargás directamente en Mercado Pago y Vinnot no los guarda. De cada compra conservamos tu cuenta, el evento, el organizador, la cantidad, el precio, la comisión aplicada y, de Mercado Pago, el número de pago, el importe, el importe devuelto, el estado y sus fechas. Estos registros se conservan como historial financiero de la operación. Si sos organizador y vinculás tu cuenta de Mercado Pago, guardamos su número de vendedor y las credenciales de autorización cifradas; se eliminan junto con tu cuenta.",
+            "en": "If you buy a paid ticket, you pay on Mercado Pago, which processes the payment under its own terms and privacy policy. To start the payment we send it the event name, quantity, price, currency, Vinnot's commission and an internal reference for the transaction; we do not send your name or email. The details you enter to pay, such as your card, go directly to Mercado Pago and Vinnot does not store them. For each purchase we keep your account, the event, the organiser, the quantity, the price, the commission applied and, from Mercado Pago, the payment number, amount, refunded amount, status and dates. These records are kept as the financial history of the transaction. If you are an organiser and connect your Mercado Pago account, we store its seller number and the encrypted authorisation credentials; they are deleted with your account."
+          }
+        },
+        {
+          "id": "communications",
+          "title": {
+            "es": "Correos, avisos y novedades",
+            "en": "Emails, alerts and news"
+          },
+          "body": {
+            "es": "Los avisos de cuenta, seguridad, pagos y entradas son necesarios para el servicio y siempre se envían, igual que los avisos sobre tus entradas y los eventos a los que te inscribiste. Las demás categorías (eventos cerca tuyo, comunidad, recomendaciones, recordatorios y newsletter) vienen activadas, incluidas las promocionales: mientras no hayas decidido sobre las novedades de Vinnot, contamos que las aceptaste. Desde tu perfil podés apagar cualquiera de ellas, por categoría y por canal (correo o app), y retirar ese permiso cuando quieras. Además de los avisos que generan tus acciones, te enviamos por la app sugerencias y recordatorios, como un vino o una ruta para vos, los eventos del fin de semana o un vino que miraste: como mucho dos por semana y nunca entre las 22:00 y las 09:00 de tu zona horaria. Guardamos tus elecciones y un registro de cada vez que das o retirás ese permiso, con la fecha y el origen (web, app o enlace del correo). Cada correo promocional incluye un enlace para darte de baja de esa categoría. Estos datos se eliminan junto con tu cuenta.",
+            "en": "Account, security, payment and ticket notices are needed for the service and are always sent, as are notices about your tickets and the events you registered for. The other categories (events near you, community, recommendations, reminders and the newsletter) start switched on, promotional ones included: until you decide about news from Vinnot, we count it as accepted. From your profile you can turn any of them off, per category and channel (email or app), and withdraw that permission at any time. Besides the notices your own actions trigger, we send you suggestions and reminders in the app, such as a wine or a route for you, the weekend's events or a wine you viewed: at most two a week and never between 22:00 and 09:00 in your time zone. We store your choices and a record of each time you give or withdraw that permission, with its date and source (web, app or email link). Every promotional email includes a link to unsubscribe from that category. This data is deleted with your account."
+          }
+        },
+        {
+          "id": "event-area",
+          "title": {
+            "es": "Eventos cerca tuyo y avisos en la app",
+            "en": "Events near you and app notifications"
+          },
+          "body": {
+            "es": "Si activás \"eventos cerca tuyo\", guardamos la zona que elegiste: una región, o una ubicación aproximada que la app y el servidor redondean a unos 11 km. Nunca guardamos tu ubicación precisa ni la mostramos a otras personas. La usamos solo para avisarte, como mucho una vez por día, cuando se publica un evento nuevo en tu zona. Podés cambiarla o dejar de recibir estos avisos desde tus preferencias de notificaciones. Para enviarte avisos en la app guardamos el identificador de notificaciones de tu dispositivo, su plataforma y el idioma de la app; se borra al cerrar sesión en ese dispositivo. Estos datos se eliminan junto con tu cuenta.",
+            "en": "If you turn on \"events near you\", we store the area you chose: a region, or an approximate location that the app and the server round to about 11 km. We never store your precise location or show it to other people. We use it only to let you know, at most once a day, when a new event is published in your area. You can change it or stop these alerts from your notification preferences. To send you app notifications we store your device's notification identifier, its platform and the app language; it is removed when you sign out on that device. This data is deleted with your account."
+          }
+        },
+        {
+          "id": "taste-recommendations",
+          "title": {
+            "es": "Recomendaciones según tu gusto",
+            "en": "Recommendations based on your taste"
+          },
+          "body": {
+            "es": "Cada noche calculamos, a partir de las puntuaciones que diste en tus reseñas y en tu cava, qué uvas y tipos de vino te gustan más. Ese perfil de gusto no se muestra a otras personas y se recalcula entero cada vez, así que refleja tus puntuaciones actuales. Junto con lo que abrís en la app (ver Actividad en la app), lo usamos para elegir las sugerencias que te enviamos por la app, como un vino, una ruta o una bodega para vos, dentro del máximo de dos avisos por semana. Nunca te recomendamos un vino que ya está en tu cava o que ya reseñaste. Las recomendaciones vienen activadas y podés desactivarlas desde tus preferencias de notificaciones; el perfil se elimina junto con tu cuenta.",
+            "en": "Every night we work out, from the ratings you gave in your reviews and your cellar, which grapes and wine types you like most. This taste profile is never shown to other people and is fully recomputed each time, so it reflects your current ratings. Together with what you open in the app (see Activity in the app), we use it to choose the suggestions we send you in the app, such as a wine, a route or a winery for you, within the limit of two a week. We never recommend a wine that is already in your cellar or that you reviewed. Recommendations start switched on and you can turn them off from your notification preferences; the profile is deleted with your account."
+          }
+        },
+        {
+          "id": "activity",
+          "title": {
+            "es": "Actividad en la app",
+            "en": "Activity in the app"
+          },
+          "body": {
+            "es": "Para personalizar tus sugerencias y elegir cuándo enviarte avisos, registramos qué vinos, rutas, eventos y bodegas abrís en la app, cuándo abrís la app (como mucho una vez cada 30 minutos, para conocer tu horario habitual en tu zona horaria) y qué notificaciones abrís. Estos datos no se muestran a otras personas ni se comparten con terceros. Se eliminan automáticamente a los 180 días y, antes, junto con tu cuenta.",
+            "en": "To personalise your suggestions and choose when to send you notifications, we record which wines, routes, events and wineries you open in the app, when you open the app (at most once every 30 minutes, to learn your usual time in your time zone) and which notifications you open. This data is never shown to other people or shared with third parties. It is deleted automatically after 180 days, and earlier together with your account."
+          }
+        },
+        {
+          "id": "images",
+          "title": {
+            "es": "Fotos, reconocimiento e IA",
+            "en": "Photos, recognition and AI"
+          },
+          "body": {
+            "es": "El reconocimiento de etiquetas analiza la imagen y puede enviar su contenido al proveedor visual configurado. Las capturas temporales de la app, imágenes enviadas como propuestas y etiquetas guardadas en el catálogo tienen finalidades diferentes. Los perfiles y comparaciones utilizan datos del vino; evitá fotografiar personas, documentos u otros datos privados al escanear.",
+            "en": "Label recognition analyses the image and may send its content to the configured visual provider. Temporary app captures, images submitted as proposals and labels stored in the catalogue serve different purposes. Profiles and comparisons use wine information; avoid photographing people, documents or other private data when scanning."
+          }
+        },
+        {
+          "id": "location",
+          "title": {
+            "es": "Ubicación y permisos del dispositivo",
+            "en": "Location and device permissions"
+          },
+          "body": {
+            "es": "Las funciones de cercanía y mapas pueden utilizar una ubicación seleccionada o compartida con permiso. La cámara y galería se utilizan para las acciones de imagen que solicitás. Podés revisar estos permisos en los ajustes del dispositivo; retirarlos puede limitar la función correspondiente, pero no constituye por sí mismo una solicitud de eliminación de datos ya enviados.",
+            "en": "Nearby and map features may use a selected location or one shared with permission. The camera and photo library are used for image actions you request. Review permissions in device settings; withdrawing them may limit the corresponding feature but does not itself request deletion of data already submitted."
+          }
+        },
+        {
+          "id": "providers",
+          "title": {
+            "es": "Proveedores y comunicación de datos",
+            "en": "Providers and data disclosure"
+          },
+          "body": {
+            "es": "La operación utiliza servicios de alojamiento, almacenamiento y correo de AWS, servicios de almacenamiento y entrega de imágenes de Cloudflare R2/Workers y servicios de IA de OpenAI según la configuración desplegada. Los pagos de entradas los procesa Mercado Pago (ver Pagos de entradas). Mapas y acceso social pueden conectarse con Google, Apple o Meta cuando se usan esas funciones. Estos servicios pueden procesar datos fuera del país del usuario. Los organizadores acceden a los datos necesarios para gestionar sus inscripciones; publicar una reseña o aporte hace visible su contenido según la función.",
+            "en": "Operation uses AWS hosting, storage and email services, Cloudflare R2/Workers image storage and delivery, and OpenAI AI services according to the deployed configuration. Ticket payments are processed by Mercado Pago (see Ticket payments). Maps and social sign-in may connect to Google, Apple or Meta when those features are used. These services may process data outside the user's country. Organisers access information needed to manage their registrations; publishing a review or contribution makes its content visible according to the feature."
+          }
+        },
+        {
+          "id": "retention",
+          "title": {
+            "es": "Conservación y eliminación",
+            "en": "Retention and deletion"
+          },
+          "body": {
+            "es": "Los datos de cuenta y actividad se conservan para prestar el servicio y gestionar sus relaciones y obligaciones aplicables. La eliminación de cuenta activa las operaciones de limpieza previstas para sus datos y referencias. Las copias de seguridad no se borran de forma instantánea. En Contacto, la cola elimina el mensaje al entregarlo al canal de soporte; los pendientes expiran a los siete días y los identificadores técnicos de deduplicación a los treinta. La conversación recibida por correo se gestiona por el canal de soporte.",
+            "en": "Account and activity data are retained to provide the service and manage related relationships and applicable obligations. Account deletion activates cleanup operations for its data and references. Backups are not erased instantly. In Contact, the queue removes a message after delivery to the support channel; pending messages expire after seven days and technical deduplication identifiers after thirty. Conversations received by email are managed through the support channel."
+          }
+        },
+        {
+          "id": "rights",
+          "title": {
+            "es": "Acceso, corrección y solicitudes",
+            "en": "Access, correction and requests"
+          },
+          "body": {
+            "es": "Podés consultar y modificar los datos disponibles en tu perfil y solicitar acceso, rectificación o eliminación de tus datos por el canal de privacidad. Indicá qué necesitás sin enviar contraseñas ni códigos. Atenderemos la solicitud conforme a los derechos, verificaciones y plazos que resulten aplicables; si existe una limitación legal o técnica relevante, deberá explicarse en la respuesta.",
+            "en": "You can view and modify available profile details and request access, correction or deletion through the privacy channel. Explain what you need without sending passwords or codes. Requests will be handled under applicable rights, verification requirements and time limits; any relevant legal or technical limitation should be explained in the response."
+          }
+        },
+        {
+          "id": "controls",
+          "title": {
+            "es": "Almacenamiento y seguridad",
+            "en": "Storage and security"
+          },
+          "body": {
+            "es": "Consultá Configuración de cookies para los mapas integrados opcionales y el almacenamiento de sesión/preferencias del navegador. Aplicamos controles de acceso y sesión; ningún servicio puede garantizar ausencia total de incidentes. Si detectás un posible problema de seguridad, contactanos sin difundir credenciales ni datos de otras personas.",
+            "en": "See Cookie settings for optional embedded maps and browser session/preference storage. Access and session controls are applied; no service can guarantee that incidents will never occur. If you identify a possible security issue, contact us without disclosing credentials or other people's data."
+          }
+        },
+        {
+          "id": "security-events",
+          "title": {
+            "es": "Registro de seguridad",
+            "en": "Security log"
+          },
+          "body": {
+            "es": "Para proteger las cuentas registramos eventos de seguridad: inicios de sesión correctos y fallidos, bloqueos temporales por intentos fallidos, el uso de una sesión que ya había sido renovada, cambios y restablecimientos de contraseña, cambios de correo o de rol, suspensiones (también las automáticas) y su levantamiento, y la eliminación de una cuenta. Cada registro guarda el identificador de la cuenta, el tipo de evento, la dirección IP, el navegador o la app desde donde se hizo (user agent, recortado) y la fecha y hora. Lo usamos solo para detectar y frenar accesos indebidos y para atender consultas de seguridad; no se muestra a otras personas. Se elimina automáticamente a los 180 días. Si eliminás tu cuenta, los registros dejan de estar vinculados a ella en ese momento y el resto de sus datos se borra al cumplirse ese plazo.",
+            "en": "To protect accounts we record security events: successful and failed sign-ins, temporary locks after failed attempts, use of a session that had already been renewed, password changes and resets, email or role changes, suspensions (automatic ones included) and their lifting, and account deletion. Each record stores the account identifier, the event type, the IP address, the browser or app it came from (user agent, truncated) and the date and time. We use it only to detect and stop unauthorised access and to handle security enquiries; it is never shown to other people. It is deleted automatically after 180 days. If you delete your account, the records are unlinked from it at once and the rest of their data is deleted when that period ends."
+          }
+        },
+        {
+          "id": "community-retention",
+          "title": {
+            "es": "Datos de moderación y bloqueos",
+            "en": "Moderation data and blocks"
+          },
+          "body": {
+            "es": "Las denuncias guardan el motivo, detalle, una copia acotada del contenido y las decisiones para su evaluación y apelaciones. Los casos abiertos se conservan hasta resolverlos. A los 90 días del cierre quedan sujetos a eliminación automática por lotes, junto con su evidencia, auditoría y comprobante. Las notas de aprobación o rechazo de publicaciones siguen el mismo plazo desde la decisión. El proceso se ejecuta cada hora; una interrupción o acumulación puede demorar la limpieza. Los bloqueos se eliminan al desbloquear o borrar cualquiera de las cuentas. El borrado de cuenta anula las referencias personales del caso, pero la evidencia textual puede conservar datos hasta la purga. Esta limpieza de la base activa no borra inmediatamente backups ni correos ya recibidos.",
+            "en": "Reports store the reason, details, a bounded content snapshot and decisions for assessment and appeals. Open cases are retained until resolved. At 90 days after closure they become eligible for automatic batch deletion together with evidence, audit and receipt. Publication approval or rejection notes follow the same period from the decision. Cleanup runs hourly; downtime or backlog can delay removal. Blocks are removed upon unblocking or deletion of either account. Account deletion nulls personal case references, but textual evidence may retain data until purging. This active-database cleanup does not immediately erase backups or emails already received."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "trust-safety",
+      "category": "platform",
+      "image": "legal",
+      "title": {
+        "es": "Confianza y seguridad",
+        "en": "Trust and safety"
+      },
+      "summary": {
+        "es": "Una plataforma para descubrir con respeto y responsabilidad.",
+        "en": "A platform for responsible, respectful discovery."
+      },
+      "sections": [
+        {
+          "id": "authenticity",
+          "title": {
+            "es": "Identidad y autenticidad",
+            "en": "Identity and authenticity"
+          },
+          "body": {
+            "es": "No suplantes personas, bodegas u organizadores, ni presentes experiencias inventadas como reales. Tener un perfil o evento publicado no constituye una certificación de autenticidad, habilitación profesional o aprobación sanitaria por Vinnot. Verificá las condiciones directamente con el responsable de la actividad.",
+            "en": "Do not impersonate people, wineries or organisers, or present invented experiences as real. A published profile or event is not Vinnot certification of authenticity, professional authorisation or health approval. Verify conditions directly with the person responsible for the activity."
+          }
+        },
+        {
+          "id": "safety",
+          "title": {
+            "es": "Consumo responsable y actividades",
+            "en": "Responsible consumption and activities"
+          },
+          "body": {
+            "es": "No se permite promover consumo por menores, prácticas peligrosas o consumo asociado a la conducción. Organizadores y establecimientos deben aplicar las restricciones y controles que correspondan a su actividad. La información de rutas no sustituye revisar accesibilidad, transporte, reservas y seguridad del recorrido.",
+            "en": "Promoting consumption by minors, dangerous practices or drinking associated with driving is not allowed. Organisers and establishments must apply restrictions and controls appropriate to their activities. Route information does not replace checking accessibility, transport, bookings and journey safety."
+          }
+        },
+        {
+          "id": "fraud",
+          "title": {
+            "es": "Fraude y protección de cuentas",
+            "en": "Fraud and account protection"
+          },
+          "body": {
+            "es": "No solicites contraseñas, códigos de verificación ni pagos engañosos mediante contenido de la plataforma. Revisá los datos y condiciones del organizador antes de pagar por canales externos. Ante sospechas, preservá la referencia del evento o contenido y reportala sin publicar información privada.",
+            "en": "Do not request passwords, verification codes or deceptive payments through platform content. Check the organiser's details and conditions before paying through external channels. If something seems suspicious, keep the event or content reference and report it without publishing private information."
+          }
+        },
+        {
+          "id": "report",
+          "title": {
+            "es": "Cómo reportar",
+            "en": "How to report"
+          },
+          "body": {
+            "es": "Podés denunciar reseñas, comentarios, perfiles, eventos y rutas desde su contexto. En Comunidad y seguridad consultás el estado de tus denuncias y administrás bloqueos. También podés usar Contacto → Reportar contenido e indicar el enlace o identificador y el motivo. Estos canales no son servicios de emergencia; ante un riesgo inmediato contactá a los servicios locales correspondientes.",
+            "en": "You can report reviews, comments, profiles, events and routes from their context. Community and safety lets you check report status and manage blocks. You can also use Contact → Report content with the link or identifier and reason. These channels are not emergency services; contact appropriate local services if there is immediate danger."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "moderation",
+      "category": "platform",
+      "image": "legal",
+      "title": {
+        "es": "Política de moderación",
+        "en": "Content moderation policy"
+      },
+      "summary": {
+        "es": "Cómo se revisan aportes y se solicitan aclaraciones.",
+        "en": "How contributions are reviewed and clarification can be requested."
+      },
+      "sections": [
+        {
+          "id": "scope",
+          "title": {
+            "es": "Qué se revisa",
+            "en": "What is reviewed"
+          },
+          "body": {
+            "es": "La moderación incluye reseñas, comentarios, denuncias de perfiles, eventos y rutas, y propuestas de vinos. Administradores y moderadores tienen permisos distintos. Las propuestas de catálogo conservan su propio circuito de aprobación, rechazo, duplicados o correcciones.",
+            "en": "Moderation covers reviews, comments, reports about profiles, events and routes, and wine submissions. Administrators and moderators have different permissions. Catalog submissions keep their own approval, rejection, duplicate and correction workflow."
+          }
+        },
+        {
+          "id": "criteria",
+          "title": {
+            "es": "Criterios y decisiones",
+            "en": "Criteria and decisions"
+          },
+          "body": {
+            "es": "Se consideran las normas de comunidad, pertinencia, identidad del vino, derechos de terceros, datos privados, spam y contenido engañoso. Pueden corregirse datos, solicitarse información o retirarse contenido según el caso. No se retira una opinión sólo por ser negativa si expresa una experiencia genuina y respeta las normas.",
+            "en": "Review considers community rules, relevance, wine identity, third-party rights, private information, spam and misleading content. Depending on the case, data may be corrected, information requested or content removed. An opinion is not removed merely for being negative if it describes a genuine experience and respects the rules."
+          }
+        },
+        {
+          "id": "process",
+          "title": {
+            "es": "Avisos y revisión humana",
+            "en": "Notices and human review"
+          },
+          "body": {
+            "es": "Las reseñas y los comentarios nuevos, y las ediciones de reseñas, se publican inmediatamente y pueden denunciarse o retirarse por incumplir las normas. Podés ver el estado de tu aporte; las reseñas y los comentarios que ya estaban pendientes o rechazados no se publican automáticamente por el cambio de política. Sólo las reseñas publicadas aportan al promedio del vino. No usamos detección automática de texto para esta decisión. Los eventos y rutas conservan sus reglas de publicación.",
+            "en": "New reviews, new comments and review edits publish immediately and can be reported or removed for breaking the community rules. You can see your contribution’s status; reviews and comments that were already pending or rejected are not automatically published by the policy change. Only published reviews contribute to the wine rating. We do not use automated text detection for this decision. Events and routes retain their publication rules."
+          }
+        },
+        {
+          "id": "appeal",
+          "title": {
+            "es": "Pedir revisión de una decisión",
+            "en": "Requesting review of a decision"
+          },
+          "body": {
+            "es": "En Contacto elegí Revisar una decisión e indicá el contenido, la decisión y el motivo de tu solicitud. Podés aportar una explicación o una referencia verificable, sin enviar documentos sensibles innecesarios. La solicitud no restaura automáticamente el contenido ni garantiza un resultado determinado.",
+            "en": "In Contact, choose Review a decision and identify the content, decision and reason for your request. You can provide an explanation or a verifiable reference without sending unnecessary sensitive documents. A request does not automatically restore content or guarantee a particular outcome."
+          }
+        },
+        {
+          "id": "review-and-blocking",
+          "title": {
+            "es": "Denuncias, bloqueos y atención",
+            "en": "Reports, blocks and response"
+          },
+          "body": {
+            "es": "Los motivos y detalles de las denuncias son privados para moderación. Revisamos aportes, denuncias y apelaciones diariamente, habitualmente alrededor de las 18:00 de Argentina, sin respuesta inmediata garantizada. Para apelar, usá Contacto → Revisar una decisión e indicá el caso o contenido. Bloquear oculta reseñas, comentarios y perfiles entre ambas cuentas autenticadas e impide nuevas interacciones; no modifica eventos, rutas ni inscripciones y no impide el acceso anónimo a contenido público. Contacto: vinnotapp@gmail.com.",
+            "en": "Report reasons and details are private to moderation. We review contributions, reports and appeals daily, usually around 18:00 Argentina time, without a guaranteed immediate response. To appeal, use Contact → Review a decision and identify the case or content. Blocking hides reviews, comments and profiles between both authenticated accounts and prevents new interactions; it does not change events, routes or registrations or prevent anonymous access to public content. Contact: vinnotapp@gmail.com."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "content-policy",
+      "category": "platform",
+      "image": "legal",
+      "title": {
+        "es": "Normas de la comunidad",
+        "en": "Community content guidelines"
+      },
+      "summary": {
+        "es": "Aportes útiles, propios y respetuosos.",
+        "en": "Useful, original and respectful contributions."
+      },
+      "sections": [
+        {
+          "id": "reviews",
+          "title": {
+            "es": "Reseñas que ayudan",
+            "en": "Helpful reviews"
+          },
+          "body": {
+            "es": "Describí tu experiencia con el vino o actividad de forma concreta. Separá opinión de hechos verificables y revelá relaciones comerciales o incentivos que puedan influir en la reseña. No fabriques experiencias, dupliques aportes para manipular puntuaciones ni coordines valoraciones engañosas.",
+            "en": "Describe your experience with the wine or activity specifically. Separate opinion from verifiable facts and disclose commercial relationships or incentives that may influence a review. Do not fabricate experiences, duplicate contributions to manipulate scores or coordinate deceptive ratings."
+          }
+        },
+        {
+          "id": "photos",
+          "title": {
+            "es": "Fotos y datos del catálogo",
+            "en": "Photos and catalogue data"
+          },
+          "body": {
+            "es": "Subí imágenes que tengas derecho a utilizar y que correspondan al vino o recurso indicado. Evitá datos personales de terceros, documentos, rostros ajenos sin autorización y material promocional irrelevante. No asocies una etiqueta a otra variedad o línea para obtener una coincidencia.",
+            "en": "Upload images you have the right to use and that correspond to the stated wine or resource. Avoid third-party personal details, documents, other people's faces without permission and irrelevant promotional material. Do not associate a label with another variety or product line to obtain a match."
+          }
+        },
+        {
+          "id": "respect",
+          "title": {
+            "es": "Respeto y contenido prohibido",
+            "en": "Respect and prohibited content"
+          },
+          "body": {
+            "es": "No publiques amenazas, acoso, discriminación, exposición de datos privados, suplantación, fraude, spam o instrucciones para vulnerar el servicio. La crítica respetuosa está permitida. No fomentes actividades ilegales ni consumo riesgoso de alcohol.",
+            "en": "Do not publish threats, harassment, discrimination, private-data exposure, impersonation, fraud, spam or instructions to compromise the service. Respectful criticism is allowed. Do not encourage illegal activities or dangerous alcohol consumption."
+          }
+        },
+        {
+          "id": "rights",
+          "title": {
+            "es": "Derechos y reportes",
+            "en": "Rights and reports"
+          },
+          "body": {
+            "es": "Si detectás un aporte incorrecto o que afecta tus derechos, reportalo con su enlace o identificador y explicá el motivo. No respondas difundiendo datos privados ni organizando ataques. Las decisiones se revisan conforme a la política de moderación.",
+            "en": "If you identify an incorrect contribution or one that affects your rights, report it with its link or identifier and explain why. Do not respond by disclosing private information or organising attacks. Decisions are reviewed under the moderation policy."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "payments",
+      "category": "terms",
+      "image": "legal",
+      "title": {
+        "es": "Eventos, pagos y cancelaciones",
+        "en": "Events, payments and cancellations"
+      },
+      "summary": {
+        "es": "Qué revisar antes de inscribirte o pagar una experiencia.",
+        "en": "What to check before registering or paying for an experience."
+      },
+      "sections": [
+        {
+          "id": "organiser",
+          "title": {
+            "es": "Quién organiza y cobra",
+            "en": "Who organises and collects payment"
+          },
+          "body": {
+            "es": "Las entradas pagas se cobran con Mercado Pago desde el checkout de Vinnot. Pagás el precio publicado; el importe se acredita en la cuenta de Mercado Pago del organizador, verificada y vinculada a su perfil, descontados la comisión de Vinnot y los costos de Mercado Pago según sus condiciones. La comisión se aplica sobre el total de la compra y el organizador ve la tasa vigente en Cobros de eventos antes de vender; un cambio de tasa se avisa con anticipación y solo se aplica a las ventas nuevas. Cada organizador define las condiciones de su evento y las cancelaciones, y es quien autoriza las devoluciones, que se procesan a través de Mercado Pago. Una devolución se descuenta en forma proporcional del organizador y de la comisión de Vinnot. Consultá al organizador si necesitás comprobantes o aclaraciones.",
+            "en": "Paid tickets are charged with Mercado Pago through the Vinnot checkout. You pay the published price; the amount is credited to the organiser's Mercado Pago account, verified and linked to their profile, after Vinnot's commission and Mercado Pago's costs under its own conditions. The commission applies to the purchase total, and organisers see the current rate in Event payments before selling; a rate change is announced in advance and applies only to new sales. Each organiser sets their event conditions and cancellations, and is the one who authorises refunds, which are processed through Mercado Pago. A refund is deducted proportionally from the organiser and from Vinnot's commission. Contact the organiser if you need receipts or clarification."
+          }
+        },
+        {
+          "id": "before",
+          "title": {
+            "es": "Antes de confirmar",
+            "en": "Before confirming"
+          },
+          "body": {
+            "es": "Revisá precio y moneda, fecha, lugar, capacidad, requisitos de edad, accesibilidad, qué incluye la entrada y condiciones de cancelación. Si alguna condición no está informada, consultala antes de pagar. Una plaza en lista de espera no equivale a una inscripción confirmada.",
+            "en": "Check price and currency, date, place, capacity, age requirements, accessibility, what is included and cancellation conditions. If a condition is not stated, ask before paying. A waiting-list place does not mean a confirmed registration."
+          }
+        },
+        {
+          "id": "payment",
+          "title": {
+            "es": "Informar un pago",
+            "en": "Reporting a payment"
+          },
+          "body": {
+            "es": "Informar un pago no lo verifica automáticamente: el organizador debe revisarlo según el flujo del evento. No repitas una transferencia porque la app muestre timeout o un problema de conexión; comprobá el movimiento con el medio de pago y consultá el estado de la inscripción.",
+            "en": "Reporting a payment does not automatically verify it: the organiser must review it under the event workflow. Do not repeat a transfer because the app shows a timeout or connection problem; check the transaction with your payment method and consult your registration status."
+          }
+        },
+        {
+          "id": "cancellation",
+          "title": {
+            "es": "Cancelación, reprogramación y devolución",
+            "en": "Cancellation, rescheduling and refunds"
+          },
+          "body": {
+            "es": "Cancelar una inscripción en Vinnot no devuelve dinero automáticamente. Si pagaste y necesitás cancelar, o el organizador cambia o cancela la actividad, contactalo para gestionar las alternativas y la devolución que corresponda según las condiciones comunicadas y tus derechos aplicables. Conservá comprobantes y referencias del evento. Vinnot puede recibir consultas por Contacto, sin sustituir al responsable del cobro.",
+            "en": "Cancelling a registration in Vinnot does not automatically refund money. If you paid and need to cancel, or the organiser changes or cancels the activity, contact them to arrange alternatives and any refund due under the communicated conditions and your applicable rights. Keep receipts and event references. Vinnot can receive enquiries through Contact without replacing the party responsible for collecting payment."
+          }
+        },
+        {
+          "id": "future",
+          "title": {
+            "es": "Servicios no disponibles actualmente",
+            "en": "Services not currently available"
+          },
+          "body": {
+            "es": "Vinnot no vende botellas, no hace envíos de productos ni ofrece suscripciones pagas. Lo único que se cobra a través de Vinnot es la venta de entradas descrita en esta página. Si en el futuro se suma otro servicio pago, sus condiciones se informarán antes de contratarlo y no se aplicarán a operaciones anteriores.",
+            "en": "Vinnot does not sell bottles, ship products or offer paid subscriptions. The only sales made through Vinnot are the ticket sales described on this page. If another paid service is added in the future, its conditions will be disclosed before purchase and will not apply to earlier transactions."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "cookies",
+      "category": "privacy",
+      "image": "privacy",
+      "title": {
+        "es": "Almacenamiento y permisos",
+        "en": "Storage and permissions"
+      },
+      "summary": {
+        "es": "Controles distintos para la web y tu dispositivo.",
+        "en": "Different controls for the web and your device."
+      },
+      "sections": [
+        {
+          "id": "web",
+          "title": {
+            "es": "Navegador",
+            "en": "Browser"
+          },
+          "body": {
+            "es": "La web conserva datos de sesión y preferencias de interfaz en almacenamiento del navegador. Su página Configuración de cookies permite decidir si cargar mapas integrados de Google. La elección se aplica a ese navegador; no cambia permisos del teléfono ni elimina tu cuenta.",
+            "en": "The website keeps session data and interface preferences in browser storage. Its Cookie settings page lets you choose whether to load embedded Google maps. The choice applies to that browser; it does not change phone permissions or delete your account."
+          }
+        },
+        {
+          "id": "device",
+          "title": {
+            "es": "Aplicación mobile",
+            "en": "Mobile application"
+          },
+          "body": {
+            "es": "La app utiliza almacenamiento local para la sesión y preferencias. Cámara, fotos y ubicación tienen permisos del sistema que podés revisar en los ajustes de tu dispositivo. No hay un interruptor de cookies web que reemplace esos permisos. Los datos ya enviados requieren una solicitud de privacidad o el flujo de eliminación que corresponda.",
+            "en": "The app uses local storage for session and preferences. Camera, photos and location have system permissions you can review in device settings. A website cookie switch does not replace those permissions. Data already submitted requires a privacy request or the applicable deletion flow."
+          }
+        },
+        {
+          "id": "providers",
+          "title": {
+            "es": "Servicios externos",
+            "en": "External services"
+          },
+          "body": {
+            "es": "Al elegir acceso social, mapas o búsquedas de direcciones se conecta con el proveedor correspondiente. Evitá activar permisos que no necesites; el catálogo puede consultarse sin conceder acceso a la cámara. Consultá Privacidad para conocer el uso de fotos y datos de cuenta.",
+            "en": "Choosing social sign-in, maps or address searches connects to the corresponding provider. Avoid enabling permissions you do not need; the catalogue can be browsed without camera access. See Privacy for information about photos and account data."
+          }
+        }
+      ]
+    }
+  ],
+  "contact": {
+    "operator": "Vinnot",
+    "email": "vinnotapp@gmail.com",
+    "country": "Argentina"
+  }
+}

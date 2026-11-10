@@ -1,0 +1,99 @@
+{
+  "profiles": {
+    "wine-001": {
+      "wine_id": "wine-001",
+      "summary": "The Catena Zapata Malbec Argentino is a flagship wine that represents the pinnacle of Argentine winemaking. With its deep purple color and complex bouquet of dark fruits, violets, and subtle oak, this wine embodies the terroir of Mendoza's high-altitude vineyards. It's a wine that commands attention and rewards patience.",
+      "ideal_occasions": [
+        "Anniversary dinners",
+        "Business entertaining",
+        "Celebrating achievements",
+        "Wine club meetings",
+        "Romantic evenings"
+      ],
+      "food_pairings_detailed": [
+        {
+          "dish": "Grilled Ribeye Steak",
+          "category": "Red Meat",
+          "match_score": 98,
+          "reason": "The wine's bold tannins and dark fruit notes complement the rich, fatty character of ribeye perfectly."
+        },
+        {
+          "dish": "Lamb Chops with Herbs",
+          "category": "Red Meat",
+          "match_score": 95,
+          "reason": "Herbal notes in the wine harmonize beautifully with rosemary and thyme-crusted lamb."
+        },
+        {
+          "dish": "Aged Manchego Cheese",
+          "category": "Cheese",
+          "match_score": 88,
+          "reason": "The cheese's nutty, slightly sharp flavors are balanced by the wine's fruit and structure."
+        },
+        {
+          "dish": "Dark Chocolate Truffles",
+          "category": "Dessert",
+          "match_score": 82,
+          "reason": "The wine's subtle sweetness and dark fruit echo the bittersweet chocolate notes."
+        }
+      ],
+      "similar_wines": [
+        "Rutini Apartado Gran Malbec",
+        "Achaval Ferrer Finca Bella Vista",
+        "Cobos Bramare Malbec"
+      ],
+      "personality_traits": [
+        "Sophisticated",
+        "Bold",
+        "Elegant",
+        "Complex",
+        "Memorable"
+      ],
+      "generated_at": "2025-01-10T14:30:00Z"
+    },
+    "wine-002": {
+      "wine_id": "wine-002",
+      "summary": "The Trapiche Gran Medalla Cabernet Sauvignon is a masterfully crafted wine that showcases the winery's 140+ years of experience. With its structured profile and notes of blackcurrant, cedar, and tobacco, this wine offers excellent aging potential while being approachable in its youth.",
+      "ideal_occasions": [
+        "Sunday roast dinners",
+        "Wine collecting",
+        "Casual dinner parties",
+        "After-work relaxation",
+        "Autumn evenings"
+      ],
+      "food_pairings_detailed": [
+        {
+          "dish": "Beef Wellington",
+          "category": "Red Meat",
+          "match_score": 94,
+          "reason": "The wine's structure and earthy notes complement the rich, savory pastry-wrapped beef."
+        },
+        {
+          "dish": "Mushroom Risotto",
+          "category": "Vegetarian",
+          "match_score": 89,
+          "reason": "Earthy mushroom flavors find a natural partner in the wine's tobacco and forest floor notes."
+        },
+        {
+          "dish": "Blue Cheese",
+          "category": "Cheese",
+          "match_score": 85,
+          "reason": "The bold, tannic wine stands up well to the pungent, creamy cheese."
+        }
+      ],
+      "similar_wines": [
+        "Luigi Bosca DOC Cabernet Sauvignon",
+        "Norton Privada",
+        "Terrazas Reserva Cabernet"
+      ],
+      "personality_traits": [
+        "Classic",
+        "Reliable",
+        "Structured",
+        "Age-worthy",
+        "Traditional"
+      ],
+      "generated_at": "2025-01-10T14:35:00Z"
+    }
+  }
+}
+

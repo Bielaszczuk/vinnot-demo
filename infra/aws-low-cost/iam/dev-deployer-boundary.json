@@ -1,0 +1,36 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadInfrastructureAndCostMetadata",
+      "Effect": "Allow",
+      "Action": ["ec2:Describe*", "ecs:Describe*", "ecs:List*", "elasticloadbalancing:Describe*", "rds:Describe*", "acm:DescribeCertificate", "cloudfront:List*", "cloudfront:Get*", "cloudfront:Describe*", "iam:Get*", "iam:List*", "ssm:GetCommandInvocation", "ssm:DescribeInstanceInformation", "ce:Get*", "pricing:Get*", "pricing:Describe*", "budgets:ViewBudget", "ses:Get*", "ses:List*"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DevelopmentComputeOnly",
+      "Effect": "Allow",
+      "Action": "ec2:*",
+      "Resource": [
+        "arn:aws:ec2:us-east-1:497675597655:instance/i-0c0c6e1119024f13f",
+        "arn:aws:ec2:us-east-1:497675597655:volume/vol-0dde79a8f8f5e4e8d",
+        "arn:aws:ec2:us-east-1:497675597655:security-group/sg-012ef0f7596554d71",
+        "arn:aws:ec2:us-east-1:497675597655:elastic-ip/eipalloc-0dfa7fc35ac2cc24d",
+        "arn:aws:ec2:us-east-1:497675597655:network-interface/eni-0c62d5cb334a2da65"
+      ]
+    },
+    {
+      "Sid": "DevelopmentBucketsOnly",
+      "Effect": "Allow",
+      "Action": "s3:*",
+      "Resource": ["arn:aws:s3:::vinnot-dev-web-497675597655", "arn:aws:s3:::vinnot-dev-web-497675597655/*", "arn:aws:s3:::vinnot-dev-uploads-497675597655", "arn:aws:s3:::vinnot-dev-uploads-497675597655/*"]
+    },
+    {"Sid": "RegistryAuthentication", "Effect": "Allow", "Action": "ecr:GetAuthorizationToken", "Resource": "*"},
+    {"Sid": "DevelopmentImagesOnly", "Effect": "Allow", "Action": "ecr:*", "Resource": "arn:aws:ecr:us-east-1:497675597655:repository/vinnot-backend"},
+    {"Sid": "DevelopmentRemoteCommandsOnly", "Effect": "Allow", "Action": "ssm:SendCommand", "Resource": ["arn:aws:ssm:us-east-1::document/AWS-RunShellScript", "arn:aws:ec2:us-east-1:497675597655:instance/i-0c0c6e1119024f13f"]},
+    {"Sid": "DevelopmentEdgeOnly", "Effect": "Allow", "Action": "cloudfront:*", "Resource": ["arn:aws:cloudfront::497675597655:distribution/E16RJ3WGUX15VP", "arn:aws:cloudfront::497675597655:function/vinnot-web-security-e16rj3wgux15vp", "arn:aws:cloudfront::497675597655:response-headers-policy/2119079c-7e73-4d7f-bb79-b615eab4947c"]},
+    {"Sid": "CreateUnattachedHeaderPolicies", "Effect": "Allow", "Action": "cloudfront:CreateResponseHeadersPolicy", "Resource": "*"},
+    {"Sid": "DevelopmentSchedulesOnly", "Effect": "Allow", "Action": "scheduler:*", "Resource": ["arn:aws:scheduler:us-east-1:497675597655:schedule/default/vinnot-dev-low-cost-host-start", "arn:aws:scheduler:us-east-1:497675597655:schedule/default/vinnot-dev-low-cost-host-stop"]},
+    {"Sid": "PassExistingSchedulerRoleOnly", "Effect": "Allow", "Action": "iam:PassRole", "Resource": "arn:aws:iam::497675597655:role/vinnot-rds-auto-stop-role", "Condition": {"StringEquals": {"iam:PassedToService": "scheduler.amazonaws.com"}}}
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "logo.alt": {
+    "message": "Vinnot",
+    "description": "The alt text of navbar logo"
+  },
+  "item.label.Documentación": {
+    "message": "Documentation",
+    "description": "Navbar item with label Documentación"
+  }
+}

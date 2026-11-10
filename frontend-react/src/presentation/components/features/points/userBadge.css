@@ -1,0 +1,125 @@
+/*
+ * Wax-seal emblems, ported from the approved motion prototype. Every light
+ * layer (`.vs-m`) shares the seal image as a mask, so reflections stay inside
+ * the wax. Modes: loop (profile, celebration, points page) plays forever;
+ * list plays one burst when `.is-on` is set and waits for the next replay;
+ * still (reduced motion) keeps a fixed highlight.
+ */
+
+@property --a { syntax: '<angle>'; inherits: true; initial-value: 0deg; }
+@property --sx { syntax: '<percentage>'; inherits: true; initial-value: 100%; }
+
+:root {
+  --vinnot-seal-shadow: rgba(43, 34, 38, 0.32);
+}
+
+.vinnot-seal { --s: 28px; width: var(--s); height: var(--s); position: relative; display: inline-block; flex: none; perspective: 600px; vertical-align: middle; }
+.vinnot-seal .vs-tilt { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .25s ease-out; }
+.vinnot-seal .vs-body { position: absolute; inset: 0; transform-origin: 50% 88%; }
+.vinnot-seal .vs-art, .vinnot-seal .vs-m { position: absolute; inset: 0; background: var(--img) center / contain no-repeat; }
+.vinnot-seal .vs-m { background: none; -webkit-mask: var(--img) center / contain no-repeat; mask: var(--img) center / contain no-repeat; pointer-events: none; opacity: 0; }
+.vinnot-seal .vs-art { filter: drop-shadow(0 calc(var(--s) * .04) calc(var(--s) * .05) var(--vinnot-seal-shadow)); }
+.vinnot-seal .vs-behind { position: absolute; pointer-events: none; opacity: 0; }
+.vinnot-seal .vs-fx { position: absolute; inset: -14%; pointer-events: none; }
+
+.vinnot-seal .vs-spark { position: absolute; width: var(--z, 14%); aspect-ratio: 1; translate: -50% -50%; opacity: 0; scale: .2;
+  background: radial-gradient(circle, #fff 0 18%, var(--c, #fff6d8) 30%, transparent 70%);
+  clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%);
+  filter: drop-shadow(0 0 3px var(--c, #ffe9a8)); }
+.vinnot-seal .vs-dot { position: absolute; width: var(--z, 4%); aspect-ratio: 1; border-radius: 50%; translate: -50% -50%; opacity: 0;
+  background: radial-gradient(circle, #fff 0 30%, var(--c) 60%, transparent 72%); filter: drop-shadow(0 0 4px var(--c)); }
+
+/* Animation gate. Per-tier `animation` shorthands reset the iteration count,
+   so the mode decides it with !important. */
+.vinnot-seal * { animation-iteration-count: infinite !important; }
+.vinnot-seal.is-list * { animation-iteration-count: 1 !important; }
+.vinnot-seal.is-list:not(.is-on) * { animation-name: none !important; }
+.vinnot-seal.is-still * { animation: none !important; }
+
+/* 1 Brote — sway */
+.vinnot-seal--brote .vs-body { animation: vs-sway 4.2s ease-in-out; }
+/* 2 Parra — sway + breathe */
+.vinnot-seal--parra .vs-body { animation: vs-sway 4.6s ease-in-out, vs-breathe 4.6s ease-in-out; }
+.vinnot-seal--parra .vs-sheen { opacity: 1; background: radial-gradient(60% 50% at 40% 30%, rgba(220,255,190,.35), transparent 70%); mix-blend-mode: screen; animation: vs-pulse 4.6s ease-in-out; }
+/* 3 Racimo — grapes ripen green → purple, with dew */
+.vinnot-seal--racimo .vs-body { animation: vs-breathe 5s ease-in-out; }
+.vinnot-seal--racimo .vs-tint { opacity: 0; background: radial-gradient(30% 32% at 42% 60%, #6f2a8a, transparent 100%); mix-blend-mode: color; animation: vs-ripen 5s ease-in-out; }
+.vinnot-seal--racimo .vs-sheen { background: radial-gradient(10% 9% at 36% 52%, rgba(255,255,255,.95), transparent 100%); mix-blend-mode: screen; animation: vs-dew 5s ease-in-out; }
+/* 4 Vendimia — knife glint */
+.vinnot-seal--vendimia .vs-sheen { background: linear-gradient(120deg, transparent 44%, rgba(255,250,230,.95) 50%, transparent 56%) 0 0 / 100% 100%; -webkit-mask: radial-gradient(18% 34% at 68% 42%, #000 40%, transparent 100%); mask: radial-gradient(18% 34% at 68% 42%, #000 40%, transparent 100%); mix-blend-mode: screen; animation: vs-knife 3.8s ease-in-out; }
+/* 5 Lagar — occasional sweep */
+.vinnot-seal--lagar .vs-sheen { opacity: 1; background: linear-gradient(110deg, transparent 40%, rgba(255,236,210,.55) 50%, transparent 60%) var(--sx) 0 / 300% 100% no-repeat; mix-blend-mode: soft-light; animation: vs-sweep 6.5s ease-in-out; }
+.vinnot-seal--lagar .vs-body { animation: vs-breathe 6.5s ease-in-out; }
+/* 6 Barrica — metallic sweep on the hoops */
+.vinnot-seal--barrica .vs-sheen { opacity: 1; background: linear-gradient(105deg, transparent 36%, rgba(255,255,255,.2) 44%, rgba(255,255,255,.95) 50%, rgba(255,255,255,.2) 56%, transparent 64%) var(--sx) 0 / 300% 100% no-repeat; mix-blend-mode: overlay; animation: vs-sweep 4.2s cubic-bezier(.5,0,.3,1); }
+/* 7 Crianza — satin sheen + wine halo */
+.vinnot-seal--crianza .vs-halo { opacity: 0; inset: -16%; border-radius: 50%; background: radial-gradient(closest-side, rgba(170,40,70,.75), rgba(170,40,70,.25) 55%, transparent 100%); filter: blur(calc(var(--s) * .05)); animation: vs-halo 4.8s ease-in-out; }
+.vinnot-seal--crianza .vs-sheen { opacity: 1; background: linear-gradient(115deg, transparent 38%, rgba(255,230,235,.75) 50%, transparent 62%) var(--sx) 0 / 300% 100% no-repeat; mix-blend-mode: overlay; animation: vs-sweep 4.8s ease-in-out; }
+/* 8 Reserva — gold sheen + gold halo */
+.vinnot-seal--reserva .vs-halo { opacity: 0; inset: -18%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,196,90,.8), rgba(255,170,60,.25) 55%, transparent 100%); filter: blur(calc(var(--s) * .05)); animation: vs-halo 4.4s ease-in-out; }
+.vinnot-seal--reserva .vs-sheen { opacity: 1; background: linear-gradient(112deg, transparent 38%, rgba(255,240,190,.2) 45%, rgba(255,248,215,1) 50%, rgba(255,240,190,.2) 55%, transparent 62%) var(--sx) 0 / 300% 100% no-repeat; mix-blend-mode: overlay; animation: vs-sweep 4.4s cubic-bezier(.5,0,.3,1); }
+/* 9 Gran Reserva — constant gold, slow rays, sparkles */
+.vinnot-seal--gran-reserva .vs-rays { opacity: .5; filter: blur(1.5px); inset: -34%; border-radius: 50%; background: repeating-conic-gradient(from var(--a), rgba(255,206,110,0) 0deg 9deg, rgba(255,214,130,.45) 12deg, rgba(255,206,110,0) 15deg 22deg); -webkit-mask: radial-gradient(closest-side, transparent 52%, #000 62%, transparent 100%); mask: radial-gradient(closest-side, transparent 55%, #000 64%, transparent 88%); animation: vs-spin 26s linear; }
+.vinnot-seal--gran-reserva .vs-halo { opacity: 0; inset: -14%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,200,95,.7), transparent 100%); filter: blur(calc(var(--s) * .05)); animation: vs-halo 3.6s ease-in-out; }
+.vinnot-seal--gran-reserva .vs-sheen { opacity: 1; background: linear-gradient(112deg, transparent 30%, rgba(255,246,205,.95) 46%, rgba(255,255,240,1) 50%, rgba(255,246,205,.95) 54%, transparent 70%) var(--sx) 0 / 260% 100% no-repeat; mix-blend-mode: overlay; animation: vs-sweep-loop 2.8s linear; }
+.vinnot-seal--gran-reserva .vs-holo { opacity: .35; background: conic-gradient(from var(--a) at 50% 50%, #fff2c4, #c88a2c, #fff6d8, #a5701f, #fff2c4); mix-blend-mode: soft-light; animation: vs-spin 8s linear; }
+/* 10 Gran Enófilo — rotating chrome + sparks */
+.vinnot-seal--gran-enofilo .vs-holo { opacity: .85; background: conic-gradient(from var(--a) at 50% 45%, #ffffff, #5d6a78 12%, #f4f8ff 24%, #3a4450 38%, #ffffff 50%, #7d8b9b 62%, #eef3fa 76%, #48525e 88%, #ffffff); mix-blend-mode: overlay; animation: vs-spin 6s linear; }
+.vinnot-seal--gran-enofilo .vs-sheen { opacity: 1; background: linear-gradient(100deg, transparent 42%, rgba(220,240,255,.95) 50%, transparent 58%) var(--sx) 0 / 300% 100% no-repeat; mix-blend-mode: screen; animation: vs-sweep 3.4s cubic-bezier(.5,0,.3,1); }
+.vinnot-seal--gran-enofilo .vs-halo { opacity: 0; inset: -14%; border-radius: 50%; background: radial-gradient(closest-side, rgba(170,215,255,.55), transparent 100%); filter: blur(calc(var(--s) * .05)); animation: vs-halo 3.4s ease-in-out; }
+/* 11 Vinnot — holographic foil that follows the pointer, glitter, rising particles */
+.vinnot-seal--vinnot .vs-holo { opacity: .8; background: conic-gradient(from var(--a) at var(--mx, 50%) var(--my, 40%), #ff7ad1, #ffd27a, #8affc1, #79d3ff, #b78bff, #ff7ad1); mix-blend-mode: overlay; filter: saturate(1.35); animation: vs-spin 7s linear; }
+.vinnot-seal--vinnot .vs-tint { opacity: .32; background: linear-gradient(var(--ang, 115deg), #ff7ad1, #ffd27a 25%, #8affc1 50%, #79d3ff 75%, #b78bff) var(--sx) 0 / 220% 100%; mix-blend-mode: color; animation: vs-sweep-loop 5.5s linear; }
+.vinnot-seal--vinnot .vs-sheen { opacity: 1; background: linear-gradient(var(--ang, 115deg), transparent 34%, rgba(255,255,255,0) 40%, rgba(255,255,255,.85) 50%, rgba(255,255,255,0) 60%, transparent 66%) var(--sx) 0 / 260% 100% no-repeat; mix-blend-mode: overlay; animation: vs-sweep-loop 3.2s ease-in-out; }
+.vinnot-seal--vinnot .vs-glitter { opacity: .9; background:
+    radial-gradient(circle at 20% 30%, #fff 0 .6px, transparent 1.2px) 0 0 / 9px 11px,
+    radial-gradient(circle at 70% 60%, #fff 0 .5px, transparent 1.1px) 3px 4px / 13px 7px,
+    radial-gradient(circle at 40% 80%, #fff 0 .7px, transparent 1.3px) 5px 1px / 17px 13px;
+  mix-blend-mode: overlay; animation: vs-glitter 1.6s steps(4); }
+.vinnot-seal--vinnot .vs-halo { opacity: 0; inset: -18%; border-radius: 50%; background: conic-gradient(from var(--a), rgba(255,122,209,.6), rgba(255,210,122,.6), rgba(138,255,193,.6), rgba(121,211,255,.6), rgba(183,139,255,.6), rgba(255,122,209,.6)); -webkit-mask: radial-gradient(closest-side, #000 45%, transparent 100%); mask: radial-gradient(closest-side, #000 45%, transparent 100%); filter: blur(calc(var(--s) * .06)); animation: vs-halo-spin 7s linear; }
+
+.vinnot-seal .vs-spark { animation: vs-twinkle var(--d, 2.6s) ease-in-out var(--dl, 0s); }
+.vinnot-seal .vs-dot { animation: vs-rise var(--d, 3.4s) ease-out var(--dl, 0s); }
+.vinnot-seal.is-list .vs-spark, .vinnot-seal.is-list .vs-dot { animation-delay: calc(var(--dl, 0s) * .25); }
+
+@keyframes vs-sway { 0%, 100% { rotate: 0deg; } 25% { rotate: -3.2deg; } 75% { rotate: 3.2deg; } }
+@keyframes vs-breathe { 0%, 100% { scale: 1; } 50% { scale: 1.035; } }
+@keyframes vs-pulse { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+@keyframes vs-ripen { 0%, 100% { opacity: 0; } 45%, 60% { opacity: .85; } }
+@keyframes vs-dew { 0%, 30%, 100% { opacity: 0; } 45% { opacity: 1; } 60% { opacity: 0; } }
+@keyframes vs-knife { 0%, 100% { opacity: 0; background-position: -40% -40%; } 8% { opacity: 1; } 34% { opacity: 1; background-position: 40% 40%; } 42% { opacity: 0; background-position: 40% 40%; } }
+@keyframes vs-sweep { 0% { --sx: 100%; } 45%, 100% { --sx: 0%; } }
+@keyframes vs-sweep-loop { 0% { --sx: 100%; } 100% { --sx: 0%; } }
+@keyframes vs-halo { 0%, 100% { opacity: .2; scale: .94; } 50% { opacity: .9; scale: 1.04; } }
+@keyframes vs-halo-spin { 0% { --a: 0deg; opacity: .55; } 50% { opacity: .95; } 100% { --a: 360deg; opacity: .55; } }
+@keyframes vs-spin { to { --a: 360deg; } }
+@keyframes vs-glitter { 0% { opacity: .35; background-position: 0 0, 3px 4px, 5px 1px; } 50% { opacity: 1; background-position: 2px 1px, 1px 6px, 3px 3px; } 100% { opacity: .35; background-position: 0 0, 3px 4px, 5px 1px; } }
+@keyframes vs-twinkle { 0%, 100% { opacity: 0; scale: .2; rotate: 0deg; } 18% { opacity: 1; scale: 1; rotate: 45deg; } 36% { opacity: 0; scale: .3; rotate: 90deg; } }
+@keyframes vs-rise { 0% { opacity: 0; translate: -50% -50%; } 15% { opacity: 1; } 100% { opacity: 0; translate: calc(-50% + var(--dx, 0px)) calc(-50% - var(--rise, 40px)); } }
+
+/* Still fallback: a frozen highlight keeps each tier recognisable. */
+.vinnot-seal.is-still .vs-sheen { --sx: 55%; }
+@media (prefers-reduced-motion: reduce) {
+  .vinnot-seal * { animation: none !important; }
+  .vinnot-seal .vs-sheen { --sx: 55%; }
+  .vinnot-seal .vs-tilt { transition: none; }
+}
+
+/* Seal that opens the points page. */
+.vinnot-seal-button { border-radius: 9999px; transition: transform .2s ease; }
+.vinnot-seal-button:hover { transform: scale(1.04); }
+.vinnot-seal-button:focus-visible { outline: 2px solid var(--color-wine-300); outline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) { .vinnot-seal-button, .vinnot-seal-button:hover { transition: none; transform: none; } }
+
+/* Tier progress bar with a slow gold shine. */
+.vinnot-points-bar { height: 6px; border-radius: 9999px; overflow: hidden; background: var(--vinnot-points-track, rgba(255, 255, 255, .14)); }
+.vinnot-points-bar > i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #b58a3c, #f3d38a, #b58a3c); background-size: 200% 100%; animation: vs-bar-shine 3.2s linear infinite; transition: width .6s ease; }
+.vinnot-points-bar--light { --vinnot-points-track: rgba(43, 34, 38, .1); }
+@keyframes vs-bar-shine { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .vinnot-points-bar > i { animation: none; transition: none; } }
+
+/* Celebration reveal. */
+.vinnot-seal-reveal { animation: vs-reveal .9s cubic-bezier(.2,.9,.25,1.2) both; }
+@keyframes vs-reveal { 0% { opacity: 0; transform: scale(.4) rotate(-12deg); } 60% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .vinnot-seal-reveal { animation: vs-fade .4s ease both; } }
+@keyframes vs-fade { from { opacity: 0; } to { opacity: 1; } }

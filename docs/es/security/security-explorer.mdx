@@ -1,0 +1,38 @@
+import DefenseLayers from '@site/src/components/DefenseLayers';
+
+# Explorador de capas
+
+Esta vista resume las capas de defensa de Vinnot, desde el borde de la red hasta
+la cadena de suministro. Selecciona una capa para ver sus controles. Los estados
+se revisaron el 2026-10-30:
+
+- **Implementado:** está en el código o la infraestructura.
+- **Mitigado:** está en el código y las plantillas, pero el responsable de la
+  infraestructura todavía tiene que aplicarlo en la cuenta.
+- **Decisión aceptada:** se conserva a conciencia, con un disparador para
+  revisarla.
+- **Pendiente:** un límite conocido con un siguiente paso definido.
+
+El punto que
+recorre las capas representa un request que las atraviesa una por una; si tu
+sistema pide reducir el movimiento, el recorrido no se anima.
+
+<DefenseLayers />
+
+## Cómo leerlo
+
+- Cada capa supone que la anterior puede fallar y agrega su propia barrera.
+- El número junto al nombre de una capa indica cuántos controles pendientes tiene.
+- Puedes moverte entre capas con las flechas del teclado, Inicio y Fin.
+
+## Dónde está el detalle
+
+- Cada control implementado, con su archivo fuente, está en
+  [Defensa en profundidad](defense-in-depth.md).
+- Cada control pendiente, mitigado o aceptado, con su riesgo y su siguiente paso,
+  está en [Límites conocidos](known-limitations.md).
+- Las contraseñas, los tokens y la reautenticación están en
+  [Contraseñas y autenticación](passwords-and-authentication.md).
+- Los datos de esta vista viven en
+  [layers.mjs](../../../docs-site/src/components/DefenseLayers/layers.mjs); al
+  resolver un límite, actualiza el estado allí y en las dos páginas anteriores.

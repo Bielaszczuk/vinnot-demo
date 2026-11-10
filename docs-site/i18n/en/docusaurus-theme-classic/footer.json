@@ -1,0 +1,14 @@
+{
+  "link.title.Documentación": {
+    "message": "Documentation",
+    "description": "The title of the footer links column with title=Documentación in the footer"
+  },
+  "link.title.Repositorio": {
+    "message": "Repository",
+    "description": "The title of the footer links column with title=Repositorio in the footer"
+  },
+  "link.item.label.Inicio": {
+    "message": "Home",
+    "description": "The label of footer link with label=Inicio linking to /docs"
+  }
+}

@@ -1,0 +1,20 @@
+[Unit]
+Description=Collect bounded Vinnot production health signals
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+ExecStart=/usr/bin/python3 /opt/vinnot-monitor/collector.py --publish
+TimeoutStartSec=120
+MemoryMax=128M
+CPUQuota=10%
+Nice=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/vinnot-monitor
+ProtectHome=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6

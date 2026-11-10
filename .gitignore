@@ -1,24 +1,206 @@
-# Compiled class file
-*.class
+# ============================
+# OS generated files
+# ============================
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# Log file
+# ============================
+# IDE - IntelliJ IDEA / JetBrains
+# ============================
+.idea/
+*.iws
+*.iml
+*.ipr
+/out/
+atlassian-ide-plugin.xml
+
+# ============================
+# IDE - VS Code
+# ============================
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ============================
+# IDE - Eclipse
+# ============================
+.classpath
+.project
+.settings/
+
+# ============================
+# Environment / Secrets
+# ============================
+.env
+.env.*
+!.env.example
+!.env.*.example
+**/runtime.env
+*.p8
+*.p12
+*.jks
+*.keystore
+**/credentials.json
+**/service-account*.json
+
+# ============================
+# Logs
+# ============================
+logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# BlueJ files
-*.ctxt
+# ============================
+# Backend - Java / Maven / Spring Boot
+# ============================
+backend/target/
+backend/*.jar
+backend/*.war
+backend/*.class
+backend/hs_err_pid*
+backend/replay_pid*
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+# Spring profile config files may contain local/prod secrets.
+# Keep the base application.yml committed because CI/CD and Docker builds need
+# framework-safe defaults that are overridden by environment variables.
+backend/src/main/resources/application-*.yml
+!backend/src/main/resources/application-local.yml
 
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
+# Maven wrapper jar (generated)
+backend/.mvn/wrapper/maven-wrapper.jar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-replay_pid*
+# Spring Boot shell log
+backend/spring-shell.log
+
+# Uploaded files (user-generated content)
+backend/uploads/
+infra/aws-low-cost/migration.env
+infra/aws-low-cost/secrets/
+
+# Large data files used only for seeding (not needed in VCS)
+docs/wineries/
+docs/wines/
+docs/dump*.sql
+# Generated personal documents and their local generator/runtime links.
+/outputs/
+
+# Local planning / working notes
+planning/*.md
+planning/ISSUE_124_*.json
+planning/ISSUE_127_*.json
+planning/issue-127-*.mjs
+planning/Issue127*.java
+planning/admin-*-122.mjs
+planning/issue-124-api-acceptance.mjs
+planning/scan-september-*.mjs
+planning/ScanSeptember*.java
+planning/SCAN_SEPTEMBER_*.json*
+docs/PLAN_DE_GESTION_DEL_PROYECTO.md
+
+# Local agent tooling state. AGENTS.md and .engram/config.json stay versioned.
+.atl/
+odd/
+.claude/settings.local.json
+
+# Local audit/review artifacts. Canonical architecture, product and release
+# documentation remains versioned; these patterns only cover ad-hoc reports
+# that have previously been committed and later removed.
+**/*_AUDIT*.md
+**/*-audit*.md
+**/*_REVIEW_????-??-??.md
+**/*-review-????-??-??.md
+
+# Benchmark and acceptance run reports are reproducible execution artifacts.
+# Canonical docs define procedures and gates, not dated run output.
+artifacts/acceptance/**
+docs/WINE_LABEL_SCAN_BENCHMARK_*.json
+docs/WINE_LABEL_SCAN_ACCEPTANCE_*.md
+docs/WINE_LABEL_SCAN_ACCEPTANCE_*.json
+
+# ============================
+# Frontend - Vue (legacy)
+# ============================
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.vite/
+frontend/*.local
+frontend/.eslintcache
+frontend/.cache/
+frontend/coverage/
+frontend/test-results/
+frontend/playwright-report/
+frontend/playwright/.cache/
+frontend/blob-report/
+
+# ============================
+# Frontend - React
+# ============================
+frontend-react/node_modules/
+frontend-react/dist/
+frontend-react/dist-ssr/
+frontend-react/.vite/
+frontend-react/*.local
+frontend-react/.eslintcache
+frontend-react/.cache/
+frontend-react/coverage/
+frontend-react/test-results/
+frontend-react/playwright-report/
+frontend-react/playwright/.cache/
+frontend-react/blob-report/
+
+# ============================
+# Frontend - Mobile (Expo / React Native)
+# ============================
+frontend-mobile/node_modules/
+frontend-mobile/.expo/
+frontend-mobile/.expo-shared/
+frontend-mobile/.cache/
+frontend-mobile/dist/
+frontend-mobile/web-build/
+frontend-mobile/android/
+frontend-mobile/ios/
+frontend-mobile/coverage/
+
+# ============================
+# Infrastructure
+# ============================
+infra/.env
+
+# ============================
+# Python (scripts)
+# ============================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.Python
+*.egg-info/
+*.egg
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# Dependency directories are local regardless of the enclosing tool/project.
+**/node_modules/
+
+# ============================
+# Misc
+# ============================
+/security-reports/
+*.orig
+*.bak
+*.swp
+*.swo
+*~
+*.tmp
+*.temp

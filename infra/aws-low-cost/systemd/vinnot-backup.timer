@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the Vinnot database backup daily
+
+[Timer]
+OnCalendar=*-*-* 04:00:00 UTC
+RandomizedDelaySec=15m
+Persistent=true
+# The matching basename selects dev/prod service without a cross-environment target.
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,9 @@
+Hola Ana & María,
+
+Confirma tu correo para activar tu cuenta de Vinnot: https://vinnot.example/verify-email?token=demo-verification
+
+---
+Vinnot
+Visitar Vinnot: https://vinnot.example
+Contacto: https://vinnot.example/contact
+Privacidad: https://vinnot.example/privacy

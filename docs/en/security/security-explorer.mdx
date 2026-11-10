@@ -1,0 +1,37 @@
+import DefenseLayers from '@site/src/components/DefenseLayers';
+
+# Layer explorer
+
+This view summarises Vinnot's defense layers, from the network edge to the supply
+chain. Select a layer to see its controls. The statuses were reviewed on
+2026-10-30:
+
+- **Implemented:** in the code or the infrastructure.
+- **Mitigated:** in the code and the templates, but the infrastructure owner still
+  has to apply it in the account.
+- **Accepted decision:** kept on purpose, with a trigger to revisit it.
+- **Pending:** a known limitation with a defined next step.
+
+The dot crossing the layers stands for a request
+passing through them one by one; if your system asks for reduced motion, the
+journey is not animated.
+
+<DefenseLayers />
+
+## How to read it
+
+- Each layer assumes the previous one may fail and adds its own barrier.
+- The number next to a layer's name shows how many pending controls it has.
+- You can move between layers with the arrow keys, Home and End.
+
+## Where the details are
+
+- Every implemented control, with its source file, is in
+  [Defense in depth](defense-in-depth.md).
+- Every pending, mitigated or accepted control, with its risk and next step, is
+  in [Known limitations](known-limitations.md).
+- Passwords, tokens and re-authentication are in
+  [Passwords and authentication](passwords-and-authentication.md).
+- The data behind this view lives in
+  [layers.mjs](../../../docs-site/src/components/DefenseLayers/layers.mjs); when a
+  limitation is solved, update its status there and in the two pages above.

@@ -1,0 +1,55 @@
+# Pruebas
+
+Casos de prueba del módulo: uno por el flujo principal de cada caso de uso y uno por cada flujo alternativo. Se pueden ejecutar a mano en la web y en la app; la columna de tests automáticos indica qué tests ejercen el caso de uso.
+
+## Casos de prueba
+
+| ID | Caso de uso | Pasos | Resultado esperado |
+|---|---|---|---|
+| `CP-REV-01` | [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | 1) El cliente pide `GET /wines/{wineId}/reviews` con orden reciente. 2) La API devuelve las reseñas aprobadas y las propias de quien consulta, sin las de cuentas bloqueadas. 3) El cliente pide `GET /wines/{wineId}/reviews/mine` para saber si la persona ya escribió una reseña. 4) La web muestra páginas de 20 y deja ordenar por recientes o populares; la app muestra páginas de 10 con «Anterior» y «Siguiente» y, con más de una reseña, deja elegir «Más recientes» o «Más valoradas». | Se muestran las reseñas visibles del vino con su autor, puntaje, texto, fecha y contadores. |
+| `CP-REV-02` | [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | Flujo principal → 1a. La ficha se abre con `?review=mine` | El cliente pide la reseña propia con `filter=mine` y la muestra primero. |
+| `CP-REV-03` | [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | Flujo principal → 2a. El vino no tiene reseñas visibles | Se muestra el estado vacío. |
+| `CP-REV-04` | [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | Flujo principal → 4a. La persona cambia el orden | Se vuelve a la primera página con el orden elegido. |
+| `CP-REV-33` | [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | Flujo principal → 4b. En la app, la persona pasa a otra página | La reseña propia queda fija solo al principio de la primera página y las siguientes siguen el orden de la API. |
+| `CP-REV-05` | [`UC-REV-02`](use-cases/uc-rev-02-publish-review.md) | 1) La persona abre el formulario de reseña en la ficha del vino. 2) Elige de 0.1 a 5.0 con la botella que llena las copas y puede sumar un título de hasta 255 caracteres y un comentario; el formulario avisa que la reseña se publica al instante. 3) El cliente envía `POST /wines/{wineId}/reviews`. 4) La API comprueba que no exista otra reseña de la persona para ese vino y la guarda como `APPROVED`. 5) Recalcula el promedio y la cantidad de reseñas aprobadas del vino en la misma transacción. 6) Agrega el vino a la cava si no estaba y guarda ahí el puntaje redondeado de 1 a 5 y, si la reseña tiene comentario, lo guarda como notas. 7) La API responde 201 y el cliente confirma la publicación y recarga la lista y el promedio. | La reseña queda publicada, el promedio del vino se actualiza y el vino queda en la cava de la persona. |
+| `CP-REV-06` | [`UC-REV-02`](use-cases/uc-rev-02-publish-review.md) | Flujo principal → 1a. La persona ya tiene una reseña de ese vino | No se ofrece el formulario. |
+| `CP-REV-07` | [`UC-REV-02`](use-cases/uc-rev-02-publish-review.md) | Flujo principal → 4a. Ya existe una reseña de la persona para ese vino | La API responde 422, o 409 si llegaron dos al mismo tiempo; la web cierra el formulario y recarga la lista. |
+| `CP-REV-08` | [`UC-REV-02`](use-cases/uc-rev-02-publish-review.md) | Flujo principal → 3a. El puntaje falta, está fuera de 0.1 a 5.0 o tiene más de un decimal | La API responde 400. |
+| `CP-REV-32` | [`UC-REV-02`](use-cases/uc-rev-02-publish-review.md) | Flujo principal → 6a. La reseña no tiene comentario | La cava guarda solo el puntaje y conserva las notas que ya tenía. |
+| `CP-REV-09` | [`UC-REV-03`](use-cases/uc-rev-03-edit-review.md) | 1) La persona elige editar su reseña y el formulario se abre con los datos actuales. 2) Cambia el puntaje, el título o el comentario y guarda. 3) El cliente envía `PATCH /wines/{wineId}/reviews/{id}`; un campo omitido conserva su valor. 4) La API comprueba la autoría o el rol, aplica los cambios y recalcula el promedio del vino. 5) Si edita su autor, actualiza la cava con lo que cambió: el comentario reemplaza las notas y el puntaje se redondea de 1 a 5. 6) La API responde 200 y el cliente muestra la reseña actualizada. | La reseña queda con los cambios y el promedio del vino actualizado. |
+| `CP-REV-10` | [`UC-REV-03`](use-cases/uc-rev-03-edit-review.md) | Flujo principal → 4a. Quien edita no es autor ni `ADMIN` | La API responde 422 `REVIEW_OWNERSHIP`. |
+| `CP-REV-11` | [`UC-REV-03`](use-cases/uc-rev-03-edit-review.md) | Flujo principal → 4b. La reseña ya no existe | La API responde 404. |
+| `CP-REV-12` | [`UC-REV-03`](use-cases/uc-rev-03-edit-review.md) | Flujo principal → 4c. La reseña estaba pendiente o rechazada | Vuelve a `PENDING` para que la decida un moderador. |
+| `CP-REV-13` | [`UC-REV-03`](use-cases/uc-rev-03-edit-review.md) | Flujo principal → 2a. La persona cancela | No se envía nada. |
+| `CP-REV-14` | [`UC-REV-04`](use-cases/uc-rev-04-delete-review.md) | 1) La persona elige eliminar la reseña. 2) El cliente pide confirmación. 3) El cliente envía `DELETE /wines/{wineId}/reviews/{id}`. 4) La API comprueba la autoría o el permiso, elimina la reseña y recalcula el promedio del vino. 5) El cliente quita la reseña de la lista y actualiza el promedio. | La reseña, sus comentarios y sus likes se eliminan y el promedio del vino se actualiza. |
+| `CP-REV-15` | [`UC-REV-04`](use-cases/uc-rev-04-delete-review.md) | Flujo principal → 2a. La persona cancela | No se elimina nada. |
+| `CP-REV-16` | [`UC-REV-04`](use-cases/uc-rev-04-delete-review.md) | Flujo principal → 4a. Quien elimina no es autor ni tiene el permiso | La API responde 422 `REVIEW_OWNERSHIP`. |
+| `CP-REV-17` | [`UC-REV-04`](use-cases/uc-rev-04-delete-review.md) | Flujo principal → 4b. La reseña ya no existe | La API responde 404. |
+| `CP-REV-18` | [`UC-REV-04`](use-cases/uc-rev-04-delete-review.md) | Flujo principal → 4c. La reseña era de otra persona | Se le envía un email `CONTENT_REMOVED` a su autor. |
+| `CP-REV-19` | [`UC-REV-05`](use-cases/uc-rev-05-like-review.md) | 1) La persona toca el like de una reseña. 2) El cliente muestra el cambio al instante. 3) El cliente envía `POST /wines/{wineId}/reviews/{id}/like`, o `DELETE` si ya tenía like. 4) La API bloquea la reseña, guarda o quita el like y actualiza el contador. | La reseña queda con o sin el like de la persona y el contador actualizado. |
+| `CP-REV-20` | [`UC-REV-05`](use-cases/uc-rev-05-like-review.md) | Flujo principal → 4a. La persona ya dio like, o lo quita sin haberlo dado | La API responde 422 y el cliente revierte el cambio con un aviso de error. |
+| `CP-REV-21` | [`UC-REV-05`](use-cases/uc-rev-05-like-review.md) | Flujo principal → 4b. La reseña no está aprobada o hay un bloqueo entre las cuentas | La API responde 404. |
+| `CP-REV-22` | [`UC-REV-05`](use-cases/uc-rev-05-like-review.md) | Flujo principal → 1a. La reseña está pendiente o rechazada | El like aparece deshabilitado. |
+| `CP-REV-23` | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | 1) La persona abre los comentarios de una reseña. 2) El cliente pide `GET /wines/{wineId}/reviews/{id}/comments` y muestra los comentarios aprobados y los propios. 3) La persona escribe un comentario de hasta 2000 caracteres y lo envía. 4) El cliente envía `POST /wines/{wineId}/reviews/{id}/comments`. 5) La API recorta el texto, lo guarda como `APPROVED` y avisa al autor de la reseña ([UC-REV-07](use-cases/uc-rev-07-activity-notices.md)). 6) La API responde 201 y el cliente muestra el comentario y actualiza el contador. | El comentario queda publicado en la reseña, o eliminado si se pidió eso. |
+| `CP-REV-24` | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | Flujo principal → 2a. No hay comentarios | Se muestra el estado vacío. |
+| `CP-REV-25` | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | Flujo principal → 4a. El texto queda vacío o supera 2000 caracteres al recortarlo | La API lo rechaza (400 o 422). |
+| `CP-REV-26` | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | Flujo principal → 4b. La reseña no está aprobada o hay un bloqueo entre las cuentas | La API responde 404. |
+| `CP-REV-27` | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | Flujo principal → 6a. La persona elimina un comentario propio, o un moderador o administrador uno ajeno | El cliente pide confirmación y envía `DELETE .../comments/{commentId}`; sin autoría ni permiso la API responde 422 `REVIEW_COMMENT_OWNERSHIP`. |
+| `CP-REV-28` | [`UC-REV-07`](use-cases/uc-rev-07-activity-notices.md) | 1) Al publicarse un comentario, la API encola un email y un push `REVIEW_COMMENT` para el autor de la reseña. 2) Todos los días a las 19:00 (hora de Argentina) la tarea programada junta los likes nuevos de cada autor. 3) Envía un push `REVIEW_LIKES_DAILY` con la cantidad de likes, de reseñas y el vino con más likes. 4) Los domingos a las 10:00 envía el resumen de la semana por email (`REVIEW_LIKES_WEEKLY`). | El autor de la reseña recibe el aviso del comentario y un resumen de los likes. |
+| `CP-REV-29` | [`UC-REV-07`](use-cases/uc-rev-07-activity-notices.md) | Flujo principal → 1a. Quien comenta es el autor de la reseña o hay un bloqueo entre las cuentas | No se envía aviso. |
+| `CP-REV-30` | [`UC-REV-07`](use-cases/uc-rev-07-activity-notices.md) | Flujo principal → 2a. Nadie dio likes nuevos | No se envía resumen. |
+| `CP-REV-31` | [`UC-REV-07`](use-cases/uc-rev-07-activity-notices.md) | Flujo principal → 3a. El push diario no se puede mostrar dentro del día | Se descarta. |
+
+## Matriz de trazabilidad
+
+| Caso de uso | Requisitos | Casos de prueba | Backend | Web | App |
+|---|---|---|---|---|---|
+| [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | RF-WEB-REV-01, RF-WEB-REV-02, RF-APK-REV-01, RF-APK-REV-02 | CP-REV-01, CP-REV-02, CP-REV-03, CP-REV-04, CP-REV-33 | 4 | 4 | 3 |
+| [`UC-REV-02`](use-cases/uc-rev-02-publish-review.md) | RF-WEB-REV-03, RF-WEB-REV-04, RF-APK-REV-03, RF-APK-REV-04 | CP-REV-05, CP-REV-06, CP-REV-07, CP-REV-08, CP-REV-32 | 5 | 2 | 3 |
+| [`UC-REV-03`](use-cases/uc-rev-03-edit-review.md) | RF-WEB-REV-05, RF-APK-REV-05 | CP-REV-09, CP-REV-10, CP-REV-11, CP-REV-12, CP-REV-13 | 3 | 1 | 1 |
+| [`UC-REV-04`](use-cases/uc-rev-04-delete-review.md) | RF-WEB-REV-06, RF-APK-REV-06 | CP-REV-14, CP-REV-15, CP-REV-16, CP-REV-17, CP-REV-18 | 2 | 1 | 1 |
+| [`UC-REV-05`](use-cases/uc-rev-05-like-review.md) | RF-WEB-REV-07, RF-APK-REV-07 | CP-REV-19, CP-REV-20, CP-REV-21, CP-REV-22 | 2 | 1 | 1 |
+| [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | RF-WEB-REV-08, RF-WEB-REV-09, RF-WEB-REV-10, RF-APK-REV-08, RF-APK-REV-09, RF-APK-REV-10 | CP-REV-23, CP-REV-24, CP-REV-25, CP-REV-26, CP-REV-27 | 3 | 1 | 1 |
+| [`UC-REV-07`](use-cases/uc-rev-07-activity-notices.md) | — | CP-REV-28, CP-REV-29, CP-REV-30, CP-REV-31 | 5 | n/a | n/a |
+
+Las columnas Backend, Web y App cuentan los archivos de test que ejercen el caso; el detalle está en cada caso de uso. «n/a» indica que el caso no aplica a esa plataforma.

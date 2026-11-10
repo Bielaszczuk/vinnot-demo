@@ -1,0 +1,285 @@
+name: Deploy Backend Dev
+
+on:
+  workflow_call:
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-backend-dev
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: '497675597655'
+  ECR_REPOSITORY: vinnot-backend
+  LOW_COST_INSTANCE_ID: i-0c0c6e1119024f13f
+  HEALTHCHECK_URL: https://api-dev.vinnot.com/api/actuator/health
+
+jobs:
+  deploy:
+    name: Build And Deploy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node for verified security tooling
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+
+      - name: Install checksum-verified scanners
+        run: |
+          node scripts/install-security-tools.mjs "$RUNNER_TEMP/security-bin" trivy
+          echo "$RUNNER_TEMP/security-bin" >> "$GITHUB_PATH"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      # Only the Maven build stage is cached, keyed on its inputs; the runtime stage and its OS
+      # packages are always rebuilt. Production `prepare` builds without any cache.
+      - name: Look up the backend build-stage cache
+        id: build-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/backend-build-cache
+          key: backend-image-build-v1-${{ hashFiles('backend/pom.xml', 'backend/Dockerfile', 'backend/.dockerignore') }}
+
+      - name: Build and scan the exact image to publish
+        env:
+          ECR_REGISTRY: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          BUILD_CACHE: ${{ runner.temp }}/backend-build-cache
+          CACHE_HIT: ${{ steps.build-cache.outputs.cache-hit == 'true' }}
+        run: |
+          set -euo pipefail
+          IMAGE_SHA="${ECR_REGISTRY}/${ECR_REPOSITORY}:dev-${GITHUB_SHA}"
+          IMAGE_LATEST="${ECR_REGISTRY}/${ECR_REPOSITORY}:dev-latest"
+          mkdir -p security-reports
+          cache_from=()
+          if [[ "$CACHE_HIT" == true ]]; then
+            cache_from=(--cache-from "type=local,src=${BUILD_CACHE}")
+          else
+            docker buildx build --pull --platform linux/amd64 --target build \
+              --cache-to "type=local,dest=${BUILD_CACHE},mode=max" backend
+          fi
+          docker buildx build --pull --platform linux/amd64 "${cache_from[@]}" \
+            --build-arg "APP_REVISION=${GITHUB_SHA}" \
+            --tag "${IMAGE_SHA}" --tag "${IMAGE_LATEST}" --load backend
+          trivy image --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --timeout 20m \
+            --format json --output security-reports/deployed-image.json "${IMAGE_SHA}"
+          trivy image --format cyclonedx --output security-reports/deployed-image.cdx.json "${IMAGE_SHA}"
+
+      - name: Preserve exact-image security evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: deployed-image-security-${{ github.run_id }}-${{ github.run_attempt }}
+          path: security-reports/
+          retention-days: 14
+          if-no-files-found: error
+
+      # A newer development push supersedes this one: later steps skip, so the run ends green.
+      - id: revision
+        name: Skip superseded or reject non-development revisions
+        run: node scripts/verify-deploy-revision.mjs
+
+      # The marker keeps this green but undeployed run from becoming the next CI impact baseline.
+      - name: Record the skipped deployment
+        if: steps.revision.outputs.current == 'false'
+        working-directory: .
+        run: mkdir -p "$RUNNER_TEMP/deploy-superseded" && echo "${{ github.sha }}" > "$RUNNER_TEMP/deploy-superseded/revision"
+
+      - name: Upload the skipped deployment marker
+        if: steps.revision.outputs.current == 'false'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: deploy-superseded-backend-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/deploy-superseded/
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Configure AWS credentials
+        if: steps.revision.outputs.current == 'true'
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          allowed-account-ids: '497675597655'
+
+      - name: Verify AWS identity
+        if: steps.revision.outputs.current == 'true'
+        run: aws sts get-caller-identity
+
+      - name: Login to Amazon ECR
+        if: steps.revision.outputs.current == 'true'
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2
+
+      - name: Push the already scanned image
+        if: steps.revision.outputs.current == 'true'
+        id: image
+        env:
+          ECR_REGISTRY: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+        run: |
+          set -euo pipefail
+          IMAGE_SHA="${ECR_REGISTRY}/${ECR_REPOSITORY}:dev-${GITHUB_SHA}"
+          IMAGE_LATEST="${ECR_REGISTRY}/${ECR_REPOSITORY}:dev-latest"
+          docker push "${IMAGE_SHA}"
+          docker push "${IMAGE_LATEST}"
+          DIGEST="$(aws ecr describe-images --repository-name "$ECR_REPOSITORY" --image-ids "imageTag=dev-${GITHUB_SHA}" --query 'imageDetails[0].imageDigest' --output text)"
+          [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+          echo "reference=${ECR_REGISTRY}/${ECR_REPOSITORY}@${DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure low-cost host is running
+        if: steps.revision.outputs.current == 'true'
+        run: |
+          set -euo pipefail
+          aws ec2 start-instances --instance-ids "${LOW_COST_INSTANCE_ID}" >/dev/null
+          aws ec2 wait instance-running --instance-ids "${LOW_COST_INSTANCE_ID}"
+          aws ec2 wait instance-status-ok --instance-ids "${LOW_COST_INSTANCE_ID}"
+
+      - name: Synchronize versioned runtime files
+        if: steps.revision.outputs.current == 'true'
+        run: |
+          set -euo pipefail
+          DEPLOY_SCRIPT="$(base64 < infra/aws-low-cost/deploy.sh | tr -d '\n')"
+          COMPOSE_FILE="$(base64 < infra/aws-low-cost/docker-compose.yml | tr -d '\n')"
+          POSTGRES_FILE="$(base64 < infra/aws-low-cost/compose.postgres.yml | tr -d '\n')"
+          REFRESH_SCRIPT="$(base64 < infra/aws-low-cost/refresh-runtime-env.sh | tr -d '\n')"
+          CADDY_FILE="$(base64 < infra/aws-low-cost/Caddyfile | tr -d '\n')"
+          DEPLOY_SHA="$(sha256sum infra/aws-low-cost/deploy.sh | awk '{print $1}')"
+          COMPOSE_SHA="$(sha256sum infra/aws-low-cost/docker-compose.yml | awk '{print $1}')"
+          POSTGRES_SHA="$(sha256sum infra/aws-low-cost/compose.postgres.yml | awk '{print $1}')"
+          REFRESH_SHA="$(sha256sum infra/aws-low-cost/refresh-runtime-env.sh | awk '{print $1}')"
+          CADDY_SHA="$(sha256sum infra/aws-low-cost/Caddyfile | awk '{print $1}')"
+          COMMANDS=(
+            "set -eu"
+            "umask 022"
+            ": > /tmp/vinnot-deploy.b64"
+            ": > /tmp/vinnot-compose.b64"
+            ": > /tmp/vinnot-postgres.b64"
+            ": > /tmp/vinnot-refresh.b64"
+            ": > /tmp/vinnot-caddy.b64"
+          )
+          while IFS= read -r chunk; do
+            COMMANDS+=("printf '%s' '${chunk}' >> /tmp/vinnot-deploy.b64")
+          done < <(printf '%s\n' "${DEPLOY_SCRIPT}" | fold -w 3000)
+          while IFS= read -r chunk; do
+            COMMANDS+=("printf '%s' '${chunk}' >> /tmp/vinnot-compose.b64")
+          done < <(printf '%s\n' "${COMPOSE_FILE}" | fold -w 3000)
+          while IFS= read -r chunk; do
+            COMMANDS+=("printf '%s' '${chunk}' >> /tmp/vinnot-postgres.b64")
+          done < <(printf '%s\n' "${POSTGRES_FILE}" | fold -w 3000)
+          while IFS= read -r chunk; do
+            COMMANDS+=("printf '%s' '${chunk}' >> /tmp/vinnot-refresh.b64")
+          done < <(printf '%s\n' "${REFRESH_SCRIPT}" | fold -w 3000)
+          while IFS= read -r chunk; do
+            COMMANDS+=("printf '%s' '${chunk}' >> /tmp/vinnot-caddy.b64")
+          done < <(printf '%s\n' "${CADDY_FILE}" | fold -w 3000)
+          COMMANDS+=(
+            "base64 --decode /tmp/vinnot-deploy.b64 > /opt/vinnot/deploy.sh.next"
+            "base64 --decode /tmp/vinnot-compose.b64 > /opt/vinnot/docker-compose.yml.next"
+            "base64 --decode /tmp/vinnot-postgres.b64 > /opt/vinnot/compose.postgres.yml.next"
+            "base64 --decode /tmp/vinnot-refresh.b64 > /opt/vinnot/refresh-runtime-env.sh.next"
+            "base64 --decode /tmp/vinnot-caddy.b64 > /opt/vinnot/Caddyfile.next"
+            "rm -f /tmp/vinnot-deploy.b64 /tmp/vinnot-compose.b64 /tmp/vinnot-postgres.b64 /tmp/vinnot-refresh.b64 /tmp/vinnot-caddy.b64"
+            "echo '${DEPLOY_SHA}  /opt/vinnot/deploy.sh.next' | sha256sum --check --status"
+            "echo '${COMPOSE_SHA}  /opt/vinnot/docker-compose.yml.next' | sha256sum --check --status"
+            "echo '${POSTGRES_SHA}  /opt/vinnot/compose.postgres.yml.next' | sha256sum --check --status"
+            "echo '${REFRESH_SHA}  /opt/vinnot/refresh-runtime-env.sh.next' | sha256sum --check --status"
+            "echo '${CADDY_SHA}  /opt/vinnot/Caddyfile.next' | sha256sum --check --status"
+            "bash -n /opt/vinnot/deploy.sh.next"
+            "bash -n /opt/vinnot/refresh-runtime-env.sh.next"
+            "chmod 0755 /opt/vinnot/deploy.sh.next"
+            "chmod 0644 /opt/vinnot/docker-compose.yml.next"
+            "chmod 0644 /opt/vinnot/compose.postgres.yml.next"
+            "chmod 0755 /opt/vinnot/refresh-runtime-env.sh.next"
+            "chmod 0644 /opt/vinnot/Caddyfile.next"
+            "mv /opt/vinnot/deploy.sh.next /opt/vinnot/deploy.sh"
+            "mv /opt/vinnot/compose.postgres.yml.next /opt/vinnot/compose.postgres.yml"
+            "mv /opt/vinnot/docker-compose.yml.next /opt/vinnot/docker-compose.yml"
+            "mv /opt/vinnot/refresh-runtime-env.sh.next /opt/vinnot/refresh-runtime-env.sh"
+            # deploy.sh validates Caddyfile.next with the pinned proxy image before activating it.
+          )
+          PARAMETERS="$(jq -n --args '{commands: $ARGS.positional}' -- "${COMMANDS[@]}")"
+          COMMAND_ID="$(aws ssm send-command \
+            --document-name AWS-RunShellScript \
+            --instance-ids "${LOW_COST_INSTANCE_ID}" \
+            --comment "Synchronize Vinnot runtime ${GITHUB_SHA}" \
+            --parameters "${PARAMETERS}" \
+            --query 'Command.CommandId' \
+            --output text)"
+          if ! aws ssm wait command-executed \
+            --command-id "${COMMAND_ID}" \
+            --instance-id "${LOW_COST_INSTANCE_ID}"; then
+            aws ssm get-command-invocation \
+              --command-id "${COMMAND_ID}" \
+              --instance-id "${LOW_COST_INSTANCE_ID}"
+            exit 1
+          fi
+
+      - name: Deploy on low-cost host
+        if: steps.revision.outputs.current == 'true'
+        env:
+          APPROVED_IMAGE: ${{ steps.image.outputs.reference }}
+        run: |
+          set -euo pipefail
+          [[ "$APPROVED_IMAGE" =~ ^497675597655\.dkr\.ecr\.us-east-1\.amazonaws\.com/vinnot-backend@sha256:[a-f0-9]{64}$ ]]
+          PARAMETERS="$(jq -n --arg command "/opt/vinnot/deploy.sh $APPROVED_IMAGE $GITHUB_SHA" '{commands:[$command]}')"
+          COMMAND_ID=""
+          for attempt in $(seq 1 30); do
+            if COMMAND_ID="$(aws ssm send-command \
+              --document-name AWS-RunShellScript \
+              --instance-ids "${LOW_COST_INSTANCE_ID}" \
+              --comment "Deploy Vinnot backend ${GITHUB_SHA}" \
+              --parameters "$PARAMETERS" \
+              --query 'Command.CommandId' \
+              --output text 2>/dev/null)"; then
+              break
+            fi
+            sleep 10
+          done
+          test -n "${COMMAND_ID}"
+
+          for attempt in $(seq 1 120); do
+            STATUS="$(aws ssm get-command-invocation \
+              --command-id "${COMMAND_ID}" \
+              --instance-id "${LOW_COST_INSTANCE_ID}" \
+              --query Status \
+              --output text 2>/dev/null || true)"
+            case "${STATUS}" in
+              Success)
+                exit 0
+                ;;
+              Failed|Cancelled|TimedOut|Cancelling)
+                aws ssm get-command-invocation \
+                  --command-id "${COMMAND_ID}" \
+                  --instance-id "${LOW_COST_INSTANCE_ID}"
+                exit 1
+                ;;
+            esac
+            sleep 10
+          done
+
+          echo "Deployment command did not complete within 20 minutes." >&2
+          exit 1
+
+      - name: Verify public health
+        if: steps.revision.outputs.current == 'true'
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 30); do
+            if curl --fail --show-error --silent --max-time 10 "${HEALTHCHECK_URL}"; then
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1

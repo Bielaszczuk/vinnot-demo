@@ -1,0 +1,48 @@
+# Functional requirements
+
+Functional requirements of the module, split by platform. The "Previous ID" column keeps the identifier they had in the per-platform specification.
+
+## Web
+
+| ID | Requirement | Acceptance criterion | Use case | Previous ID |
+|---|---|---|---|---|
+| `RF-WEB-WIN-01` | Browse cards and result totals. | Available name, winery, type, image/fallback and rating/reviews are displayed; totals come from metadata rather than just visible cards. | [`UC-WIN-01`](use-cases/uc-win-01-search-catalog.md) | `RF-WEB-WINE-001` |
+| `RF-WEB-WIN-02` | Search text with debounce. | At least two normalized characters trigger search; empty/short text retains filtered catalogue without inventing local results. | [`UC-WIN-01`](use-cases/uc-win-01-search-catalog.md) | `RF-WEB-WINE-002` |
+| `RF-WEB-WIN-03` | Combine visible filters. | Type, grape, country and region combine with text; changing country clears region and changing criteria resets pagination. | [`UC-WIN-01`](use-cases/uc-win-01-search-catalog.md) | `RF-WEB-WINE-003` |
+| `RF-WEB-WIN-04` | Suggest country from authorized location. | Location is matched to references; manual selection/clearing prevail and missing permission or match enables global browsing. | [`UC-WIN-01`](use-cases/uc-win-01-search-catalog.md) | `RF-WEB-WINE-004` |
+| `RF-WEB-WIN-05` | Clear search/filters and distinguish states. | Loading, results, empty and error are distinct states; clearing does not restore a country rejected by the user. | [`UC-WIN-01`](use-cases/uc-win-01-search-catalog.md) | `RF-WEB-WINE-005` |
+| `RF-WEB-WIN-06` | Page through server results. | Requests pages of twenty using hasNext/hasPrevious/totalPages; it does not download the whole catalogue for in-memory pagination. | [`UC-WIN-02`](use-cases/uc-win-02-page-catalog.md) | `RF-WEB-PAGE-001` |
+| `RF-WEB-WIN-07` | Represent the query in web navigation. | Reads q/search, type, grape, country, region and page parameters; URL updates do not guarantee restoration of every local filter. | [`UC-WIN-02`](use-cases/uc-win-02-page-catalog.md) | `RF-WEB-PAGE-002` |
+| `RF-WEB-WIN-08` | Retain presentation during page transitions. | Previous results may remain until new data arrives; this is not a confirmed second page or a new total before the response. | [`UC-WIN-02`](use-cases/uc-win-02-page-catalog.md) | `RF-WEB-PAGE-003` |
+| `RF-WEB-WIN-09` | Open details by identifier. | Shows available description, winery/origin, grapes, alcohol, sensory data and pairings; missing values are not invented. | [`UC-WIN-03`](use-cases/uc-win-03-view-wine-detail.md) | `RF-WEB-WINE-006` |
+| `RF-WEB-WIN-10` | Separate information, reviews and complete profile. | Detail offers these views and compare, share and add/open cellar actions; reading the basic detail does not generate AI. | [`UC-WIN-03`](use-cases/uc-win-03-view-wine-detail.md) | `RF-WEB-WINE-007` |
+| `RF-WEB-WIN-11` | Retain original data when displaying a sensory summary. | The projection can fill missing fields from the localized persisted profile while preserving manual content and zero scores. | [`UC-WIN-03`](use-cases/uc-win-03-view-wine-detail.md) | `RF-WEB-WINE-008` |
+| `RF-WEB-WIN-12` | Invite mobile download for scanning. | /wines/scan shows available downloads; it captures no camera, processes no files and invokes no web recognition. | [`UC-WIN-04`](use-cases/uc-win-04-scan-invitation.md) | `RF-WEB-WEBX-002` |
+
+## APK
+
+| ID | Requirement | Acceptance criterion | Use case | Previous ID |
+|---|---|---|---|---|
+| `RF-APK-WIN-01` | Browse cards and result totals. | Available name, winery, type, image/fallback and rating/reviews are displayed; totals come from metadata rather than just visible cards. | [`UC-WIN-01`](use-cases/uc-win-01-search-catalog.md) | `RF-APK-WINE-001` |
+| `RF-APK-WIN-02` | Search text with debounce. | At least two normalized characters trigger search; empty/short text retains filtered catalogue without inventing local results. | [`UC-WIN-01`](use-cases/uc-win-01-search-catalog.md) | `RF-APK-WINE-002` |
+| `RF-APK-WIN-03` | Combine visible filters. | Type, grape, country and region combine with text; changing country clears region and changing criteria resets pagination. | [`UC-WIN-01`](use-cases/uc-win-01-search-catalog.md) | `RF-APK-WINE-003` |
+| `RF-APK-WIN-04` | Suggest country from authorized location. | Location is matched to references; manual selection/clearing prevail and missing permission or match enables global browsing. | [`UC-WIN-01`](use-cases/uc-win-01-search-catalog.md) | `RF-APK-WINE-004` |
+| `RF-APK-WIN-05` | Clear search/filters and distinguish states. | Loading, results, empty and error are distinct states; clearing does not restore a country rejected by the user. | [`UC-WIN-01`](use-cases/uc-win-01-search-catalog.md) | `RF-APK-WINE-005` |
+| `RF-APK-WIN-06` | Load pages progressively. | Pages of twenty retain server order and one card per UUID; no next page is requested while busy, without hasNext or with an outstanding error. | [`UC-WIN-02`](use-cases/uc-win-02-page-catalog.md) | `RF-APK-PAGE-001` |
+| `RF-APK-WIN-07` | Separate collections when criteria or account change. | Resets to page zero and discards previous-selection responses; results from different filters/users are not merged. | [`UC-WIN-02`](use-cases/uc-win-02-page-catalog.md) | `RF-APK-PAGE-002` |
+| `RF-APK-WIN-08` | Refresh without emptying a collection on error. | Pull-to-refresh replaces with page zero only on success; failure retains data and allows retrying the corresponding operation. | [`UC-WIN-02`](use-cases/uc-win-02-page-catalog.md) | `RF-APK-PAGE-003` |
+| `RF-APK-WIN-09` | Open details by identifier. | Shows available description, winery/origin, grapes, alcohol, sensory data and pairings; missing values are not invented. | [`UC-WIN-03`](use-cases/uc-win-03-view-wine-detail.md) | `RF-APK-WINE-006` |
+| `RF-APK-WIN-10` | Separate information, reviews and complete profile. | Detail offers these views and compare, share and add/open cellar actions; reading the basic detail does not generate AI. | [`UC-WIN-03`](use-cases/uc-win-03-view-wine-detail.md) | `RF-APK-WINE-007` |
+| `RF-APK-WIN-11` | Retain original data when displaying a sensory summary. | The projection can fill missing fields from the localized persisted profile while preserving manual content and zero scores. | [`UC-WIN-03`](use-cases/uc-win-03-view-wine-detail.md) | `RF-APK-WINE-008` |
+| `RF-APK-WIN-12` | Request permission and capture a label. | Denied permission communicates the restriction; capture freezes the analyzed image and permits retaking without duplicating native operations. | [`UC-WIN-05`](use-cases/uc-win-05-scan-label.md) | `RF-APK-SCAN-001` |
+| `RF-APK-WIN-13` | Prepare photo and text evidence. | Validates quality/resolution and prepares optional OCR; evidence limits do not prevent visual recognition when OCR is unsuitable. | [`UC-WIN-05`](use-cases/uc-win-05-scan-label.md) | `RF-APK-SCAN-002` |
+| `RF-APK-WIN-14` | Submit a transient scan and obtain an outcome. | EXACT_MATCH, POSSIBLE_MATCHES or NO_MATCH determines the next view; ordinary scanning does not save a catalogue image. | [`UC-WIN-05`](use-cases/uc-win-05-scan-label.md) | `RF-APK-SCAN-003` |
+| `RF-APK-WIN-15` | Open an exact match or select a suggestion. | An unambiguous exact match opens the wine; up to three suggestions require selection and are not announced as 100% certain matches. | [`UC-WIN-05`](use-cases/uc-win-05-scan-label.md) | `RF-APK-SCAN-004` |
+| `RF-APK-WIN-16` | Recover failures and cancel scanning. | Error retains the capture and offers retry, search or retake; cancellation discards late responses without promising to undo remote processing already started. | [`UC-WIN-05`](use-cases/uc-win-05-scan-label.md) | `RF-APK-SCAN-010` |
+| `RF-APK-WIN-17` | Apply server usage limits. | Configurable per-user limits (default scan 30/hour, submission 10/day) communicate rejection without triggering retry loops. | [`UC-WIN-05`](use-cases/uc-win-05-scan-label.md) | `RF-APK-SCAN-011` |
+| `RF-APK-WIN-18` | Release temporary capture resources. | Exit/reset releases only registered files and waits for native operations still using them; arbitrary phone photos are not deleted. | [`UC-WIN-05`](use-cases/uc-win-05-scan-label.md) | `RF-APK-SCAN-012` |
+| `RF-APK-WIN-19` | Search manually while keeping the capture. | At least two characters use the catalogue; new text does not retain old results as if they were current. | [`UC-WIN-06`](use-cases/uc-win-06-manual-search-from-scan.md) | `RF-APK-SCAN-005` |
+| `RF-APK-WIN-20` | Submit a wine not found. | Name/winery required; type, vintage, grapes, country, region, alcohol, notes and captured image are supported; from “Add your wine” the image is optional and without it the proposal is never published automatically; backend decides publication/link/review. | [`UC-WIN-07`](use-cases/uc-win-07-submit-wine.md) | `RF-APK-SCAN-006` |
+| `RF-APK-WIN-21` | Accept localized alcohol decimals. | 13,6 and 13.6 produce the same value; allows 0–100 and rejects non-numeric text; optional vintage 1800..current year+1. | [`UC-WIN-07`](use-cases/uc-win-07-submit-wine.md) | `RF-APK-SCAN-007` |
+| `RF-APK-WIN-22` | Attach a label only to an exact match without an image. | The specific use case rechecks identity, moderation and concurrency; selecting a suggestion does not replace existing photos. | [`UC-WIN-08`](use-cases/uc-win-08-attach-label-photo.md) | `RF-APK-SCAN-009` |
+| `RF-APK-WIN-23` | Show the result and view personal submissions. | APPROVED/DUPLICATE/NEEDS_REVIEW/REJECTED/CHANGES_REQUESTED/PENDING appear with available notes/target and personal pagination. | [`UC-WIN-09`](use-cases/uc-win-09-track-submissions.md) | `RF-APK-SCAN-008` |

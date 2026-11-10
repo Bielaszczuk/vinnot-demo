@@ -1,0 +1,2 @@
+to: ana@example.test
+subject: Verify your Vinnot account

@@ -1,0 +1,187 @@
+name: Production Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Prepare an immutable candidate, publish it, or restore the previous compatible release'
+        type: choice
+        options: [prepare, publish, rollback]
+        required: true
+      approved_sha:
+        description: 'Full current main SHA approved by the operator'
+        type: string
+        required: true
+      ci_run_id:
+        description: 'Successful CI run for approved_sha (prepare only)'
+        type: string
+      baseline_candidate_run_id:
+        description: 'Previous published prepare run; verified artefacts allow unchanged components to be reused'
+        type: string
+      force_rebuild:
+        description: 'Rebuild both components after build-environment or deployment configuration changes'
+        type: boolean
+        default: false
+      candidate_run_id:
+        description: 'Successful prepare run to publish (previous candidate for rollback)'
+        type: string
+      host_prepared:
+        description: 'Publish only: the migrations and runtime files the candidate plan requires are already applied on the host (release guide step 7)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: read
+
+# One publication across backend/web. Never interrupt an operation already sent to SSM.
+concurrency:
+  group: vinnot-production-release
+  cancel-in-progress: false
+
+env:
+  APPROVED_SHA: ${{ inputs.approved_sha }}
+  GH_TOKEN: ${{ github.token }}
+  AWS_REGION: us-east-1
+
+jobs:
+  prepare:
+    name: Prepare production candidate
+    if: inputs.operation == 'prepare'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      RELEASE_RUN_ID: ${{ inputs.ci_run_id }}
+      RELEASE_RUN_KIND: ci
+      BASELINE_CANDIDATE_RUN_ID: ${{ inputs.baseline_candidate_run_id }}
+      FORCE_REBUILD: ${{ inputs.force_rebuild }}
+      VITE_API_BASE_URL: https://api.vinnot.com/api
+      VITE_APP_ENV: production
+      VITE_MOCK_API: 'false'
+      VITE_EVENT_PAYMENTS_ENABLED: 'true'
+      VITE_FEATURE_SOCIAL_LOGIN: 'true'
+      VITE_GOOGLE_OAUTH_CLIENT_ID: ${{ vars.PROD_GOOGLE_OAUTH_CLIENT_ID }}
+      VITE_APPLE_CLIENT_ID: com.vinnot.web
+      VITE_APPLE_REDIRECT_URI: https://vinnot.com/login
+      VITE_FACEBOOK_APP_ID: ''
+      VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.PROD_GOOGLE_MAPS_BROWSER_KEY }}
+      VITE_GENERATE_SOURCEMAP: 'false'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend-react/package-lock.json
+      - name: Verify approved main, existing CI gate and baseline candidate
+        run: node scripts/verify-production-release.mjs
+      - name: Download previous candidate only for verified reuse
+        if: inputs.baseline_candidate_run_id != ''
+        run: |
+          [[ "$BASELINE_CANDIDATE_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          RELEASE_RUN_ID="$BASELINE_CANDIDATE_RUN_ID" RELEASE_RUN_KIND=candidate RELEASE_ACTION=rollback node scripts/verify-production-release.mjs
+          gh run download "$BASELINE_CANDIDATE_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "production-candidate-$BASELINE_CANDIDATE_RUN_ID" --dir baseline-release
+      - name: Plan changed components and preserve complete rollback artefacts
+        id: components
+        run: |
+          mkdir -p release/web
+          node scripts/production-component-plan.mjs
+      - name: Plan host preparation (migrations and runtime files)
+        run: node scripts/verify-production-release.mjs --host-preparation
+      - name: Validate explicit production browser configuration
+        if: steps.components.outputs.web == 'true'
+        run: |
+          test -n "$VITE_GOOGLE_OAUTH_CLIENT_ID"
+          test -n "$VITE_GOOGLE_MAPS_API_KEY"
+      - name: Build production web once
+        if: steps.components.outputs.web == 'true'
+        working-directory: frontend-react
+        run: |
+          npm ci
+          npm run build
+          test -f dist/index.html
+          grep -R -q 'https://api.vinnot.com/api' dist/assets
+          if grep -R -E -q 'https://api-dev.vinnot.com|TU_GOOGLE_MAPS_API_KEY' dist/assets; then exit 1; fi
+      - name: Copy new web into complete candidate
+        if: steps.components.outputs.web == 'true'
+        run: cp -R frontend-react/dist/. release/web/
+      - name: Build and scan the exact backend candidate
+        if: steps.components.outputs.backend == 'true'
+        run: |
+          node scripts/install-security-tools.mjs "$RUNNER_TEMP/security-bin" trivy
+          docker build --pull --platform linux/amd64 --build-arg "APP_REVISION=$APPROVED_SHA" --tag "vinnot-candidate:$APPROVED_SHA" backend
+          "$RUNNER_TEMP/security-bin/trivy" image --scanners vuln --severity HIGH,CRITICAL --exit-code 1 --timeout 20m --format json --output release/image-security.json "vinnot-candidate:$APPROVED_SHA"
+          "$RUNNER_TEMP/security-bin/trivy" image --format cyclonedx --output release/backend.cdx.json "vinnot-candidate:$APPROVED_SHA"
+          docker save --output release/backend.tar "vinnot-candidate:$APPROVED_SHA"
+      - name: Seal complete candidate and component identities
+        run: node scripts/prepare-production-manifest.mjs
+      - name: Confirm revision is still current
+        run: node scripts/verify-production-release.mjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: production-candidate-${{ github.run_id }}
+          path: release/
+          # Preserve every file covered by the manifest, including web placeholders.
+          include-hidden-files: true
+          retention-days: 30
+          if-no-files-found: error
+
+  publish:
+    name: Publish approved production candidate
+    if: inputs.operation == 'publish' || inputs.operation == 'rollback'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    env:
+      CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+      RELEASE_ACTION: ${{ inputs.operation }}
+      HOST_PREPARED: ${{ inputs.host_prepared }}
+      DOCKER_CONFIG: ${{ github.workspace }}/.production-docker-auth
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: Verify candidate run before downloading any files
+        env:
+          RELEASE_RUN_ID: ${{ inputs.candidate_run_id }}
+          RELEASE_RUN_KIND: candidate
+        run: node scripts/verify-production-release.mjs
+      - name: Download named candidate without rebuilding
+        run: |
+          [[ "$CANDIDATE_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          gh run download "$CANDIDATE_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "production-candidate-$CANDIDATE_RUN_ID" --dir release
+      - name: Verify provenance, checksums, CI and current main before AWS credentials
+        id: validation
+        env:
+          RELEASE_VALIDATE_ONLY: 'true'
+        run: node scripts/publish-production-release.mjs
+      - name: Assume separate production role
+        if: steps.validation.outputs.backend == 'true' || steps.validation.outputs.web == 'true'
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::497675597655:role/vinnot-production-release
+          role-session-name: release-${{ github.run_id }}
+          aws-region: us-east-1
+          allowed-account-ids: '497675597655'
+      - name: Publish verified image and web package
+        run: node scripts/publish-production-release.mjs
+      - name: Preserve publication status without runtime secrets
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: production-publication-${{ github.run_id }}
+          path: deployment-result.json
+          retention-days: 30
+          if-no-files-found: ignore
+      - name: Remove ephemeral registry credentials
+        if: ${{ always() }}
+        run: rm -rf -- "$DOCKER_CONFIG"

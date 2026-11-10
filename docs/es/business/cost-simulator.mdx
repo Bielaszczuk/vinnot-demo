@@ -1,0 +1,29 @@
+import CostProjection from '@site/src/components/CostProjection';
+
+# Simulador de costos por escala
+
+Mueve la cantidad de usuarios activos mensuales y mira qué plan necesita cada servicio,
+cuánto cuesta por mes y por año, y qué límites de los planes actuales se superan. El
+primer cuello de botella aparece resaltado.
+
+## Cómo usarlo
+
+1. Mueve el control de escala, de 500 a 60.000 usuarios activos mensuales, o elige una
+   de las escalas de referencia: 1.000, 5.000, 10.000 o 50.000.
+2. Lee el costo total por mes y por año, y la barra con la composición del costo.
+3. Revisa la tabla: indica el plan necesario de cada servicio y su costo.
+4. Revisa los límites superados y qué tipo de cambio exige cada uno: un plan pago, un
+   cambio de configuración o un costo variable.
+
+<CostProjection />
+
+## De dónde salen los números
+
+- Los planes, precios y límites son los de
+  [Capacidad y proyección de costos](capacity-and-cost-projections.md), con los mismos
+  supuestos y la misma fecha: 29-10-2026. El simulador y esa página usan un único
+  modelo, y una prueba automática fija sus valores.
+- Los costos fijos (entorno de desarrollo, otros servicios de AWS, Apple y dominio)
+  vienen de [Costos actuales](costs.md).
+- Por encima de 60.000 usuarios el modelo deja de ser válido: hace falta medir con una
+  prueba de carga.

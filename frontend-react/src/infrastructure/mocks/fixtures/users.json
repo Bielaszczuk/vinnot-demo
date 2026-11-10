@@ -1,0 +1,82 @@
+{
+  "users": [
+    {
+      "id": "user-001",
+      "email": "demo@vinnot.com",
+      "name": "Demo User",
+      "avatar": null,
+      "roles": ["ROLE_USER"],
+      "is_verified": true,
+      "preferences": {
+        "favorite_wine_types": ["red", "sparkling"],
+        "favorite_regions": ["Mendoza", "Valle de Uco"],
+        "price_range": { "min": 20, "max": 100 },
+        "notifications": {
+          "email": true,
+          "push": false,
+          "events": true,
+          "recommendations": true,
+          "newsletter": false
+        },
+        "locale": "es-AR",
+        "theme": "system"
+      },
+      "created_at": "2024-01-01T10:00:00Z",
+      "updated_at": "2025-01-10T15:00:00Z"
+    },
+    {
+      "id": "user-admin",
+      "email": "admin@vinnot.com",
+      "name": "Admin User",
+      "avatar": null,
+      "roles": ["ROLE_ADMIN", "ROLE_USER"],
+      "is_verified": true,
+      "preferences": {
+        "favorite_wine_types": ["red", "white"],
+        "favorite_regions": ["Mendoza"],
+        "price_range": null,
+        "notifications": {
+          "email": true,
+          "push": true,
+          "events": true,
+          "recommendations": true,
+          "newsletter": true
+        },
+        "locale": "en-US",
+        "theme": "light"
+      },
+      "created_at": "2023-06-01T08:00:00Z",
+      "updated_at": "2025-01-08T12:00:00Z"
+    },
+    {
+      "id": "user-partner",
+      "email": "partner@winery.com",
+      "name": "Winery Partner",
+      "avatar": null,
+      "roles": ["ROLE_PARTNER", "ROLE_USER"],
+      "is_verified": true,
+      "preferences": {
+        "favorite_wine_types": [],
+        "favorite_regions": ["Mendoza"],
+        "price_range": null,
+        "notifications": {
+          "email": true,
+          "push": false,
+          "events": true,
+          "recommendations": false,
+          "newsletter": true
+        },
+        "locale": "es-AR",
+        "theme": "dark"
+      },
+      "created_at": "2024-03-15T14:00:00Z",
+      "updated_at": "2025-01-05T09:00:00Z"
+    }
+  ],
+  "credentials": {
+    "demo@vinnot.com": "demo123",
+    "admin@vinnot.com": "admin123",
+    "partner@winery.com": "partner123"
+  }
+}
+

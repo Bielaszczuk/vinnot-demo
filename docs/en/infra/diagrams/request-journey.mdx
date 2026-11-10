@@ -1,0 +1,33 @@
+import RequestJourney from '@site/src/components/RequestJourney';
+
+# Request journey
+
+Pick a scenario and follow the dot: it travels every hop of a real request, from the device
+to the database, R2 or the external provider. Each step explains what happens at that hop:
+TLS termination, WAF rules, rate limiting, the JWT check or the query. Use **Play** to watch
+it on its own, or **Previous** and **Next** to go one step at a time. When your system asks
+for reduced motion, the component shows the list of steps without animation.
+
+<RequestJourney />
+
+## What each scenario shows
+
+| Scenario | Path | What it demonstrates |
+|---|---|---|
+| Open vinnot.com | Browser → Cloudflare DNS → CloudFront → WAF → CloudFront Function → private S3 | The web is static and does not touch the API host until React starts |
+| The app requests /api/wines | App → Cloudflare proxy and WAF → Caddy → rate limit → JWT filter → controller → PostgreSQL | The whole backend lives on one EC2 host with Docker Compose |
+| Show an image | Web or app → Cloudflare DNS → Worker → edge cache → private R2 | Images use no AWS resources |
+| Mercado Pago payment (webhook) | Mercado Pago → Cloudflare proxy → Caddy → HMAC signature → PostgreSQL → Mercado Pago API → push and email | The notice is never taken as truth: the server looks the payment up |
+| OTA update | Publishing → app → EAS Update → download | JavaScript changes skip the stores and AWS |
+
+## Sources for each hop
+
+- **Web:** distribution, WAF and flat-rate subscription in [`production-web-stack.json`](../../../../infra/aws-low-cost/production-web-stack.json); routing and headers function in [`configure-web-security-function.mjs`](../../../../scripts/configure-web-security-function.mjs).
+- **API:** TLS, headers and proxy in [`Caddyfile`](../../../../infra/aws-low-cost/Caddyfile); limits in [`RateLimitingFilter.java`](../../../../backend/src/main/java/com/vinnot/shared/infrastructure/security/RateLimitingFilter.java) and [`application.yml`](../../../../backend/src/main/resources/application.yml); token in [`JwtAuthenticationFilter.java`](../../../../backend/src/main/java/com/vinnot/shared/infrastructure/security/JwtAuthenticationFilter.java); catalogue in [`WineReadController.java`](../../../../backend/src/main/java/com/vinnot/wine/infrastructure/web/controller/WineReadController.java); connection pool in [`docker-compose.yml`](../../../../infra/aws-low-cost/docker-compose.yml).
+- **Images:** [`worker.mjs`](../../../../infra/cloudflare/catalog-images/worker.mjs) and [`wrangler.uploads.jsonc`](../../../../infra/cloudflare/catalog-images/wrangler.uploads.jsonc).
+- **Payments:** [`PaymentWebhookController.java`](../../../../backend/src/main/java/com/vinnot/payment/infrastructure/web/PaymentWebhookController.java), [`MercadoPagoWebhookSignature.java`](../../../../backend/src/main/java/com/vinnot/payment/infrastructure/security/MercadoPagoWebhookSignature.java) and [`MercadoPagoPaymentAdapter.java`](../../../../backend/src/main/java/com/vinnot/payment/infrastructure/gateway/MercadoPagoPaymentAdapter.java).
+- **OTA:** channels in [`eas.json`](../../../../frontend-mobile/eas.json) and the runtime version policy in [`app.config.ts`](../../../../frontend-mobile/app.config.ts).
+
+The full map of where each part runs is in [Hosting and runtime](../architecture/hosting-and-runtime.md),
+and the external providers are in [External services](../architecture/external-services.md).
+The component lives in [`RequestJourney`](../../../../docs-site/src/components/RequestJourney/journey.mjs).

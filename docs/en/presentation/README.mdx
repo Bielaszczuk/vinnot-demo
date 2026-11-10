@@ -1,0 +1,68 @@
+import Link from '@docusaurus/Link';
+
+# Presentation
+
+The oral presentation of Vinnot as animated slides: 25 slides that present the project
+from scratch, for people who do not know the platform. It goes from
+what Vinnot is and what you can do, with the live demo, to how it was built, how it makes
+money and what growth costs. Each slide shows which rubric rows it covers and links to the
+page of this documentation that explains the topic.
+
+<Link className="button button--primary button--lg" to="/presentation">Open the presentation</Link>
+
+## How to use it
+
+The presentation fills the window. To project it, press **F** or the full-screen
+button.
+
+| Action | Keys or gesture |
+|---|---|
+| Forward | → , ↓ , space, Enter, Page Down or a click on the slide |
+| Back | ← , ↑ , Backspace or Page Up |
+| Go to the start or the end | Home or End |
+| Full screen | F |
+| On a phone or tablet | Swipe left or right |
+
+Each slide reveals its content in steps: moving forward shows the next step before going
+to the next slide. The address keeps the slide number (`/presentation#12`), so reloading
+the page resumes at the same place. At the bottom there is a clock with the elapsed time
+and a progress bar split by chapter. Transitions are not animated when the system asks
+for reduced motion.
+
+## Route
+
+| Chapter | Slides | Where it is explained |
+|---|---|---|
+| I. What Vinnot is | Cover, agenda, the problem, the solution, who it is for, one platform on three screens | [Project](../project/README.md), [Project plan](../project/project-plan.md) and [Product access](../project/deliverables-and-access.md) |
+| II. The product | What you can do, points and seals, demo route, live demo | [Manuals](../manuals/README.md), [Points and seals](../manuals/points-and-seals.mdx) and [Videos](../videos/README.md) |
+| III. How it was built | Project plan, schedule, requirements, diagrams, architecture, repository, security and quality | [Requirements index](../project/requirements-index.md), [Schedule](../gantt/README.md), [Diagrams](../diagrams/README.md), [Architecture](../architecture/README.md), [Repository organization](../project/repository-organization.md) and [Security](../security/README.md) |
+| IV. Business and scale | Value proposition and competitors, monetization, how to gain users, 12-month projection, costs and scale, the offer for wineries and a founder winery roadmap | [Business model](../business/README.md), [Monetization](../business/monetization.md), [12-month user projection](../business/user-acquisition-projection.md), [Capacity and cost projections](../business/capacity-and-cost-projections.md) and [Winery pricing roadmap](../business/winery-pricing-roadmap.md) |
+| V. Closing | Rubric recap, access and questions | [Product access](../project/deliverables-and-access.md) |
+
+## Rubric coverage
+
+| Block | Row | Slides | Reference page |
+|---|---|---|---|
+| Documentation | Project overview | Agenda, the problem, the solution | [Project](../project/README.md) |
+| Documentation | Project plan | Who it is for, project plan, schedule | [Project plan](../project/project-plan.md) |
+| Documentation | Modeling and diagrams | Schedule, diagrams, architecture | [Diagrams](../diagrams/README.md) |
+| Documentation | Requirements | Traceable requirements | [Requirements index](../project/requirements-index.md) and [Traceability matrix](../modules/traceability.md) |
+| Final product | Web functionality | Three screens, what you can do, live demo | [Web](../frontend-web/README.md) |
+| Final product | Mobile functionality | Three screens, what you can do, points and seals, live demo | [Mobile app](../frontend-mobile/README.md) |
+| Final product | Source code and repositories | Architecture, repository, security and quality | [Repository organization](../project/repository-organization.md) |
+| Final product | Deliverables: demo and access | Demo route, closing | [Product access](../project/deliverables-and-access.md) |
+| Oral presentation | Clarity and communication | Cover and closing: the order of the whole talk | This page |
+| Oral presentation | Participation | Cover | This page |
+| Oral presentation | Live technical demo | Demo route, live demo | [Guided tour by role](../project/deliverables-and-access.md#guided-tour-by-role) |
+| Oral presentation | Value proposition | Value proposition, monetization, user projection, costs and scale, the offer for wineries | [Business model](../business/README.md) and [Winery pricing roadmap](../business/winery-pricing-roadmap.md) |
+
+## Figures it shows
+
+The figures on the slides come from the pages linked in the table above and are checked
+by the site tests (`docs-site/test/presentation-content.test.mjs`): the requirement
+totals, the monthly cost, the projection by users, the sample commission and the seal
+thresholds. The user projection and the winery prices come from
+`docs-site/src/components/Presentation/growth.mjs`, and
+`docs-site/test/presentation-growth.test.mjs` checks them against their pages. When one
+of those pages changes a figure, update `content.mjs` or `growth.mjs` in
+`docs-site/src/components/Presentation/`.

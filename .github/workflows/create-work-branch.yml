@@ -1,0 +1,68 @@
+name: Create Work Branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      work_type:
+        description: Type of work
+        required: true
+        type: choice
+        options:
+          - feature
+          - bugfix
+          - hotfix
+          - task
+      issue_number:
+        description: Existing issue number; leave empty to create one
+        required: false
+        type: string
+      title:
+        description: Title; required only when creating a new issue
+        required: false
+        type: string
+      description:
+        description: Issue objective; used only when creating a new issue
+        required: false
+        type: string
+      start_date:
+        description: Start date (YYYY-MM-DD); leave both dates empty to skip roadmap
+        required: false
+        type: string
+      end_date:
+        description: Planned end date (YYYY-MM-DD); requires start date
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  create:
+    name: Create issue and linked branch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository policy
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+
+      - name: Create or reuse issue and create linked branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WORK_TYPE: ${{ inputs.work_type }}
+          ISSUE_NUMBER: ${{ inputs.issue_number }}
+          WORK_TITLE: ${{ inputs.title }}
+          WORK_DESCRIPTION: ${{ inputs.description }}
+          WORK_START_DATE: ${{ inputs.start_date }}
+          WORK_END_DATE: ${{ inputs.end_date }}
+          PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          PROJECT_OWNER: ${{ vars.WORK_PROJECT_OWNER || 'Bielaszczuk' }}
+          PROJECT_NUMBER: ${{ vars.WORK_PROJECT_NUMBER || '3' }}
+          PROJECT_START_FIELD: ${{ vars.WORK_PROJECT_START_FIELD || 'Start date' }}
+          PROJECT_END_FIELD: ${{ vars.WORK_PROJECT_END_FIELD || 'Target date' }}
+        run: node scripts/create-github-work-item.mjs

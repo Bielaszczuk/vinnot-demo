@@ -1,0 +1,40 @@
+name: Bugfix
+description: Reproducible defect that is not a production emergency
+title: "[Bugfix]: "
+body:
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+      description: What happened, including the exact error or visible symptom?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and environment
+      description: Logs, request ID, screenshots, device/browser, build, and environment.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Regression acceptance criteria
+      description: Include the automated test that must prevent recurrence.
+    validations:
+      required: true

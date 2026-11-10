@@ -1,0 +1,168 @@
+# Dependency update policy: docs/en/infra/guides/dependency-updates.md.
+# Actions: one grouped monthly pull request keeps SHA-pinned Actions current. Each bump also needs one
+# reviewed commit to infra/security/actions-policy.json, which CI enforces as the review step.
+# Everything else: one grouped monthly pull request per project with patch and minor updates only.
+# Major updates and the Expo SDK family are planned upgrades; scripts/dependency-report.mjs lists them.
+# Python is not listed: scripts/wine-images pins versions in requirements.lock, a file name
+# Dependabot's pip support does not read, so the local report compares that lock with PyPI.
+# The cooldown skips releases younger than a week, so a broken or hijacked release is not picked up.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: development
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: npm
+    directory: /frontend-mobile
+    target-branch: development
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      mobile-routine:
+        patterns: ['*']
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+      # The Expo SDK pins these; they move together with `npx expo install --fix`.
+      - dependency-name: 'expo'
+      - dependency-name: 'expo-*'
+      - dependency-name: '@expo/*'
+      - dependency-name: 'react'
+      - dependency-name: 'react-dom'
+      - dependency-name: 'react-native'
+      - dependency-name: 'react-native-*'
+      - dependency-name: '@react-native/*'
+      - dependency-name: '@react-native-async-storage/*'
+      - dependency-name: '@react-native-community/*'
+      - dependency-name: '@react-navigation/*'
+      - dependency-name: '@shopify/flash-list'
+      - dependency-name: 'jest-expo'
+      - dependency-name: 'babel-preset-expo'
+      - dependency-name: 'typescript'
+      - dependency-name: '@types/react'
+
+  - package-ecosystem: npm
+    directory: /frontend-react
+    target-branch: development
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      web-routine:
+        patterns: ['*']
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: npm
+    directory: /docs-site
+    target-branch: development
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      docs-site-routine:
+        patterns: ['*']
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: npm
+    directory: /tools/docs-diagrams
+    target-branch: development
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      docs-diagrams-routine:
+        patterns: ['*']
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: maven
+    directory: /backend
+    target-branch: development
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      backend-routine:
+        patterns: ['*']
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  # Base images stay pinned by digest; Dependabot moves the tag and the digest together.
+  - package-ecosystem: docker
+    directory: /backend
+    target-branch: development
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      backend-images:
+        patterns: ['*']
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+      # The build image tag carries the JDK (3.9-eclipse-temurin-25), so a JDK jump reads as a patch
+      # update. The JDK moves as a planned upgrade together with pom.xml, CI and the runtime image.
+      - dependency-name: 'maven'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor', 'version-update:semver-patch']
+
+  - package-ecosystem: docker-compose
+    directories:
+      - /infra
+      - /infra/aws-low-cost
+    target-branch: development
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      compose-images:
+        patterns: ['*']
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']

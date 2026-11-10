@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "instance_id": "i-06bff053f7584c6c2",
+  "account_id": "497675597655",
+  "region": "us-east-1",
+  "namespace": "Vinnot/Production",
+  "thresholds": {
+    "snapshot_max_age_seconds": 180,
+    "memory_min_bytes": 268435456,
+    "disk_min_bytes": 3221225472,
+    "container_memory_percent": 90,
+    "db_connections_percent": 80,
+    "backup_max_age_seconds": 108000,
+    "effects_max_overdue_seconds": 1800,
+    "ai_monthly_limit_usd": 8,
+    "ai_unresolved_max_age_seconds": 3600,
+    "http_error_ratio": 0.05,
+    "http_slow_ratio": 0.2
+  }
+}

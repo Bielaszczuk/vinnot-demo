@@ -1,0 +1,196 @@
+/* Revenue simulator (#482). Theme colors come from --ifm-* plus three series colors tuned for
+   both themes; bars grow with a transition unless the reader prefers reduced motion. */
+
+.simulator {
+  --c-commission: #7b2d3b;
+  --c-subscription: #c9a25a;
+  --c-cost: #6b5850;
+  margin: 1.5rem 0 2rem;
+  padding: 1rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: var(--ifm-card-border-radius, 8px);
+  background: var(--ifm-background-surface-color);
+  display: grid;
+  gap: 1rem;
+}
+
+:global([data-theme='dark']) .simulator {
+  --c-commission: #c45a6b;
+  --c-subscription: #e2c27f;
+  --c-cost: #b6a397;
+}
+
+.inputs {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+
+.group {
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 6px;
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+  min-width: 0;
+}
+
+.group legend {
+  padding: 0 0.25rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.8125rem;
+}
+
+.input {
+  font: inherit;
+  font-size: 0.9rem;
+  width: 100%;
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  background: var(--ifm-background-color);
+  color: var(--ifm-font-color-base);
+}
+
+.slider {
+  width: 100%;
+  accent-color: var(--ifm-color-primary);
+}
+
+.caption {
+  font-size: 0.8125rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.chip {
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  background: var(--ifm-background-color);
+  color: var(--ifm-font-color-base);
+  cursor: pointer;
+}
+
+.chip:focus-visible,
+.input:focus-visible,
+.slider:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+}
+
+.active {
+  background: var(--ifm-color-primary);
+  border-color: var(--ifm-color-primary);
+  color: var(--ifm-color-white, #fff);
+}
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.figures dt {
+  font-size: 0.8125rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.figures dd {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.figures dd.small {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.positive {
+  color: var(--ifm-color-success-darker, #067647);
+}
+
+.negative {
+  color: var(--ifm-color-danger-darker, #b42318);
+}
+
+:global([data-theme='dark']) .positive {
+  color: var(--ifm-color-success-lighter, #47cd89);
+}
+
+:global([data-theme='dark']) .negative {
+  color: var(--ifm-color-danger-lighter, #f97066);
+}
+
+.bars {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: minmax(5rem, auto) 1fr;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.8125rem;
+}
+
+.track {
+  display: flex;
+  height: 1rem;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--ifm-color-emphasis-200);
+}
+
+.bar {
+  flex: 0 0 var(--w);
+  transition: flex-basis 450ms ease;
+}
+
+.commission { background: var(--c-commission); }
+.subscription { background: var(--c-subscription); }
+.cost { background: var(--c-cost); }
+
+.line {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+}
+
+.note {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    transition: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .simulator {
+    padding: 0.75rem;
+  }
+}

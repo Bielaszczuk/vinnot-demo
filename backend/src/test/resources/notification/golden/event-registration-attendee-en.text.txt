@@ -1,0 +1,13 @@
+Tasting
+Registration status: Awaiting payment
+Payment status: Payment pending
+Guests: 1
+Event date: Oct 20, 2026, 9:00:00 AM (America/Argentina/Buenos Aires)
+Confirm before: Oct 19, 2026, 3:45:00 PM (America/Argentina/Buenos Aires)
+View my ticket: https://vinnot.example/my-tickets/11111111-2222-3333-4444-555555555555
+
+---
+Vinnot
+Visit Vinnot: https://vinnot.example
+Contact: https://vinnot.example/contact
+Privacy: https://vinnot.example/privacy

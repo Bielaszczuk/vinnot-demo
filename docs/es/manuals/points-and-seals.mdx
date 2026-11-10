@@ -1,0 +1,169 @@
+import SealLadder from '@site/src/components/SealLadder';
+import PourRating, { RatingExamples } from '@site/src/components/PourRating';
+
+# Puntos y sellos
+
+Cada vez que participas en Vinnot sumas puntos: cuando reseñas un vino, cuando tus
+reseñas reciben likes, cuando comentas, cuando propones un vino nuevo o te inscribes
+a un evento. Con los puntos cambia tu **sello de lacre**, que empieza como Brote y
+puede llegar a Vinnot. El sello aparece junto a tu nombre en las reseñas y en
+tu perfil, para que la comunidad reconozca a quienes más aportan.
+
+## En pocas palabras
+
+1. Participa: cada acción de la tabla [Cómo sumar puntos](#cómo-sumar-puntos) suma.
+2. Puedes sumar hasta **40 puntos por día**; los vinos que propones y el equipo aprueba no cuentan para ese tope.
+3. Tu sello depende de los puntos que tienes hoy: sube cuando sumas y puede bajar si se quitan puntos.
+4. Toca tu sello en el perfil para ver «Tus puntos»: cómo sumar, tus últimos movimientos y la escalera completa de sellos.
+
+## Cómo sumar puntos
+
+| Acción | Puntos | Límite |
+|---|---|---|
+| Publicar una reseña | +3 | Una vez por vino |
+| Escribir en tu reseña un comentario de 80 caracteres o más | +2 | Una vez por vino |
+| Recibir un like en una de tus reseñas | +1 | Hasta 5 por día. Un like en tu propia reseña también cuenta |
+| Comentar la reseña de otra persona | +1 | Hasta 3 por día |
+| Proponer un vino nuevo que el equipo aprueba | +8 | Sin límite diario: no cuenta para el tope de 40 |
+| Escanear una etiqueta que coincide exactamente con un vino del catálogo | +1 | Una vez por vino, hasta 3 por día |
+| Agregar un vino a tu cava a mano | +1 | Una vez por vino, hasta 3 por día |
+| Inscribirte a un evento (inscripción confirmada) | +4 | Por cada inscripción confirmada |
+| Completar tu perfil: foto, nombre, apellido y teléfono | +5 | Una sola vez |
+
+- **Dar** likes no suma puntos; recibirlos, sí.
+- Un vino que entra a tu cava porque publicaste una reseña no suma el punto de la cava: ese vino ya sumó por la reseña.
+- Solo suman las reseñas publicadas. Una reseña en revisión o rechazada suma cuando se aprueba.
+- Ninguna acción suma dos veces: repetirla sobre el mismo contenido no vuelve a dar puntos.
+
+### El tope diario
+
+Puedes sumar hasta 40 puntos por día, contados según la zona horaria de tu cuenta.
+Los vinos que propones y el equipo aprueba suman sus 8 puntos aunque ya hayas llegado
+al tope.
+
+## Qué quita puntos
+
+| Situación | Qué pasa con tus puntos |
+|---|---|
+| Borras una reseña y la vuelves a escribir | Se descuentan sus puntos al borrarla y vuelven al escribirla: el resultado es el mismo que antes, no sumas de más |
+| El equipo de moderación retira una reseña o un comentario tuyo | Se quitan solo los puntos de ese contenido |
+| Una reseña vuelve a revisión, por ejemplo al editar una reseña pendiente o rechazada | Deja de sumar hasta que se aprueba; al aprobarse vuelve a sumar una sola vez |
+| Se cancela, se rechaza o vence tu inscripción a un evento | Se quitan los 4 puntos de esa inscripción |
+| Eliminas tu cuenta de forma definitiva | Se borran todos tus puntos |
+
+Y lo que **no** quita puntos:
+
+- Si se borra una reseña en la que comentaste, conservas los puntos de tu comentario.
+- Si alguien que te dio un like elimina su cuenta, conservas ese punto.
+
+Cada descuento aparece en tus últimos movimientos como un movimiento negativo.
+
+## Los sellos
+
+Once sellos, del primero al más alto. Cada uno tiene su propio brillo, que crece con el nivel.
+
+Cada tarjeta muestra el sello con su animación, su nombre y los puntos que necesitas para llegar a él.
+
+<SealLadder />
+
+Si tu dispositivo tiene activada la opción de reducir el movimiento, el sello se
+muestra quieto, con un reflejo fijo.
+
+### Cuando llegas a un sello nuevo
+
+- La primera vez que alcanzas un sello, la app y la web lo celebran con el sello a pantalla completa.
+- También recibes un push con el nombre del sello que alcanzaste, si tienes encendidas las notificaciones de «Comunidad».
+- La celebración y el push llegan una sola vez por sello: si bajas y vuelves a subir, no se repiten.
+
+### Si ya usabas Vinnot
+
+Al lanzar los puntos, Vinnot contó tu actividad anterior con las mismas reglas y los
+mismos topes diarios, así que empiezas con el sello que te corresponde. En lugar de
+una celebración verás una sola vez una tarjeta de bienvenida que te avisa que tu sello
+está listo. Los escaneos de
+etiquetas anteriores al lanzamiento no suman, porque antes no se guardaban.
+
+## Dónde aparece tu sello
+
+| Lugar | Qué ves |
+|---|---|
+| Tu perfil, arriba | Tu sello, tus puntos, el nombre del sello y una barra de progreso hasta el siguiente |
+| «Tus puntos» (al tocar el sello del perfil) | Cómo sumar puntos, tus últimos 20 movimientos y la escalera completa de sellos |
+| Reseñas de un vino y tus reseñas | El sello junto a tu nombre |
+| Comentarios de las reseñas | El sello junto a tu nombre |
+| Administración de usuarios | El sello y los puntos de cada cuenta, solo para el equipo |
+
+- En las listas, el sello brilla una vez al aparecer y vuelve a brillar cada 8 a 16 segundos; en tu perfil brilla todo el tiempo.
+- El sello no aparece en los eventos que organizas, en los bloqueos, en las denuncias ni en los push.
+- Una cuenta suspendida o desactivada no muestra su sello.
+- Las demás personas ven tu sello, no tu cantidad de puntos.
+
+## Puntuar con copas
+
+Las puntuaciones van de **0.1 a 5.0**, con un decimal, en reseñas y en tu cava. Si
+quieres poner 2.15, se guarda 2.2.
+
+### Cómo se ven
+
+Cada copa se llena según la fracción del puntaje: un 2.2 son dos copas llenas y 0.2
+de la tercera. La copa, el color del vino y la botella siguen el tipo de vino, como
+en la escena del perfil IA:
+
+| Tipo de vino | Copa | Vino | Botella |
+|---|---|---|---|
+| Tinto (o tipo desconocido) | Bordeaux | Tinto | Oscura |
+| Fortificado | Bordeaux | Rubí | Oscura |
+| Rosado | Rosé | Rosado | Transparente rosada |
+| Blanco | Tulipa | Blanco | Transparente blanca |
+| Naranjo y de postre | Tulipa | Ámbar | Transparente ámbar |
+| Espumante | Flauta, con burbujas que suben | Espumante | Espumante |
+
+<RatingExamples />
+
+### Cómo puntuar
+
+Pruébalo aquí: elige un tipo de vino y mueve la botella sobre las copas o desliza la barra de abajo.
+
+<PourRating />
+
+1. Sin puntaje, la botella aparece parada a la izquierda de las copas y se descorcha sola: un sacacorchos saca el corcho (en el espumante salta el corcho). Debajo hay una barra con una copita y el puntaje dice «0.0 / 5».
+2. Arrastra la botella hacia las copas, desliza la barra o toca una copa: la botella se levanta sobre la primera copa y las copas se llenan al mismo tiempo que la barra. Cada número entero de la barra queda debajo de su copa.
+3. Mientras subes el puntaje, la botella se inclina, sirve un chorro del color del vino en la copa que se está llenando y se va vaciando.
+4. Mientras lo bajas, la botella se levanta, las copas se vacían y la botella se vuelve a llenar.
+5. Con 5.0, después de servir la última copa, la botella vuelve a su lugar, destapada y vacía.
+6. Al final de la barra se ve el puntaje elegido, por ejemplo «3.6 / 5».
+
+| Con | Cómo se ajusta |
+|---|---|
+| Lector de pantalla | Es un control deslizante: cada gesto de subir o bajar cambia 0.1 |
+| Teclado (web) | Flechas: ±0.1 · Re Pág / Av Pág: ±0.5 · Inicio / Fin: mínimo y máximo |
+
+Los puntajes que ya tenías en tu cava se conservan. Publicar una reseña copia el
+puntaje a tu cava con su decimal, sin redondear.
+
+## Preguntas frecuentes
+
+**¿Puedo perder mi sello?**
+Sí. El sello depende de tus puntos actuales; si se quitan puntos y quedas debajo del
+mínimo, vuelves al sello anterior. La celebración no se repite al recuperarlo.
+
+**¿Por qué una acción no me sumó puntos?**
+Revisa la tabla [Cómo sumar puntos](#cómo-sumar-puntos): puede que hayas llegado al
+tope de 40 del día o al límite diario de esa acción, que ese vino ya te haya sumado o
+que la reseña todavía no esté aprobada.
+
+**¿Puedo darle like a mi propia reseña?**
+Sí, y suma 1 punto como cualquier like recibido, dentro del límite de 5 por día.
+
+**¿Puedo apagar el aviso de sello nuevo?**
+Sí: apaga las notificaciones de «Comunidad» en tus preferencias de notificaciones. La
+celebración dentro de la app y de la web se sigue mostrando.
+
+**¿Hay un ranking?**
+No. Los puntos sirven para tu sello; no hay ranking entre personas ni perfiles públicos
+con puntos.
+
+## Más información
+
+- Escribir una reseña [en la app](app-user.md#escribir-una-reseña) y [en la web](web-user.md#escribir-una-reseña).
+- Para el detalle técnico de las reglas, la API y los datos, ver el módulo [Puntos y sellos](../modules/gamification/README.md).

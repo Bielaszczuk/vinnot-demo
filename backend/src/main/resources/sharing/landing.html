@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="{{lang}}"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{pageTitle}}</title><meta name="description" content="{{description}}">
+<link rel="canonical" href="{{canonical}}"><meta property="og:type" content="website">
+<meta property="og:site_name" content="Vinnot"><meta property="og:locale" content="{{locale}}">
+<meta property="og:title" content="{{pageTitle}}"><meta property="og:description" content="{{description}}">
+<meta property="og:url" content="{{canonical}}"><meta property="og:image" content="{{ogImage}}">{{ogImageSize}}
+<meta property="og:image:alt" content="{{ogImageAlt}}"><meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{pageTitle}}"><meta name="twitter:description" content="{{description}}">
+<meta name="twitter:image" content="{{ogImage}}"><meta name="apple-itunes-app" content="{{smartBanner}}">
+<meta name="theme-color" content="#a72350"><link rel="icon" href="{{origin}}/images/brand/mark.png">
+<link rel="stylesheet" href="{{origin}}/share-assets/landing.css">
+<script type="module" src="{{origin}}/share-assets/landing-downloads.js"></script>
+</head><body>
+<header><a href="{{origin}}" aria-label="Vinnot"><img class="logo" src="{{origin}}/share-assets/vinnot-logo.png" alt="Vinnot" width="174" height="55"></a><a class="language" href="{{switchUrl}}" lang="{{switchLang}}">{{switchText}}</a></header>
+<main>
+<section class="download" aria-labelledby="download-title"
+    data-download-landing data-ios-url="{{iosUrl}}" data-android-url="{{androidUrl}}" data-android-available="{{androidAvailable}}"
+    data-ios-message="{{iosMessage}}" data-android-message="{{androidMessage}}" data-android-pending="{{androidText}}">
+  <span class="eyebrow">{{subtitle}}</span>
+  <h1 id="download-title">{{install}}</h1>
+  <p class="download-description">{{installText}}</p>
+  <a class="download-button" data-download-button href="#download-options">{{download}}</a>
+  <p class="download-status" data-download-status aria-live="polite">{{free}}</p>
+  <div class="stores" id="download-options" aria-label="{{stores}}">
+    <a class="store-link" data-store="ios" href="{{iosUrl}}" aria-label="App Store"><img src="{{origin}}/share-assets/app-store.svg" alt="App Store" height="48" width="144"></a>
+    <div class="android-store"><a class="store-link {{androidClass}}" data-store="android" href="{{androidUrl}}" aria-label="{{androidText}}" aria-disabled="{{androidDisabled}}" tabindex="{{androidTabIndex}}"><img src="{{origin}}/share-assets/google-play.png" alt="Google Play" height="62" width="160"></a><span class="android-note {{androidClass}}">{{androidText}}</span></div>
+  </div>
+  <ul class="benefits" aria-label="{{features}}">
+    <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3M7 12h10"/></svg><span>{{scan}}</span></li>
+    <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l2 7a5 5 0 0 1-10 0l2-7Zm-2 7h10M12 15v6m-4 0h8"/></svg><span>{{cellar}}</span></li>
+    <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Zm6-3v15m6-12v15"/></svg><span>{{routes}}</span></li>
+  </ul>
+</section>
+<section class="content-preview {{previewClass}}" aria-label="{{preview}}">
+  <div class="content-art"><img class="{{imageClass}}" src="{{image}}" alt="{{title}}" loading="lazy"></div>
+  <div class="content-body"><span class="eyebrow">{{category}}</span><h2>{{title}}</h2><p>{{description}}</p></div>
+</section>
+<nav class="access" aria-label="{{access}}">
+  <a class="app-open" href="{{appUrl}}">{{open}} <span aria-hidden="true">↗</span></a>
+  <a class="web-link" href="{{webUrl}}">{{web}} <span aria-hidden="true">→</span></a>
+</nav>
+</main><footer><p>{{subtitle}}</p><nav><a href="{{origin}}/legal/privacy">{{privacy}}</a><a href="{{origin}}/contact">{{contact}}</a></nav><small>© Vinnot</small></footer>
+</body></html>

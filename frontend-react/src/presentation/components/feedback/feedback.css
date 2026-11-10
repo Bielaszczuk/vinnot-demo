@@ -1,0 +1,38 @@
+.vinnot-notice {
+  --notice-accent: var(--color-wine-700, #ab214c);
+  display: flex; align-items: flex-start; gap: 12px; padding: 16px;
+  border: 1px solid var(--color-wine-100, #fce7eb); border-radius: 20px;
+  background: var(--color-surface); color: var(--color-ink);
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  animation: vinnot-notice-enter 240ms cubic-bezier(.2,.7,.3,1) both;
+}
+.vinnot-notice--error { --notice-accent: var(--color-wine-900, #7a1d3e); }
+.vinnot-notice--warning { --notice-accent: var(--color-warning); }
+.vinnot-notice__icon {
+  display: grid; place-items: center; flex: 0 0 36px; height: 36px;
+  border-radius: 12px; background: var(--color-wine-50, #fdf2f4); color: var(--notice-accent);
+}
+.vinnot-notice__copy { flex: 1; min-width: 0; align-self: center; overflow-wrap: anywhere; }
+.vinnot-notice__title { margin: 0 0 4px; font-size: 14px; font-weight: 600; line-height: 1.5; }
+.vinnot-notice__message { font-size: 14px; font-weight: 400; line-height: 1.6; }
+.vinnot-notice__close {
+  display: grid; place-items: center; flex: 0 0 44px; height: 44px; margin: -4px -8px -4px 0;
+  border: 0; border-radius: 14px; background: transparent; color: var(--color-gray-500); cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.vinnot-notice__close:hover { background: var(--color-wine-50, #fdf2f4); color: var(--notice-accent); }
+.vinnot-notice__close:focus-visible { outline: 2px solid var(--notice-accent); outline-offset: 1px; }
+.vinnot-toasts {
+  position: fixed; top: max(20px, env(safe-area-inset-top)); right: max(20px, env(safe-area-inset-right));
+  width: min(420px, calc(100vw - 40px)); max-height: calc(100dvh - 40px); overflow-y: auto;
+  z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; padding: 4px;
+}
+.vinnot-toast { pointer-events: auto; }
+.vinnot-toast .vinnot-notice { box-shadow: 0 8px 28px -10px rgb(68 11 30 / 18%); }
+.vinnot-toast--leaving { animation: vinnot-notice-exit 180ms ease-in forwards; }
+@keyframes vinnot-notice-enter { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes vinnot-notice-exit { to { opacity: 0; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) {
+  .vinnot-notice, .vinnot-toast--leaving { animation: none; }
+  .vinnot-notice__close { transition: none; }
+}

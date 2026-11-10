@@ -1,0 +1,41 @@
+import { coverImagesService } from './coverImages.service';
+import { coverImagesClient } from '@/infrastructure/api/clients/coverImages.client';
+import { photoCropService } from './photoCrop.service';
+jest.mock('@/infrastructure/api/clients/coverImages.client', () => ({ coverImagesClient: { upload: jest.fn(), preview: jest.fn() } }));
+jest.mock('./photoCrop.service', () => ({ photoCropService: { pickFramed: jest.fn() } }));
+const adjust = jest.fn();
+const framed = { uri: 'file:///cover.jpg', width: 2400, height: 1350, fileName: 'cover.jpg', mimeType: 'image/jpeg' as const, base64: null };
+beforeEach(() => jest.clearAllMocks());
+it('cancelled or denied selections and abandoned editors never upload', async () => {
+  const controller = new AbortController();
+  jest.mocked(photoCropService.pickFramed).mockResolvedValueOnce({ status: 'cancelled' }).mockResolvedValueOnce({ status: 'permission_denied' });
+  expect(await coverImagesService.selectAndUpload('EVENT', controller.signal, adjust)).toBe('cancelled');
+  expect(await coverImagesService.selectAndUpload('EVENT', controller.signal, adjust)).toBe('permission_denied');
+  controller.abort();
+  jest.mocked(photoCropService.pickFramed).mockResolvedValueOnce({ status: 'selected', image: framed });
+  await coverImagesService.selectAndUpload('EVENT', controller.signal, adjust);
+  expect(coverImagesClient.upload).not.toHaveBeenCalled();
+});
+it('frames the photo as a cover and uploads only the framed photo', async () => {
+  const signal = new AbortController().signal;
+  const result = { id: 'id', imageUrl: '/api/uploads/covers/id.webp', width: 1, height: 1, size: 2 };
+  jest.mocked(photoCropService.pickFramed).mockResolvedValue({ status: 'selected', image: framed });
+  jest.mocked(coverImagesClient.upload).mockResolvedValue(result);
+  expect(await coverImagesService.selectAndUpload('WINE_ROUTE', signal, adjust)).toEqual(result);
+  expect(photoCropService.pickFramed).toHaveBeenCalledWith('COVER', adjust, { fileName: 'cover.jpg' });
+  expect(coverImagesClient.upload).toHaveBeenCalledTimes(1);
+  expect(coverImagesClient.upload).toHaveBeenCalledWith({ uri: 'file:///cover.jpg', fileName: 'cover.jpg', mimeType: 'image/jpeg' }, 'WINE_ROUTE', signal);
+  expect(await coverImagesService.preview(result.imageUrl, signal)).toBe('file:///cover.jpg');
+  expect(coverImagesClient.preview).not.toHaveBeenCalled();
+});
+it('downloads a private cover once per session and again after the session ends', async () => {
+  const signal = new AbortController().signal;
+  const url = '/api/uploads/covers/00000000-0000-4000-8000-000000000002.webp';
+  jest.mocked(coverImagesClient.preview).mockResolvedValue('data:image/webp;base64,x');
+  expect(await coverImagesService.preview(url, signal)).toBe('data:image/webp;base64,x');
+  expect(await coverImagesService.preview(url, signal)).toBe('data:image/webp;base64,x');
+  expect(coverImagesClient.preview).toHaveBeenCalledTimes(1);
+  coverImagesService.clearPreviews();
+  await coverImagesService.preview(url, signal);
+  expect(coverImagesClient.preview).toHaveBeenCalledTimes(2);
+});

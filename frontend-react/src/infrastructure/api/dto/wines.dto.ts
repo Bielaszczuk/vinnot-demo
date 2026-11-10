@@ -1,0 +1,6 @@
+export * from './wines.base.dto'
+export * from './wines.review.dto'
+export * from './wines.comparison.dto'
+export * from './wines.ai.dto'
+export * from './wines.request.dto'
+export * from './wines.scan.dto'

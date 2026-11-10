@@ -1,0 +1,227 @@
+/* Request journey: a scenario picker, a track of hops with a travelling dot, the hop card and
+   the step controls. Colours come from the Infima variables, so light and dark themes work. */
+
+.journey {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-background-surface-color);
+}
+
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.choice {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--ifm-color-emphasis-400);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ifm-font-color-base);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.choice:hover {
+  border-color: var(--ifm-color-primary);
+}
+
+.chosen {
+  border-color: var(--ifm-color-primary);
+  background: var(--ifm-color-primary);
+  color: var(--ifm-color-white);
+}
+
+.summary {
+  margin: 0.9rem 0 0.25rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.note {
+  margin: 0.75rem 0 0.5rem;
+  font-size: 0.875rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+/* Hop colours by kind. */
+.k-device { --hop: var(--ifm-color-primary); }
+.k-dns { --hop: var(--ifm-color-info); }
+.k-edge { --hop: var(--ifm-color-warning-darker); }
+.k-proxy { --hop: var(--ifm-color-success); }
+.k-app { --hop: var(--ifm-color-primary-darker); }
+.k-data { --hop: var(--ifm-color-danger); }
+.k-external { --hop: var(--ifm-color-secondary-darkest); }
+
+/* The track: hops sit at --at percent of the inner width, between two 16px gutters. */
+.track {
+  position: relative;
+  height: 3.25rem;
+  margin: 1.25rem 16px 0.75rem;
+}
+
+.rail,
+.filled {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 4px;
+  border-radius: 2px;
+  transform: translateY(-50%);
+}
+
+.rail {
+  right: 0;
+  background: var(--ifm-color-emphasis-300);
+}
+
+.filled {
+  background: var(--ifm-color-primary);
+  transition: width 0.6s ease;
+}
+
+.node {
+  position: absolute;
+  top: 50%;
+  left: var(--at);
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 2px solid var(--hop);
+  border-radius: 50%;
+  background: var(--ifm-background-surface-color);
+  color: var(--ifm-font-color-base);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+.reached {
+  background: var(--hop);
+  color: var(--ifm-color-white);
+}
+
+.active {
+  box-shadow: 0 0 0 4px var(--ifm-color-emphasis-200);
+}
+
+.dot {
+  position: absolute;
+  top: 0;
+  left: var(--at);
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--ifm-color-primary);
+  transform: translate(-50%, -50%);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.moving {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--ifm-color-primary-lightest); }
+  50% { box-shadow: 0 0 0 6px transparent; }
+}
+
+.card {
+  min-height: 7.5rem;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--hop);
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-color-emphasis-100);
+}
+
+.counter {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.hopName {
+  margin-top: 0.15rem;
+  font-weight: 700;
+}
+
+.detail {
+  margin: 0.35rem 0 0;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.control {
+  min-width: 6.5rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--ifm-color-emphasis-400);
+  border-radius: var(--ifm-global-radius);
+  background: transparent;
+  color: var(--ifm-font-color-base);
+  font: inherit;
+  cursor: pointer;
+}
+
+.control:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.primary {
+  border-color: var(--ifm-color-primary);
+  background: var(--ifm-color-primary);
+  color: var(--ifm-color-white);
+}
+
+.steps {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.stepItem {
+  margin-bottom: 0.6rem;
+  padding-left: 0.5rem;
+  border-left: 3px solid var(--hop);
+}
+
+.stepItem span {
+  display: block;
+}
+
+@media (max-width: 420px) {
+  .journey {
+    padding: 0.75rem;
+  }
+
+  .node {
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filled,
+  .dot {
+    transition: none;
+  }
+
+  .moving {
+    animation: none;
+  }
+}

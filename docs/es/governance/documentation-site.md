@@ -44,7 +44,7 @@ reescribe los enlaces antes de que Docusaurus los resuelva:
 | Destino del enlace en `docs/` | Resultado en el sitio |
 |---|---|
 | Otra página del mismo idioma | Enlace interno del sitio |
-| Archivo o carpeta del repositorio fuera de `docs/` | Archivo en GitHub, rama `development` |
+| Archivo o carpeta del repositorio fuera de `docs/` | Archivo en GitHub en `Bielaszczuk/vinnot-demo`, rama `main` |
 | Página del otro idioma (`../en/...`) | Ruta del otro idioma en el sitio |
 | Archivo inexistente | Sin cambios: el build falla |
 

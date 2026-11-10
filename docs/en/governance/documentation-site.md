@@ -44,7 +44,7 @@ rewrites links before Docusaurus resolves them:
 | Link target in `docs/` | Result in the site |
 |---|---|
 | Another page in the same language | Internal site link |
-| Repository file or folder outside `docs/` | File on GitHub, `development` branch |
+| Repository file or folder outside `docs/` | File on GitHub in `Bielaszczuk/vinnot-demo`, `main` branch |
 | Page in the other language (`../es/...`) | The other language's route in the site |
 | Missing file | Unchanged: the build fails |
 

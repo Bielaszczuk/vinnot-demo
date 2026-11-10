@@ -7,7 +7,7 @@ local y qué controla la integración continua.
 ## Un monorepo
 
 Todo el producto vive en un solo repositorio de GitHub,
-[`Bielaszczuk/vinnot`](https://github.com/Bielaszczuk/vinnot): la API, la web, la app,
+[`Bielaszczuk/vinnot-demo`](https://github.com/Bielaszczuk/vinnot-demo): la API, la web, la app,
 la infraestructura, los scripts y esta documentación. Un cambio que toca varias partes
 se revisa y se publica junto.
 

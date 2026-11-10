@@ -46,12 +46,12 @@ proyecto. Las consolas piden la cuenta de cada servicio.
 
 | Recurso | Enlace |
 |---|---|
-| Repositorio (monorepo) | [github.com/Bielaszczuk/vinnot](https://github.com/Bielaszczuk/vinnot) |
-| Código fuente de la app (APK) | [frontend-mobile/](https://github.com/Bielaszczuk/vinnot/tree/main/frontend-mobile) |
-| Código fuente de la web | [frontend-react/](https://github.com/Bielaszczuk/vinnot/tree/main/frontend-react) |
-| Código fuente del backend | [backend/](https://github.com/Bielaszczuk/vinnot/tree/main/backend) |
-| Issues | [Issues del repositorio](https://github.com/Bielaszczuk/vinnot/issues) |
-| Acciones de CI/CD | [GitHub Actions](https://github.com/Bielaszczuk/vinnot/actions) |
+| Repositorio (monorepo) | [github.com/Bielaszczuk/vinnot-demo](https://github.com/Bielaszczuk/vinnot-demo) |
+| Código fuente de la app (APK) | [frontend-mobile/](https://github.com/Bielaszczuk/vinnot-demo/tree/main/frontend-mobile) |
+| Código fuente de la web | [frontend-react/](https://github.com/Bielaszczuk/vinnot-demo/tree/main/frontend-react) |
+| Código fuente del backend | [backend/](https://github.com/Bielaszczuk/vinnot-demo/tree/main/backend) |
+| Issues | [Issues del repositorio](https://github.com/Bielaszczuk/vinnot-demo/issues) |
+| Acciones de CI/CD | [GitHub Actions](https://github.com/Bielaszczuk/vinnot-demo/actions) |
 | Sitio de documentación | [vinnot-docs.pages.dev](https://vinnot-docs.pages.dev), con acceso restringido |
 | Diagramas en Lucidchart | [Catálogo de diagramas](../diagrams/README.md#lucidchart) |
 

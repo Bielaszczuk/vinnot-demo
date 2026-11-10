@@ -7,7 +7,7 @@ integration checks.
 ## One monorepo
 
 The whole product lives in one GitHub repository,
-[`Bielaszczuk/vinnot`](https://github.com/Bielaszczuk/vinnot): the API, the web, the
+[`Bielaszczuk/vinnot-demo`](https://github.com/Bielaszczuk/vinnot-demo): the API, the web, the
 app, the infrastructure, the scripts and this documentation. A change that touches
 several parts is reviewed and published together.
 

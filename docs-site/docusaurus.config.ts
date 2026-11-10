@@ -9,9 +9,10 @@ import chapterLabels from './src/sidebar/chapter-labels.mjs';
 
 const siteDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(siteDir, '..');
-const repoUrl = 'https://github.com/Bielaszczuk/vinnot';
-// Source and edit links point at the integration branch, where the docs evolve.
-const sourceBranch = process.env.DOCS_SOURCE_BRANCH ?? 'development';
+// The source repository is private, so source and edit links point at its public copy,
+// which holds a snapshot of main (the branch the published site is built from).
+const repoUrl = 'https://github.com/Bielaszczuk/vinnot-demo';
+const sourceBranch = process.env.DOCS_SOURCE_BRANCH ?? 'main';
 const routeBasePath = 'docs';
 const baseUrl = process.env.DOCS_BASE_URL ?? '/';
 

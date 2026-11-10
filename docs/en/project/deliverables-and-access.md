@@ -39,7 +39,7 @@ from [`eas.json`](../../../frontend-mobile/eas.json).
 
 | Resource | Link | Access |
 |---|---|---|
-| Repository (monorepo) | [github.com/Bielaszczuk/vinnot](https://github.com/Bielaszczuk/vinnot) | Private; see [Repository organization](repository-organization.md#how-to-get-access) |
+| Repository (monorepo) | [github.com/Bielaszczuk/vinnot-demo](https://github.com/Bielaszczuk/vinnot-demo) | Private; see [Repository organization](repository-organization.md#how-to-get-access) |
 | Documentation site | [vinnot-docs.pages.dev](https://vinnot-docs.pages.dev) | Private: only emails authorized in Cloudflare Access ([Documentation site](../governance/documentation-site.md)) |
 | Demo videos | [Videos](../videos/README.md) | Inside this documentation |
 | Service consoles | [Important URLs](../important-urls/README.md#consoles) | Team accounts |

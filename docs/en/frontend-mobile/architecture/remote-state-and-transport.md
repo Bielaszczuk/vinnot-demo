@@ -51,6 +51,7 @@ including `null`/204 results. Failure or cancellation does not imply changed dat
 | Admin notifications | `Admin:notifications.push`, `.metrics`, `.preview`, `.reach` and `.history`; a switch refreshes `notifications.push`, a test or send only `notifications.history` |
 | Wineries, routes, cellar, user, partner and references | `Wineries`, `WineRoutes`, `Cellar`, `User`, `Partner`, `References` families |
 | Community: receipts, blocks, overviews and queues | `Community` family |
+| Social: public profile, followers, following, feed, suggestions, a profile's reviews and cellar | `Social` family; follow/unfollow, block, review, cellar and own-profile edits invalidate it |
 | Comparison | No automatic invalidation tags |
 
 Partner event creation/editing/deletion refreshes Partner, public events, the

@@ -17,17 +17,31 @@ flowchart LR
     BAC --> H["Command y query handlers"]
     AC --> H
     UC --> H
+    UC -->|"GET /users/{id}/profile"| CHK["CheckCommunityProfileUseCase (comunidad): bloqueos"]
     H --> D["User y value objects"]
     H --> PORTS["Puertos: repositorio, tokens, email, almacenamiento"]
+    H --> AVATAR["AvatarUrlResolver (shared): URL absoluta de la foto"]
+    H --> SPP["SocialProfilePort"]
+    SPP --> CSPA["CommunitySocialProfileAdapter"]
+    CSPA --> GSU["GetSocialUseCase (comunidad): seguimientos, sello, contadores, cava y gustos"]
     PORTS --> DB[("PostgreSQL")]
     PORTS --> OUTBOX["Outbox: emails y borrados"]
 ```
 
-[Ver diagrama de «Arquitectura» completo](https://images.vinnot.com/docs/diagrams/v1/es/modules-users-architecture-cdf26037256d.svg)
+[Ver diagrama de «Arquitectura» completo](https://images.vinnot.com/docs/diagrams/v1/es/modules-users-architecture-08b84074b600.svg)
 
 La web usa los endpoints `/auth/web/*`, que guardan el token de renovación en una
 cookie HttpOnly; la app usa `/auth/*` con Bearer y guarda los tokens en
 SecureStore. Ambas comparten `UserController` para el perfil y la cuenta.
+
+El perfil público se compone entre dos módulos: antes de consultar,
+`UserController` le pide a `CheckCommunityProfileUseCase` que rechace con 404 un
+perfil con bloqueo en cualquier sentido; después, `GetPublicUserProfileQueryHandler`
+carga la cuenta y pide la parte social a `SocialProfilePort`, cuyo adaptador
+`CommunitySocialProfileAdapter` llama al puerto de entrada `GetSocialUseCase` de
+comunidad y traduce su respuesta. El módulo de usuarios no usa tipos de dominio ni
+repositorios de comunidad. Las reseñas y la cava del perfil (`GET /users/{id}/reviews`
+y `/cellar`) las sirve `MemberActivityController`, de comunidad.
 
 ## Backend
 
@@ -44,16 +58,42 @@ en la cuenta (ver [Idioma y zona horaria](#idioma-y-zona-horaria)).
 |---|---|---|
 | `GET /users` | ADMIN | `PageResult<UserResponse>` |
 | `GET /users/{id}` | ADMIN | wrapper de `UserResponse` |
-| `GET /users/{id}/profile` | autenticado | wrapper de `PublicUserProfileResponse` |
+| `GET /users/{id}/profile` | autenticado | wrapper de `PublicUserProfileResponse`; 404 para una cuenta inexistente o inactiva o con un bloqueo en cualquier sentido |
+| `GET /users/{id}/reviews` | autenticado | las reseñas aprobadas del miembro (módulo de comunidad) |
+| `GET /users/{id}/cellar` | autenticado | la cava visible del miembro (módulo de comunidad) |
 | `GET /users/{id}/stats` | ADMIN | wrapper de `UserStatsResponse` |
 | `GET /users/me/stats` | autenticado | estadísticas del principal |
 | `GET /auth/me` | autenticado | sesión/perfil actual |
 
 El perfil público incluye `id`, `username`, `fullName`, `avatarUrl`, `roles` y
-`createdAt`. No incluye email, flags de cuenta ni tokens. `UserResponse`, usado
-en perfil propio y administración, también contiene email, nombres, estado,
-onboarding, `preferredLanguage`, `timezone`, proveedores sociales y `hasPassword`;
-nunca incluye contraseñas ni hashes.
+`createdAt`, seguidos de los campos sociales de #541: `bio`, `tier` (la clave del
+sello), `followersCount`, `followingCount`, `reviewsCount`, `cellarCount` (`null`
+cuando la cava no es visible para quien consulta), `cellarVisible`, `following`
+(quien consulta sigue al miembro), `followsYou`, `affinityPercent` (`null` para
+uno mismo o cuando alguno valoró menos de cinco vinos), `tasteWheel` (`null` con
+menos de cinco vinos valorados; si no, filas `{kind, value, label, score, tone,
+ratedWines}`: hasta ocho de cada `GRAPE`, `TYPE` y `REGION`, mejor puntaje
+primero, donde `tone` es un código de tipo de vino, `null` para regiones; ver la
+[arquitectura de Comunidad](../community/architecture.md)) y `tasteTraits` (`null` con el
+mismo umbral salvo que el miembro haya completado el test de gustos o ajustado
+un rasgo; si no, `{structure, families, fromQuiz}`: `structure` con filas
+`{trait, score, wines, adjusted}` para `ACIDITY`, `BODY`, `TANNIN` y
+`SWEETNESS`, puntaje 0–100, donde `adjusted` es verdadero cuando el puntaje es el
+valor manual del miembro, `families` con filas `{family, percent}` para `FRUIT`,
+`FLORAL`, `HERBAL`, `SPICE`, `OAK` y `MINERAL`, de mayor a menor, y `fromQuiz`
+verdadero cuando algún valor mostrado vino del test de gustos porque faltaba el
+dato real; los puntajes del test informan `wines: 0`; ver
+[Comunidad](../community/architecture.md#test-de-gustos) y
+[Paladar ajustable](../community/architecture.md#paladar-ajustable)). No
+incluye email, teléfono, flags de cuenta, la configuración de la cava, las
+respuestas del test de gustos ni tokens. `GetPublicUserProfileQueryHandler`
+carga la cuenta (404 si no existe o está inactiva) y lee los campos sociales a
+través de `SocialProfilePort`, que implementa `CommunitySocialProfileAdapter`
+sobre el módulo de comunidad; antes, el controller aplica el control de bloqueo
+de `CheckCommunityProfileUseCase`. `UserResponse`, usado en perfil propio y
+administración, también contiene email, nombres, estado, onboarding,
+`preferredLanguage`, `timezone`, proveedores sociales, `hasPassword`, `bio` y
+`cellarVisibility`; nunca incluye contraseñas ni hashes.
 Los nombres de roles se proyectan con prefijo `ROLE_`.
 
 ### Actualización de perfil
@@ -62,6 +102,15 @@ Los nombres de roles se proyectan con prefijo `ROLE_`.
 carga al usuario, normaliza un username presente mediante `Username`, consulta
 su unicidad si cambia, aplica nombres y guarda. Devuelve UUID; el controller
 consulta `GetUserByIdUseCase` y devuelve la proyección dentro del wrapper.
+
+Campos del perfil social (#541), ambos opcionales (ausente o `null` conserva el
+valor):
+
+- `bio` se recorta; un texto en blanco la borra; más de 160 caracteres responde
+  400 `BIO_TOO_LONG` (lo valida `User.updateBio`, se guarda en `users.bio`).
+- `cellarVisibility` es `PUBLIC` (por defecto), `FOLLOWERS` o `PRIVATE`; cualquier
+  otro valor responde 400 `INVALID_CELLAR_VISIBILITY` (`CellarVisibility`, se
+  guarda en `users.cellar_visibility`, V87).
 
 Reglas de nombres:
 
@@ -105,6 +154,39 @@ desde el handler. La reconciliación previa conserva cleanup si falla el request
 El handler no tiene `@Transactional`; los límites están en repositorio/outbox.
 R2 convierte a WebP y conserva inventario durable.
 [Storage y compensación](../../backend/use-cases/uploads-and-reference-data.md).
+
+#### Valor guardado y URL que recibe el cliente
+
+`users.profile_image_url` guarda la foto tal como la deja cada origen. Toda
+respuesta que lleva una foto la pasa por `AvatarUrlResolver` (puerto de
+aplicación en `shared`, implementado por `PublicAvatarUrlResolver`), así el
+cliente siempre recibe una URL absoluta (#541):
+
+| Origen | Valor guardado | URL en la respuesta |
+| --- | --- | --- |
+| Subida con almacenamiento `local` o `s3` | `/api/uploads/avatars/<archivo>` | `app.public-api-base-url` + ruta, sin repetir `/api` (`https://api.vinnot.com/api/uploads/avatars/<archivo>`) |
+| Subida con almacenamiento `r2` | `https://images.vinnot.com/...` | sin cambios |
+| Inicio con Google o Facebook | enlace del proveedor | sin cambios |
+| Sin foto | `null` o vacío | `null` |
+
+`app.public-api-base-url` toma `APP_PUBLIC_API_BASE_URL` (por defecto
+`http://localhost:8080/api`). Usan el resolver `GET /auth/me`, la sesión de
+login, `GET /users`, `GET /users/{id}`, `PATCH /users/me`, el perfil público,
+`POST /users/me/avatar`, las reseñas y comentarios de vinos, las listas de
+seguidores y seguidos, sugerencias, feed y reseñas del perfil, y en admin
+`GET /admin/users` (con el campo `avatarUrl`) y `GET /admin/reviews`.
+
+#### Foto del inicio social
+
+La regla vive en `User.enrichFromIdentityProvider` y `ProviderPhoto` (dominio):
+
+| Caso | Resultado |
+| --- | --- |
+| Google entrega `picture` con sufijo de tamaño (`=s96-c`, `=s<n>` o `=s<n>-c` al final) | se guarda con `=s256-c` |
+| La cuenta no tiene foto | se guarda la del proveedor |
+| La foto guardada es un enlace de proveedor (`googleusercontent.com`, `facebook.com`, `fbcdn.net`, `fbsbx.com`) | se reemplaza en cada inicio social, así un cambio de foto en Google se ve |
+| La foto guardada es una subida a Vinnot (`/api/uploads/...` o R2) u otro enlace | nunca se reemplaza |
+| El proveedor no entrega foto (Apple) | no cambia nada |
 
 ### Password y email
 

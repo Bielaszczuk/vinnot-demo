@@ -24,6 +24,11 @@ import { PaymentReturnPage } from "@pages/events/PaymentReturnPage"
  *   /cellar (protected)      → MyCellarPage inside AppShell + auth guard (lazy)
  *   /profile (protected)     → UserProfilePage inside AppShell + auth guard (lazy)
  *   /profile/points          → PointsPage ("Your points") inside AppShell + auth guard (lazy)
+ *   /users/:id               → PublicProfilePage inside AppShell + auth guard (lazy)
+ *   /users/:id/followers     → FollowListPage (followers) inside AppShell + auth guard (lazy)
+ *   /users/:id/following     → FollowListPage (following) inside AppShell + auth guard (lazy)
+ *   /feed                    → FollowingFeedPage ("De gente que seguís") inside AppShell + auth guard (lazy)
+ *   /taste-quiz              → TasteQuizPage (five illustrated taste questions) inside AppShell + auth guard (lazy)
  *   /partner/events (partner)→ PartnerEventsPage inside AppShell + partner guard (lazy)
  *   /admin/* (admin)         → Admin pages inside AppShell + admin guard (lazy)
  *   /403                     → ForbiddenPage inside AppShell
@@ -45,6 +50,7 @@ import { ConfirmDialog } from '@components/feedback/ConfirmDialog'
 import { ProtectedRoute } from '@components/auth/ProtectedRoute'
 import { PageLoader } from '@components/ui/PageLoader'
 import { RouteErrorBoundary } from '@components/ui/RouteErrorBoundary'
+import { TasteQuizPrompt } from '@components/features/tasteQuiz/TasteQuizPrompt'
 
 /* ── Auth pages (no shell) — eagerly loaded (small) ──────────────── */
 import { LoginPage } from '@pages/public/LoginPage'
@@ -97,6 +103,10 @@ const ReviewPublicationsPage = lazy(() => import("@pages/community/ReviewPublica
 const CommunityModerationPage = lazy(() => import('@pages/community/CommunityModerationPage').then(m => ({ default: m.CommunityModerationPage })))
 const UserProfilePage = lazy(() => import('@pages/user/UserProfilePage').then(m => ({ default: m.UserProfilePage })))
 const PointsPage = lazy(() => import('@pages/user/PointsPage').then(m => ({ default: m.PointsPage })))
+const PublicProfilePage = lazy(() => import('@pages/social/PublicProfilePage').then(m => ({ default: m.PublicProfilePage })))
+const FollowListPage = lazy(() => import('@pages/social/FollowListPage').then(m => ({ default: m.FollowListPage })))
+const FollowingFeedPage = lazy(() => import('@pages/social/FollowingFeedPage').then(m => ({ default: m.FollowingFeedPage })))
+const TasteQuizPage = lazy(() => import('@pages/user/TasteQuizPage').then(m => ({ default: m.TasteQuizPage })))
 
 // Partner pages
 const PartnerEventsPage = lazy(() => import('@pages/partner/PartnerEventsPage').then(m => ({ default: m.PartnerEventsPage })))
@@ -138,7 +148,11 @@ function AppShellLayout() {
 
   return (
     <AppShell>
-      <TermsGate exempt={publicInformation}><RouteErrorBoundary><Outlet /></RouteErrorBoundary></TermsGate>
+      <TermsGate exempt={publicInformation}>
+        {/* Offers the taste quiz once after sign-in; renders only past the terms gate and never on public information. */}
+        <TasteQuizPrompt disabled={publicInformation} />
+        <RouteErrorBoundary><Outlet /></RouteErrorBoundary>
+      </TermsGate>
     </AppShell>
   )
 }
@@ -249,6 +263,12 @@ function AppRoutes() {
           <Route path="community" element={<Suspense fallback={<PageLoadingFallback />}><CommunityPage /></Suspense>} />
           <Route path="profile" element={<Suspense fallback={<PageLoadingFallback />}><UserProfilePage /></Suspense>} />
           <Route path="profile/points" element={<Suspense fallback={<PageLoadingFallback />}><PointsPage /></Suspense>} />
+          {/* ── Social: public profiles, people lists and the following feed ── */}
+          <Route path="users/:id" element={<Suspense fallback={<PageLoadingFallback />}><PublicProfilePage /></Suspense>} />
+          <Route path="users/:id/followers" element={<Suspense fallback={<PageLoadingFallback />}><FollowListPage kind="followers" /></Suspense>} />
+          <Route path="users/:id/following" element={<Suspense fallback={<PageLoadingFallback />}><FollowListPage kind="following" /></Suspense>} />
+          <Route path="feed" element={<Suspense fallback={<PageLoadingFallback />}><FollowingFeedPage /></Suspense>} />
+          <Route path="taste-quiz" element={<Suspense fallback={<PageLoadingFallback />}><TasteQuizPage /></Suspense>} />
           <Route path="cellar" element={<Suspense fallback={<PageLoadingFallback />}><MyCellarPage /></Suspense>} />
         </Route>
 

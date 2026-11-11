@@ -1,5 +1,6 @@
 package com.vinnot.admin.application.query.handler;
 
+import com.vinnot.shared.infrastructure.storage.PublicAvatarUrlResolver;
 import com.vinnot.admin.application.port.out.UserPointsPort;
 import com.vinnot.admin.application.port.out.EventQueryPort;
 import com.vinnot.admin.application.port.out.ReviewQueryPort;
@@ -30,7 +31,9 @@ import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.eq;
 
 class AdminCatalogQueryHandlersTest {
+    private static final String AVATAR = "https://api.vinnot.test/api/uploads/avatars/user.webp";
     private final UserPointsPort userPoints = mock(UserPointsPort.class);
+    private final PublicAvatarUrlResolver avatars = new PublicAvatarUrlResolver("https://api.vinnot.test/api");
 
     @Test
     void aggregatesDashboardCountersAcrossOutputPorts() {
@@ -66,7 +69,7 @@ class AdminCatalogQueryHandlersTest {
         UUID userId = UUID.randomUUID();
         when(users.findById(userId)).thenReturn(Optional.of(userData(userId)));
         GetAdminUserByIdQueryHandler handler =
-                new GetAdminUserByIdQueryHandler(users, userPoints);
+                new GetAdminUserByIdQueryHandler(users, userPoints, avatars);
 
         assertThat(handler.execute(new GetAdminUserByIdQuery(userId)).id())
                 .isEqualTo(userId);
@@ -75,6 +78,9 @@ class AdminCatalogQueryHandlersTest {
         var withPoints = handler.execute(new GetAdminUserByIdQuery(userId));
         assertThat(withPoints.points()).isEqualTo(85);
         assertThat(withPoints.badgeTier()).isEqualTo("RACIMO");
+        assertThat(withPoints.avatarUrl()).isEqualTo(AVATAR);
+        assertThat(withPoints.username()).isEqualTo("user");
+        assertThat(withPoints.email()).isEqualTo("user@vinnot.com");
 
         UUID missing = UUID.randomUUID();
         when(users.findById(missing)).thenReturn(Optional.empty());
@@ -106,7 +112,7 @@ class AdminCatalogQueryHandlersTest {
                 .thenReturn(PageResult.of(List.of(user), 0, 20, 1));
         when(users.findAll(any()))
                 .thenReturn(PageResult.of(List.of(user), 0, 20, 1));
-        SearchAdminUsersQueryHandler handler = new SearchAdminUsersQueryHandler(users, userPoints);
+        SearchAdminUsersQueryHandler handler = new SearchAdminUsersQueryHandler(users, userPoints, avatars);
 
         assertThat(handler.execute(new SearchAdminUsersQuery("cris", 0, 20)).content())
                 .hasSize(1);
@@ -120,6 +126,8 @@ class AdminCatalogQueryHandlersTest {
         var listed = handler.execute(new SearchAdminUsersQuery(null, 0, 20)).content().getFirst();
         assertThat(listed.points()).isEqualTo(12);
         assertThat(listed.badgeTier()).as("locked or inactive").isNull();
+        assertThat(listed.avatarUrl()).isEqualTo(AVATAR);
+        assertThat(listed.role()).isEqualTo("USER");
         when(users.findAll(any())).thenReturn(PageResult.of(List.of(), 0, 20, 0));
         assertThat(handler.execute(new SearchAdminUsersQuery(null, 0, 20)).content()).isEmpty();
     }
@@ -128,6 +136,6 @@ class AdminCatalogQueryHandlersTest {
         Instant now = Instant.now();
         return new UserQueryPort.UserAdminData(
                 userId, "user", "user@vinnot.com", "Wine", "Lover",
-                "USER", true, false, null, true, null, now, now, now);
+                "USER", true, false, null, true, "/api/uploads/avatars/user.webp", now, now, now);
     }
 }

@@ -209,3 +209,62 @@ describe("winesClient review vintage", () => {
     expect(patchMock).toHaveBeenCalledWith("/wines/wine-1/reviews/review-1", { rating: 4, clearVintage: true });
   });
 });
+
+describe("winesClient review avatars", () => {
+  const getMock = http.get as jest.MockedFunction<typeof http.get>;
+  const patchMock = http.patch as jest.MockedFunction<typeof http.patch>;
+  const relative = "/api/uploads/avatars/ana.jpg";
+  const absolute = "https://lh3.googleusercontent.com/a/ana=s256-c";
+  const resolved = "https://api.vinnot.com/api/uploads/avatars/ana.jpg";
+  const review = (avatarUrl: string | null) => ({
+    id: "review-1",
+    userAvatarUrl: avatarUrl,
+    reviewer: { id: "u1", username: "ana", displayName: "Ana", avatarUrl },
+  });
+  const comment = (avatarUrl: string | null) => ({
+    id: "comment-1",
+    reviewer: { id: "u1", username: "ana", displayName: "Ana", avatarUrl },
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("resolves relative reviewer avatars in a reviews page and keeps absolute ones and the page metadata", async () => {
+    getMock.mockResolvedValue({
+      data: { items: [review(relative), review(absolute), { ...review(null), reviewer: null }], totalItems: 3, hasNext: false },
+    });
+
+    const page = await winesClient.getWineReviews("wine-1");
+
+    expect(page.items?.[0]).toMatchObject({ userAvatarUrl: resolved, reviewer: { avatarUrl: resolved } });
+    expect(page.items?.[1]).toMatchObject({ userAvatarUrl: absolute, reviewer: { avatarUrl: absolute } });
+    expect(page.items?.[2]).toMatchObject({ userAvatarUrl: null, reviewer: null });
+    expect(page).toMatchObject({ totalItems: 3, hasNext: false });
+  });
+
+  it("resolves the reviewer avatar of a created and an updated review", async () => {
+    postMock.mockResolvedValue({ data: review(relative) });
+    patchMock.mockResolvedValue({ data: review(absolute) });
+
+    await expect(winesClient.createWineReview("wine-1", { rating: 4 })).resolves.toMatchObject({
+      userAvatarUrl: resolved,
+      reviewer: { avatarUrl: resolved },
+    });
+    await expect(winesClient.updateWineReview("wine-1", "review-1", { rating: 4 })).resolves.toMatchObject({
+      userAvatarUrl: absolute,
+      reviewer: { avatarUrl: absolute },
+    });
+  });
+
+  it("resolves the author avatar of listed and added comments", async () => {
+    getMock.mockResolvedValue({ data: [comment(relative), comment(absolute), { id: "comment-2", reviewer: null }] });
+    postMock.mockResolvedValue({ data: comment(relative) });
+
+    const comments = await winesClient.getReviewComments("wine-1", "review-1");
+    expect(comments.map((item) => item.reviewer?.avatarUrl ?? null)).toEqual([resolved, absolute, null]);
+    await expect(winesClient.addReviewComment("wine-1", "review-1", "Nice")).resolves.toMatchObject({
+      reviewer: { avatarUrl: resolved },
+    });
+  });
+});

@@ -3,6 +3,7 @@
  * @architecture: Capa 4 — Infraestructura HTTP
  */
 import {
+  resolveAuthorAssetUrls,
   resolveWineAssetUrls,
   resolveWinePageAssetUrls,
 } from "@/infrastructure/api/resolveApiAssetUrl";
@@ -29,6 +30,15 @@ import type {
   WinesPageResponseDto,
 } from "@/infrastructure/api/dto/wines.dto";
 
+/** Author avatars become loadable URLs; pagination metadata stays untouched. */
+function resolveReviewsPage(page: ReviewsPageResponseDto): ReviewsPageResponseDto {
+  return {
+    ...page,
+    ...(page.items ? { items: page.items.map(resolveAuthorAssetUrls) } : {}),
+    ...(page.content ? { content: page.content.map(resolveAuthorAssetUrls) } : {}),
+  };
+}
+
 export const winesClient = {
   getWines: (params?: WineFilterDto): Promise<WinesPageResponseDto> =>
     http
@@ -51,17 +61,19 @@ export const winesClient = {
       .get<ReviewsPageResponseDto>(`/wines/${id}/reviews`, {
         params: { page: params?.page, size: params?.pageSize, filter: params?.filter },
       })
-      .then((r) => r.data),
+      .then((r) => resolveReviewsPage(r.data)),
 
   createWineReview: (id: string, data: CreateWineReviewRequestDto): Promise<WineReviewDto> =>
-    http.post<WineReviewDto>(`/wines/${id}/reviews`, data).then((r) => r.data),
+    http.post<WineReviewDto>(`/wines/${id}/reviews`, data).then((r) => resolveAuthorAssetUrls(r.data)),
 
   updateWineReview: (
     wineId: string,
     reviewId: string,
     data: UpdateWineReviewRequestDto,
   ): Promise<WineReviewDto> =>
-    http.patch<WineReviewDto>(`/wines/${wineId}/reviews/${reviewId}`, data).then((r) => r.data),
+    http
+      .patch<WineReviewDto>(`/wines/${wineId}/reviews/${reviewId}`, data)
+      .then((r) => resolveAuthorAssetUrls(r.data)),
 
   deleteWineReview: (wineId: string, reviewId: string): Promise<void> =>
     http.delete(`/wines/${wineId}/reviews/${reviewId}`).then(() => undefined),
@@ -78,7 +90,7 @@ export const winesClient = {
   getReviewComments: (wineId: string, reviewId: string): Promise<ReviewCommentDto[]> =>
     http
       .get<ReviewCommentDto[]>(`/wines/${wineId}/reviews/${reviewId}/comments`)
-      .then((r) => r.data),
+      .then((r) => r.data.map(resolveAuthorAssetUrls)),
 
   addReviewComment: (
     wineId: string,
@@ -87,7 +99,7 @@ export const winesClient = {
   ): Promise<ReviewCommentDto> =>
     http
       .post<ReviewCommentDto>(`/wines/${wineId}/reviews/${reviewId}/comments`, { content })
-      .then((r) => r.data),
+      .then((r) => resolveAuthorAssetUrls(r.data)),
 
   deleteReviewComment: (wineId: string, reviewId: string, commentId: string): Promise<void> =>
     http.delete(`/wines/${wineId}/reviews/${reviewId}/comments/${commentId}`).then(() => undefined),

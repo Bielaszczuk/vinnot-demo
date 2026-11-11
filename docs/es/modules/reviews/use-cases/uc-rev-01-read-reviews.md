@@ -7,7 +7,7 @@
 | Plataformas | Web, APK |
 | Actores | Usuario autenticado |
 | IDs en Lucidchart | [WEB UC-REV-01](https://lucid.app/lucidchart/9f11a16b-bb5a-42fc-a9e8-0852b17bd241/edit), [APK UC-REV-01](https://lucid.app/lucidchart/e095dd25-e8ac-41ba-bf5b-396e1055f217/edit) |
-| Requisitos | [`RF-WEB-REV-01`](../requirements.md), [`RF-WEB-REV-02`](../requirements.md), [`RF-APK-REV-01`](../requirements.md), [`RF-APK-REV-02`](../requirements.md) |
+| Requisitos | [`RF-WEB-REV-01`](../requirements.md), [`RF-WEB-REV-02`](../requirements.md), [`RF-APK-REV-01`](../requirements.md), [`RF-APK-REV-02`](../requirements.md), [`RF-WEB-REV-11`](../requirements.md), [`RF-APK-REV-11`](../requirements.md) |
 | Casos de prueba | [`CP-REV-01`](../testing.md), [`CP-REV-02`](../testing.md), [`CP-REV-03`](../testing.md), [`CP-REV-04`](../testing.md), [`CP-REV-33`](../testing.md) |
 
 ## Precondiciones
@@ -38,6 +38,7 @@
 - Las reseñas pendientes o rechazadas solo las ve su autor, con una etiqueta de estado.
 - Un bloqueo entre cuentas oculta las reseñas en ambos sentidos.
 - `/mine` solo dice si existe una reseña propia, en cualquier estado; no devuelve su contenido.
+- Cada reseña identifica a su autor con foto, nombre, sello y `@usuario` debajo, más chico y en gris. La API devuelve la foto como URL absoluta; si falta o no carga, la web muestra un ícono de persona y la app las iniciales. En la web, la foto y el nombre abren el perfil público del autor; en la app, todo el bloque del autor.
 
 ## Diagrama
 

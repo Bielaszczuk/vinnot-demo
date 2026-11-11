@@ -16,6 +16,7 @@ Requisitos funcionales del módulo, separados por plataforma. La columna «ID an
 | `RF-WEB-REV-08` | Abrir comentarios de una reseña. | Consulta por reviewId; distingue contenido visible, vacío y fallo; el autor también ve sus comentarios pendientes o rechazados anteriores. | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | `RF-WEB-REVIEW-007` |
 | `RF-WEB-REV-09` | Publicar un comentario. | Texto recortado entre 1 y 2000 caracteres se publica al instante como APPROVED; el mensaje de éxito confirma la publicación. | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | `RF-WEB-REVIEW-008` |
 | `RF-WEB-REV-10` | Eliminar comentario propio o con permiso de moderación. | Se verifica commentId, autoría y permiso; no habilita editar cualquier comentario ajeno. | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | `RF-WEB-REVIEW-009` |
+| `RF-WEB-REV-11` | Identificar al autor de cada reseña. | Cada reseña muestra la foto del autor (o un reemplazo si falta o no carga), su nombre con el sello y su `@usuario` debajo, más chico y en gris; sin usuario no se muestra la línea; foto y nombre abren su perfil público. | [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | — |
 
 ## APK
 
@@ -31,3 +32,4 @@ Requisitos funcionales del módulo, separados por plataforma. La columna «ID an
 | `RF-APK-REV-08` | Abrir comentarios de una reseña. | Consulta por reviewId; distingue contenido visible, vacío y fallo; el autor también ve sus comentarios pendientes o rechazados anteriores. | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | `RF-APK-REVIEW-007` |
 | `RF-APK-REV-09` | Publicar un comentario. | Texto recortado entre 1 y 2000 caracteres se publica al instante como APPROVED; el mensaje de éxito confirma la publicación. | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | `RF-APK-REVIEW-008` |
 | `RF-APK-REV-10` | Eliminar comentario propio o con permiso de moderación. | Se verifica commentId, autoría y permiso; no habilita editar cualquier comentario ajeno. | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | `RF-APK-REVIEW-009` |
+| `RF-APK-REV-11` | Identificar al autor de cada reseña. | Cada reseña muestra la foto del autor (o un reemplazo si falta o no carga), su nombre con el sello y su `@usuario` debajo, más chico y en gris; sin usuario no se muestra la línea; foto y nombre abren su perfil público. | [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | — |

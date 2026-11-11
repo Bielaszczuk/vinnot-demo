@@ -220,7 +220,13 @@ describe('authService session lifecycle', () => {
     } as never)
     await expect(authService.getCurrentUser()).resolves.toMatchObject({
       id: 'user-1', socialProviders: ['GOOGLE'], hasSocialIdentity: true, hasPassword: true,
+      bio: null, cellarVisibility: 'PUBLIC',
     })
+    vi.mocked(authClient.getCurrentUser).mockResolvedValueOnce({
+      id: 'user-1', username: 'ana', email: 'ana@vinnot.com', name: 'Ana', roles: ['ROLE_USER'], emailVerified: true,
+      bio: 'Malbec lover', cellarVisibility: 'FOLLOWERS',
+    } as never)
+    await expect(authService.getCurrentUser()).resolves.toMatchObject({ bio: 'Malbec lover', cellarVisibility: 'FOLLOWERS' })
 
     vi.mocked(authClient.getCurrentUser).mockRejectedValueOnce(
       new HttpError(400, 'ACCOUNT_DISABLED', 'disabled'),

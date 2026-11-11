@@ -19,6 +19,7 @@ Las personas que organizan eventos y el equipo de Vinnot tienen sus propios manu
 - [Escribir una reseña](#escribir-una-reseña)
 - [Tu cava](#tu-cava)
 - [Perfil IA y comparación](#perfil-ia-y-comparación)
+- [Test de gustos](#test-de-gustos)
 - [Eventos: inscribirte, pagar y ver tus entradas](#eventos-inscribirte-pagar-y-ver-tus-entradas)
 - [Rutas del vino y mapas](#rutas-del-vino-y-mapas)
 - [Compartir y abrir enlaces](#compartir-y-abrir-enlaces)
@@ -153,7 +154,7 @@ Puedes buscar en el catálogo con texto y filtros y, si un vino no está, propon
 2. Escribe en «Buscar por nombre de vino o bodega...». La búsqueda empieza con 2 caracteres.
 3. Usa «Filtrar» para elegir tipo, uva, país o región.
 4. Desliza hasta el final de la lista para cargar más vinos.
-5. Cada tarjeta muestra cuántas reseñas tiene, por ejemplo «(5) reseñas». Toca el número subrayado para abrir el vino directamente en la pestaña «Reseñas».
+5. Cada tarjeta muestra cuántas reseñas tiene, por ejemplo «(5) reseñas». Toca el número subrayado o la palabra «reseñas» para abrir el vino directamente en sus reseñas.
 
 ![Pantalla de la app: búsqueda de vinos](./img/app-user/wines-search.webp)
 
@@ -190,7 +191,7 @@ Casos de uso: [UC-WIN-01](../modules/wines/use-cases/uc-win-01-search-catalog.md
 
 ## La ficha de un vino y de una bodega
 
-La ficha reúne los datos del vino, sus reseñas y su perfil IA en tres pestañas: «Info», «Reseñas» y «Perfil».
+La ficha reúne los datos del vino y su perfil IA en dos pestañas: «Info» y «Perfil». Las reseñas cierran «Info»: desliza hasta el final para leerlas.
 
 ![Pantalla de la app: ficha de un vino](./img/app-user/wine-detail.webp)
 
@@ -210,7 +211,7 @@ Casos de uso: [UC-WIN-03](../modules/wines/use-cases/uc-win-03-view-wine-detail.
 
 Una reseña es tu opinión pública sobre un vino: un puntaje de 0.1 a 5.0 en copas, la añada que probaste, un título y un comentario.
 
-1. Abre el vino y toca «Escribir reseña», arriba o en la pestaña «Reseñas». El formulario sube desde abajo en un panel; deslízalo hacia abajo o toca «Volver» para cerrarlo, y lo que escribiste se guarda para la próxima vez. Si tocas «Cancelar» después de cambiar algo, pregunta «¿Descartar los cambios?»: «Seguir editando» vuelve al formulario y «Descartar» lo borra. Mientras la reseña se envía, el panel queda abierto.
+1. Abre el vino y toca «Escribir reseña», arriba o al final de «Info», donde están las reseñas. El formulario sube desde abajo en un panel; deslízalo hacia abajo o toca «Volver» para cerrarlo, y lo que escribiste se guarda para la próxima vez. Si tocas «Cancelar» después de cambiar algo, pregunta «¿Descartar los cambios?»: «Seguir editando» vuelve al formulario y «Descartar» lo borra. Mientras la reseña se envía, el panel queda abierto.
 2. Al abrir el formulario, la botella se descorcha sola al lado de las copas; debajo hay una barra con una copita y «Deslizá la botella o la barra para puntuar». En tus primeras tres reseñas, después del descorche, una botella translúcida muestra el gesto. Arrastra la botella hacia las copas o desliza la barra para elegir de 0.1 a 5.0, o toca una copa: las dos se mueven juntas y cada número entero queda debajo de su copa; la botella se levanta y sirve; mientras subes, las copas se llenan y la botella se vacía, y mientras bajas, pasa al revés. Con 5.0 la botella vuelve a su lugar, vacía. Solo la calificación es obligatoria, marcada con (*); también puedes sumar «Añada», «Título» y «Comentario».
    - En «Añada» escribe el año o toca uno de los años sugeridos. Si el vino tiene añada en el catálogo, aparece primero con «del catálogo». Para cambiarla, toca la × de la píldora.
 3. Toca «Enviar reseña». La reseña se publica al instante.
@@ -293,6 +294,34 @@ El perfil IA es un análisis de sommelier generado con inteligencia artificial. 
 > - Para comparar tienes que elegir dos vinos distintos.
 
 Casos de uso: [UC-AI-01](../modules/ai/use-cases/uc-ai-01-view-ai-profile.md), [UC-AI-02](../modules/ai/use-cases/uc-ai-02-compare-wines.md).
+
+## Test de gustos
+
+El test de gustos son cinco preguntas ilustradas que arman un primer perfil de gustos mientras todavía no valoraste vinos.
+
+1. La app te lo ofrece una vez después de iniciar sesión. También puedes abrirlo cuando quieras desde tu perfil público: «Hacé tu test de gustos», o «Repetir el test» si ya lo hiciste.
+2. Toca la opción que más te guste en cada pregunta: un día de lluvia, tu fruta favorita, un postre, una cena especial y el aroma que más te gusta. La app pasa sola a la siguiente; con la flecha vuelves a la anterior y tu respuesta sigue marcada.
+3. Después de la quinta respuesta verás «Definiendo tu perfil de gustos»: una pluma dibuja tus elecciones en un cuaderno de cata, una copa se llena de vino y un pincel da forma a tu rueda de sabores alrededor de una copa de vino. Luego llegas a tu perfil público con el resultado.
+
+> - Toca «Saltear» en cualquier pregunta si prefieres no hacerlo: la app no vuelve a ofrecértelo, y puedes hacerlo más tarde desde tu perfil.
+> - Si sales mientras repites el test, tus respuestas anteriores se conservan.
+> - Tu tarjeta de gustos indica «Según tu test de gustos» mientras el perfil se apoya en el test. La rueda de sabores aparece cuando valoras 5 vinos; hasta entonces, en su lugar ves la rueda bloqueada con un candado.
+> - La rueda de sabores es una flor de pétalos de acuarela, uno por cada uva, estilo o región; cuanto mejor lo puntuaste, más largo el pétalo. Muestra una cosa por vez: «Uvas» (al abrir), «Estilos» o «Regiones». Toca un pétalo, o su nombre debajo, para resaltarlo: en el centro ves qué es, su puntaje promedio y cuántos vinos valoraste. Tócalo de nuevo para soltarlo. Las uvas tintas van en tonos granate y violeta, las blancas en dorados y verdes, y las rosadas en rosas.
+> - Si no se pueden guardar las respuestas, toca «Reintentar»: no hace falta responder de nuevo.
+
+### Ajustar tu paladar
+
+Puedes afinar a mano la estructura de tu paladar (acidez, cuerpo, taninos y dulzor) desde tu perfil público.
+
+1. En la tarjeta «Tu paladar», toca «Ajustar» junto a «Estructura».
+2. Arrastra cada barra, o toca un punto de la barra, para llenarla o vaciarla según tu gusto. La palabra de nivel cambia mientras la mueves.
+3. Toca «Guardar» para guardar los cambios, o «Cancelar» para dejar todo como estaba.
+
+> - Solo se guardan las barras que cambiaste. Un rasgo que todavía no tenía datos empieza en el medio.
+> - Los rasgos que ajustaste muestran la etiqueta «Ajustado» y tienen prioridad sobre lo que calcula Vinnot con tus valoraciones y tu test.
+> - «Volver a lo calculado», en el modo de ajuste, borra todos tus ajustes.
+> - Con un lector de pantalla, desliza hacia arriba o hacia abajo sobre cada barra para subirla o bajarla de a 5.
+> - Solo tú ves «Ajustar»; quienes visitan tu perfil ven el resultado.
 
 ## Eventos: inscribirte, pagar y ver tus entradas
 
@@ -439,7 +468,7 @@ Desde «Perfil» ves tus estadísticas y gestionas tus datos, tu seguridad y tu 
 
 ### Perfil y datos
 
-1. Abre «Perfil». Debajo del encabezado, «Cuenta» empieza con «Mis entradas» y «Cambiar contraseña»; más abajo verás tus «Estadísticas», como tus reseñas y los vinos de tu cava.
+1. Abre «Perfil». Debajo del encabezado verás tus «Estadísticas», como tus reseñas y los vinos de tu cava. Después, «Accesos rápidos» te lleva a «Mi Bodega», «Mis entradas», «Mi perfil público», «Mis vinos enviados» y «Comunidad y seguridad». Más abajo, «Ajustes» reúne la foto, la contraseña, la cuenta, las notificaciones y el idioma.
    - En el encabezado ves tu sello, tus puntos y una barra hacia el siguiente sello. Toca el sello para abrir «Tus puntos» ([Puntos y sellos](points-and-seals.mdx)).
 2. Toca «Editar perfil», arriba de todo, para cambiar usuario, nombre, apellido o teléfono.
 3. Toca «Cambiar foto» y elige «Tomar foto» o «Elegir de galería».

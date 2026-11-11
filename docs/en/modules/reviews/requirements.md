@@ -16,6 +16,7 @@ Functional requirements of the module, split by platform. The "Previous ID" colu
 | `RF-WEB-REV-08` | Open a review's comments. | Queries by reviewId; distinguishes visible content, empty and failure; the author also sees their own legacy pending or rejected comments. | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | `RF-WEB-REVIEW-007` |
 | `RF-WEB-REV-09` | Post a comment. | Trimmed text between 1 and 2000 characters is published at once as APPROVED; the success message confirms the comment was posted. | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | `RF-WEB-REVIEW-008` |
 | `RF-WEB-REV-10` | Delete an owned comment or use moderation permission. | commentId, ownership and permission are checked; editing arbitrary comments is not enabled. | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | `RF-WEB-REVIEW-009` |
+| `RF-WEB-REV-11` | Identify the author of each review. | Each review shows the author's photo (or a placeholder when it is missing or fails to load), their name with the seal and their `@username` below, smaller and in gray; without a username the line is not shown; the photo and the name open their public profile. | [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | — |
 
 ## APK
 
@@ -31,3 +32,4 @@ Functional requirements of the module, split by platform. The "Previous ID" colu
 | `RF-APK-REV-08` | Open a review's comments. | Queries by reviewId; distinguishes visible content, empty and failure; the author also sees their own legacy pending or rejected comments. | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | `RF-APK-REVIEW-007` |
 | `RF-APK-REV-09` | Post a comment. | Trimmed text between 1 and 2000 characters is published at once as APPROVED; the success message confirms the comment was posted. | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | `RF-APK-REVIEW-008` |
 | `RF-APK-REV-10` | Delete an owned comment or use moderation permission. | commentId, ownership and permission are checked; editing arbitrary comments is not enabled. | [`UC-REV-06`](use-cases/uc-rev-06-review-comments.md) | `RF-APK-REVIEW-009` |
+| `RF-APK-REV-11` | Identify the author of each review. | Each review shows the author's photo (or a placeholder when it is missing or fails to load), their name with the seal and their `@username` below, smaller and in gray; without a username the line is not shown; the photo and the name open their public profile. | [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | — |

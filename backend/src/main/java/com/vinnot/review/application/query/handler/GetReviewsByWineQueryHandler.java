@@ -1,5 +1,6 @@
 package com.vinnot.review.application.query.handler;
 
+import com.vinnot.shared.application.port.AvatarUrlResolver;
 import com.vinnot.review.application.port.in.GetReviewsByWineUseCase;
 import com.vinnot.review.application.port.out.ReviewCommentRepositoryPort;
 import com.vinnot.review.application.port.out.ReviewLikeRepositoryPort;
@@ -35,6 +36,7 @@ public class GetReviewsByWineQueryHandler implements GetReviewsByWineUseCase {
     private final ReviewCommentRepositoryPort commentRepository;
     private final ReviewLikeRepositoryPort likeRepository;
     private final ReviewerBadgePort badges;
+    private final AvatarUrlResolver avatars;
 
     @Override
     @Transactional(readOnly = true)
@@ -83,7 +85,7 @@ public class GetReviewsByWineQueryHandler implements GetReviewsByWineUseCase {
                         user.id(),
                         user.username(),
                         displayName,
-                        user.profileImageUrl(),
+                        avatars.resolve(user.profileImageUrl()),
                         reviewCountByUser.getOrDefault(user.id(), 0L).intValue(),
                         badgeByUser.get(user.id())
                 );

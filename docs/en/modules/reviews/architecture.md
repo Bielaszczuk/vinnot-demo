@@ -186,6 +186,14 @@ is `false`. `ReviewCommentResponse` includes `publicationStatus` and limits
 author identity to public fields. UI never receives email, internal roles or
 tokens.
 
+The author of a review or comment arrives as `reviewer` with `id`, `username`,
+`displayName`, `avatarUrl` and `badgeTier` (reviews add `totalReviews`, currently always sent as 0).
+`ReviewerInfoResolver` builds it with `UserQueryPort`, `ReviewerBadgePort` and
+`AvatarUrlResolver`, so `avatarUrl` is always an absolute URL or `null` (see
+[Stored value and the URL clients receive](../users/architecture.md#stored-value-and-the-url-clients-receive)).
+The web and app clients resolve the author's photo again when they map reviews
+and comments; an absolute URL is left unchanged.
+
 ### Frontends
 
 Web and mobile access presentation → application service → HTTP client. The backend does not control query keys or invalidation. Creation/edit responses and review reads are mapped to frontend models before rendering.
@@ -235,26 +243,29 @@ moderation screens are in [Administration](../admin/README.md).
 | Piece | What it does |
 |---|---|
 | [`ReviewsList.tsx`](../../../../frontend-react/src/presentation/components/features/wine/ReviewsList.tsx) | Pages of 20 in recent or popular order, the person's own review first, create and edit, confirmation before deleting and an optimistic like that is reverted when it fails |
-| [`ReviewCard.tsx`](../../../../frontend-react/src/presentation/components/features/wine/ReviewCard.tsx) | Author, stars, text, date, counts and status label; like and comments disabled when the review is not approved |
+| [`ReviewCard.tsx`](../../../../frontend-react/src/presentation/components/features/wine/ReviewCard.tsx) | Author with photo (or a person icon when it is missing or fails to load), name and seal, with their `@username` below in gray; the photo and the name open their public profile (`/users/{id}`). Stars, text, date, counts and status label; like and comments disabled when the review is not approved |
 | [`ReviewForm.tsx`](../../../../frontend-react/src/presentation/components/features/wine/ReviewForm.tsx) | Bottle control from 0.1 to 5.0, a title of up to 255 characters, a comment and the immediate-publication notice |
-| [`ReviewComments.tsx`](../../../../frontend-react/src/presentation/components/features/wine/ReviewComments.tsx) | Comment list, new comments of up to 2000 characters and deletion with confirmation |
+| [`ReviewComments.tsx`](../../../../frontend-react/src/presentation/components/features/wine/ReviewComments.tsx) | Comment list with the author's photo (or a person icon), name, seal and `@username` below in gray; new comments of up to 2000 characters and deletion with confirmation |
 | [`hooks/queries/wine`](../../../../frontend-react/src/presentation/hooks/queries/wine/) | Queries and mutations; creating or deleting reloads the wine page, the catalog, the cellar and the community data |
 | [`wines.service.ts`](../../../../frontend-react/src/application/services/wines.service.ts) | Maps the DTOs; a 409 or 422 when creating or editing is treated as a state conflict and reloads the list |
 | [`wines.reviews.client.ts`](../../../../frontend-react/src/infrastructure/api/clients/wines.reviews.client.ts) | Endpoints of `/wines/{wineId}/reviews` |
 
 ## App
 
-Reviews appear on the wine's page,
-`frontend-mobile/app/(app)/(tabs)/wines/[id].tsx`, which leads to the person's own
-review with `?review=mine`. The cellar can also publish a note as a review
+Reviews close the “Info” tab of the wine's page,
+`frontend-mobile/app/(app)/(tabs)/wines/[id].tsx`. With `?tab=reviews` (the cards'
+count) the page scrolls down to them, and with `?review=mine` it leads to the
+person's own review;
+[`useWineReviewFocus.ts`](../../../../frontend-mobile/src/presentation/hooks/ui/useWineReviewFocus.ts)
+does that scroll. The cellar can also publish a note as a review
 ([Cellar](../cellar/README.md)).
 
 | Piece | What it does |
 |---|---|
 | [`ReviewsList.tsx`](../../../../frontend-mobile/src/presentation/features/wine/ReviewsList.tsx) | Pages of 10 with “Previous” and “Next”, “Most recent” or “Most popular” order when there is more than one review, the person's own review first on the first page and the form while there is no own review yet |
-| [`ReviewItem.tsx`](../../../../frontend-mobile/src/presentation/features/wine/ReviewItem.tsx) | Author with their seal, rating in glasses filled by fraction, text, status label, like, edit and deletion with confirmation |
+| [`ReviewItem.tsx`](../../../../frontend-mobile/src/presentation/features/wine/ReviewItem.tsx) | Author with photo (their initials when it is missing or fails to load), name, seal and `@username` below in gray; tapping the author opens their public profile. Rating in glasses filled by fraction, text, status label, like, edit and deletion with confirmation |
 | [`ReviewForm.tsx`](../../../../frontend-mobile/src/presentation/features/wine/ReviewForm.tsx) and [`ReviewFormFields.tsx`](../../../../frontend-mobile/src/presentation/features/wine/ReviewFormFields.tsx) | Bottle control above the glasses, from 0.1 to 5.0 (a glass can also be tapped), a title of up to 255 characters, a comment and the immediate-publication notice |
-| [`ReviewComments.tsx`](../../../../frontend-mobile/src/presentation/features/wine/ReviewComments.tsx) | Comment list, new comments of up to 2000 characters and deletion with confirmation |
+| [`ReviewComments.tsx`](../../../../frontend-mobile/src/presentation/features/wine/ReviewComments.tsx) | Comment list with the author's photo (or their initials), name, seal and `@username` below in gray; new comments of up to 2000 characters and deletion with confirmation |
 | [`useWines.ts`](../../../../frontend-mobile/src/presentation/hooks/queries/wine/useWines.ts) | Queries and mutations for reviews, likes and comments |
 | [`wines.service.ts`](../../../../frontend-mobile/src/application/services/wines.service.ts) | Maps the DTOs to app models |
 | [`wines.client.ts`](../../../../frontend-mobile/src/infrastructure/api/clients/wines.client.ts) | Endpoints of `/wines/{wineId}/reviews` |

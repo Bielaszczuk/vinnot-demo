@@ -7,7 +7,7 @@
 | Platforms | Web, APK |
 | Actors | Signed-in user |
 | Lucidchart IDs | [WEB UC-REV-01](https://lucid.app/lucidchart/9f11a16b-bb5a-42fc-a9e8-0852b17bd241/edit), [APK UC-REV-01](https://lucid.app/lucidchart/e095dd25-e8ac-41ba-bf5b-396e1055f217/edit) |
-| Requirements | [`RF-WEB-REV-01`](../requirements.md), [`RF-WEB-REV-02`](../requirements.md), [`RF-APK-REV-01`](../requirements.md), [`RF-APK-REV-02`](../requirements.md) |
+| Requirements | [`RF-WEB-REV-01`](../requirements.md), [`RF-WEB-REV-02`](../requirements.md), [`RF-APK-REV-01`](../requirements.md), [`RF-APK-REV-02`](../requirements.md), [`RF-WEB-REV-11`](../requirements.md), [`RF-APK-REV-11`](../requirements.md) |
 | Test cases | [`CP-REV-01`](../testing.md), [`CP-REV-02`](../testing.md), [`CP-REV-03`](../testing.md), [`CP-REV-04`](../testing.md), [`CP-REV-33`](../testing.md) |
 
 ## Preconditions
@@ -38,6 +38,7 @@
 - Pending or rejected reviews are only seen by their author, with a status label.
 - A block between accounts hides reviews both ways.
 - `/mine` only says whether the person has a review, in any status; it does not return its content.
+- Each review identifies its author with photo, name, seal and `@username` below, smaller and in gray. The API returns the photo as an absolute URL; when it is missing or fails to load, the web shows a person icon and the app the initials. On the web, the photo and the name open the author's public profile; in the app, the whole author block does.
 
 ## Diagram
 

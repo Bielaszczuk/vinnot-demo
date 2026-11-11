@@ -11,6 +11,16 @@ export function resolveApiAssetUrl(value: string | null | undefined): string | n
 }
 
 
+/** Resolves a user photo (`avatarUrl`); absolute URLs pass through, so it is safe to apply twice. */
+export function withAvatar<T extends { avatarUrl?: string | null }>(item: T): T {
+  return { ...item, avatarUrl: resolveApiAssetUrl(item.avatarUrl) }
+}
+
+/** Resolves the photo of an embedded author (`reviewer`), keeping a missing author as is. */
+export function withReviewerAvatar<T extends { reviewer?: { avatarUrl?: string | null } | null }>(item: T): T {
+  return item.reviewer ? { ...item, reviewer: withAvatar(item.reviewer) } : item
+}
+
 /** Resolve catalog media at the HTTP boundary, preserving the DTO shape. */
 export function resolveWineAssetUrls<T extends object>(wine: T): T {
   const resolved = { ...wine };

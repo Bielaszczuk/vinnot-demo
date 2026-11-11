@@ -29,6 +29,8 @@ export interface UserDto {
   hasPassword?: boolean;
   socialProviders?: string[];
   onboardingCompleted?: boolean;
+  bio?: string | null;
+  cellarVisibility?: CellarVisibilityDto;
   preferredLanguage?: "es" | "en";
   timezone?: string;
   isActive?: boolean;
@@ -64,18 +66,76 @@ export interface NotificationPreferencesDto {
   newsletter?: boolean;
 }
 
-export interface UserProfileDto {
+export type CellarVisibilityDto = "PUBLIC" | "FOLLOWERS" | "PRIVATE";
+
+export interface TasteWheelEntryDto {
+  kind: "TYPE" | "GRAPE" | "REGION";
+  value: string;
+  label: string;
+  /** 0 to 5. */
+  score: number;
+  /** S15: wine type code of the entry (TYPE: itself; GRAPE: dominant type of its wines); null for REGION. */
+  tone?: string | null;
+  /** S15: rated wines behind the entry. */
+  ratedWines?: number | null;
+}
+
+export interface TasteTraitDto {
+  trait: "ACIDITY" | "BODY" | "TANNIN" | "SWEETNESS";
+  /** 0 to 100. */
+  score: number;
+  /** Liked wines with data for this trait. */
+  wines: number;
+  /** S11: the member set this value by hand; it wins over the calculated one. */
+  adjusted?: boolean;
+}
+
+/**
+ * S11: PUT /users/me/taste-traits body. Partial: a number (0-100) sets the trait, null clears
+ * it; anything else is refused with 400 INVALID_TASTE_ADJUSTMENT. DELETE clears every trait.
+ */
+export interface TasteTraitsAdjustmentRequestDto {
+  structure: Partial<Record<TasteTraitDto["trait"], number | null>>;
+}
+
+export interface TasteFamilyDto {
+  family: "FRUIT" | "FLORAL" | "HERBAL" | "SPICE" | "OAK" | "MINERAL";
+  /** 1 to 100. */
+  percent: number;
+}
+
+/** Issue #541, S9: structure scores in trait order and aroma families, highest share first. */
+export interface TasteTraitsDto {
+  structure: TasteTraitDto[];
+  families: TasteFamilyDto[];
+  /** S10: true when any value comes from the taste quiz. */
+  fromQuiz: boolean;
+}
+
+/** GET /users/{id}/profile (issue #541, S7): the original fields plus the social ones. */
+export interface PublicUserProfileDto {
   id: string;
-  name: string;
-  avatar?: string | null;
+  username: string;
+  fullName?: string | null;
+  avatarUrl?: string | null;
+  roles?: string[];
+  createdAt: string;
   bio?: string | null;
-  location?: string | null;
-  favorite_wines?: string[];
-  review_count?: number;
-  follower_count?: number;
-  following_count?: number;
-  is_following?: boolean;
-  joined_at: string;
+  tier?: string | null;
+  followersCount: number;
+  followingCount: number;
+  reviewsCount: number;
+  /** Null when the cellar is not visible to the viewer. */
+  cellarCount: number | null;
+  cellarVisible: boolean;
+  following: boolean;
+  followsYou: boolean;
+  /** Null for one's own profile or when either user has fewer than 5 rated wines. */
+  affinityPercent: number | null;
+  /** Null under 5 rated wines; every TYPE row plus the top 6 GRAPE rows. */
+  tasteWheel: TasteWheelEntryDto[] | null;
+  /** Null under 5 rated wines (S9). Optional: an API release before S9 omits it. */
+  tasteTraits?: TasteTraitsDto | null;
 }
 
 export interface UserStatsDto {
@@ -97,6 +157,9 @@ export interface UpdateUserRequestDto {
   username?: string;
   firstName?: string;
   lastName?: string;
+  /** Trimmed by the backend; blank clears it. At most 160 characters (400 BIO_TOO_LONG). */
+  bio?: string;
+  cellarVisibility?: CellarVisibilityDto;
 }
 
 export interface RequestEmailChangeDto {

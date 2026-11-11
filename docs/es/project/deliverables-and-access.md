@@ -39,7 +39,7 @@ Connect, de [`eas.json`](../../../frontend-mobile/eas.json).
 
 | Recurso | Enlace | Acceso |
 |---|---|---|
-| Repositorio (monorepo) | [github.com/Bielaszczuk/vinnot-demo](https://github.com/Bielaszczuk/vinnot-demo) | Privado; ver [Organización del repositorio](repository-organization.md#cómo-obtener-acceso) |
+| Repositorio (monorepo) | [github.com/Bielaszczuk/vinnot-demo](https://github.com/Bielaszczuk/vinnot-demo) | Público: copia de `main`. El repositorio de trabajo es privado; ver [Organización del repositorio](repository-organization.md#cómo-obtener-acceso) |
 | Sitio de documentación | [vinnot-docs.pages.dev](https://vinnot-docs.pages.dev) | Privado: solo emails autorizados en Cloudflare Access ([Sitio de documentación](../governance/documentation-site.md)) |
 | Videos de demostración | [Videos](../videos/README.md) | Dentro de esta documentación |
 | Consolas de los servicios | [URLs importantes](../important-urls/README.md#consolas) | Cuentas del equipo |

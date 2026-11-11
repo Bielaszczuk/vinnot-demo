@@ -101,6 +101,19 @@ export const queryKeys = {
     myPoints: () => [...queryKeys.users.all, 'me', 'points'] as const,
     notificationPreferences: () => [...queryKeys.users.all, 'me', 'notification-preferences'] as const,
     eventArea: () => [...queryKeys.users.all, 'me', 'event-area'] as const,
+    tasteQuiz: () => [...queryKeys.users.all, 'me', 'taste-quiz'] as const,
+  },
+
+  social: {
+    all: ['social'] as const,
+    profiles: () => [...queryKeys.social.all, 'profile'] as const,
+    profile: (userId: string) => [...queryKeys.social.profiles(), userId] as const,
+    reviews: (userId: string, page: number) => [...queryKeys.social.profile(userId), 'reviews', page] as const,
+    cellar: (userId: string, page: number) => [...queryKeys.social.profile(userId), 'cellar', page] as const,
+    followers: (userId: string, page: number) => [...queryKeys.social.all, 'followers', userId, page] as const,
+    following: (userId: string, page: number) => [...queryKeys.social.all, 'following', userId, page] as const,
+    suggestions: (size: number) => [...queryKeys.social.all, 'suggestions', size] as const,
+    feed: (page: number, size: number) => [...queryKeys.social.all, 'feed', page, size] as const,
   },
 
   cellar: {

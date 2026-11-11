@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { useCountryName } from '@hooks/useCountryName'
 import { ChevronDown, ChevronUp, MapPin } from 'lucide-react'
 import { Input } from '@components/ui/Input'
 import { Select } from '@components/ui/Select'
@@ -74,6 +75,7 @@ export function AdminWineryIdentitySection({ editor }: { editor: AdminWineryEdit
 
 export function AdminWineryLocationSection({ editor }: { editor: AdminWineryEditor }) {
   const { t } = useTranslation()
+  const countryName = useCountryName()
   const { formId, register, errors, watch, setValue, touch } = editor
   const countryId = watch('countryId')
   const advancedId = `${formId}-advanced`
@@ -86,7 +88,7 @@ export function AdminWineryLocationSection({ editor }: { editor: AdminWineryEdit
           id={`${formId}-country`}
           label={`${t('admin.wineries.country')} *`}
           placeholder={t('admin.routes.selectCountry')}
-          options={editor.countries.map((country) => ({ value: country.id, label: country.name }))}
+          options={editor.countries.map((country) => ({ value: country.id, label: countryName(country.name) }))}
           value={countryId}
           onChange={(event) => editor.changeCountry(event.target.value)}
           error={errors.countryId?.message}

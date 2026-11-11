@@ -61,6 +61,11 @@ describe("admin.mappers", () => {
     expect(user.enabled).toBe(true);
   });
 
+  it("reads the user's avatar url, null when absent", () => {
+    expect(mapAdminUserFromRaw({ id: "u1", avatarUrl: "https://cdn.vinnot.com/ana.jpg" }).avatarUrl).toBe("https://cdn.vinnot.com/ana.jpg");
+    expect(mapAdminUserFromRaw({ id: "u2" }).avatarUrl).toBeNull();
+  });
+
   it("reads the admin endpoint's comma-separated role field", () => {
     expect(mapAdminUserFromRaw({ id: "u3", role: "ADMIN,USER", active: true }).roles).toEqual(["ROLE_ADMIN", "ROLE_USER"]);
   });

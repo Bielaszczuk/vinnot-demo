@@ -22,9 +22,11 @@ const mockWineries = [
   { id: "w-1", name: "Bodega Norte", regionName: "Mendoza", countryName: "Argentina", latitude: -33, longitude: -68, address: "Ruta 40" },
 ];
 
+const mockLanguage = { value: "es-AR" };
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string, options?: { name?: string }) => (options?.name ? `${key}(${options.name})` : key),
+    i18n: { language: mockLanguage.value },
   }),
 }));
 jest.mock("@/presentation/providers/ToastProvider", () => ({
@@ -52,6 +54,7 @@ jest.mock("@/presentation/hooks/queries/admin", () => ({
     data: [
       { id: "country-ar", code: "AR", name: "Argentina" },
       { id: "country-cl", code: "CL", name: "Chile" },
+      { id: "country-es", code: "ES", name: "España" },
     ],
   }),
   useAdminRegions: (countryId?: string) => ({
@@ -155,6 +158,7 @@ const searchStopWinery = (query: string) => {
 beforeEach(() => {
   jest.clearAllMocks();
   mockPending.value = false;
+  mockLanguage.value = "es-AR";
   mockCreate.mockResolvedValue({});
   mockUpdate.mockResolvedValue({});
   mockGeocode.mockResolvedValue({ ok: false, status: "ZERO_RESULTS" });
@@ -226,6 +230,15 @@ describe("details", () => {
     expect(mockCreate).toHaveBeenCalledWith(
       expect.objectContaining({ name: "Ruta Nueva", country: "Argentina", region: "Salta", status: "draft" }),
     );
+  });
+
+  it("shows countries in English but saves the stored catalog name", async () => {
+    mockLanguage.value = "en-US";
+    render(<AdminRouteSheet visible onClose={jest.fn()} />);
+    fireEvent.changeText(screen.getByLabelText("admin.routes.name"), "Ruta Nueva");
+    pick("admin.routes.country", "admin.routes.countrySearch", "spa", "Spain");
+    await pressAsync("admin.routes.createRoute");
+    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ country: "España" }));
   });
 });
 

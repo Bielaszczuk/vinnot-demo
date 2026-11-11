@@ -27,7 +27,7 @@ unsubscriptions.
 | Account, security, payments, tickets | Mandatory, visible | No | — |
 | Wine submissions, support, moderation | Mandatory, hidden | No | — |
 | Events near you | Optional | Yes; starts on | Push only, 1 a day |
-| Community | Optional | Yes; starts on | Comments, like summaries and new seal (`TIER_REACHED`) |
+| Community | Optional | Yes; starts on | Comments, like summaries, new seal (`TIER_REACHED`) and new follower (`NEW_FOLLOWER`) |
 | Recommendations | Promotional | Yes; starts on | Push only, 1 every 7 days |
 | News | Promotional | Yes; starts on | — |
 

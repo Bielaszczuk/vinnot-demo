@@ -28,7 +28,7 @@ jest.mock("@/presentation/hooks/useAuth", () => ({
 jest.mock("@/presentation/hooks/queries/wine/useWines", () => ({
   useReviewComments: () => ({
     data: mockComments.failed ? undefined : [
-      { id: "c1", content: "Nice", reviewer: mockComments.anonymous ? {} : { id: "author", displayName: "Ana", badgeTier: "RACIMO" } },
+      { id: "c1", content: "Nice", reviewer: mockComments.anonymous ? {} : { id: "author", username: "ana_vino", displayName: "Ana", badgeTier: "RACIMO" } },
       { id: "c2", content: "Mine", reviewer: { id: "reader", displayName: "Reader" } },
     ],
     isLoading: false,
@@ -124,4 +124,10 @@ it("shows the commenter's seal after the name only when they have one", () => {
   mockComments.anonymous = false;
   render(<ReviewComments wineId="wine" reviewId="review" />, { wrapper: draftsWrapper() });
   expect(screen.getAllByRole("button", { name: "points.badgeLabel" })).toHaveLength(1);
+});
+
+it("shows the commenter's @username under their name only when they have one", () => {
+  render(<ReviewComments wineId="w1" reviewId="r1" />, { wrapper: draftsWrapper() });
+  expect(screen.getByText("@ana_vino")).toBeTruthy();
+  expect(screen.getAllByText(/^@/)).toHaveLength(1);
 });

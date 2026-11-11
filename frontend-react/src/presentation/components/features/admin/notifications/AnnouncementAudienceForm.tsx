@@ -1,5 +1,6 @@
 import { useId, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useCountryName } from '@hooks/useCountryName'
 import {
   ANNOUNCEMENT_DESTINATIONS,
   ANNOUNCEMENT_LANGUAGES,
@@ -60,6 +61,7 @@ export function AnnouncementAudienceForm({
   onDestinationChange: (destination: AnnouncementDestination) => void
 }) {
   const { t } = useTranslation()
+  const countryName = useCountryName()
   const channels: Array<{ key: 'email' | 'push'; label: string }> = [
     { key: 'email', label: t('admin.notifications.audience.email') },
     { key: 'push', label: t('admin.notifications.audience.push') },
@@ -110,7 +112,7 @@ export function AnnouncementAudienceForm({
             <select id={id} value={countryId ?? ''} disabled={disabled} className={SELECT}
               onChange={(event) => onCountryChange(event.target.value || null)}>
               <option value="">{t('admin.notifications.audience.allCountries')}</option>
-              {countries.map((country) => <option key={country.id} value={country.id}>{country.name}</option>)}
+              {countries.map((country) => <option key={country.id} value={country.id}>{countryName(country.name)}</option>)}
             </select>
           )}
         </Field>

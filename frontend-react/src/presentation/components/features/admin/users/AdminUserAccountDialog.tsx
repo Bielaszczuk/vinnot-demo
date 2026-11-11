@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { AdminFormDialog } from '@components/features/admin/AdminFormDialog'
 import { Button } from '@components/ui/Button'
 import { Input } from '@components/ui/Input'
+import { AdminUserAvatar } from './AdminUserAvatar'
 import type { AdminUser } from '@domain/admin/admin.types'
 import {
   ADMIN_USER_NAME_MAX_LENGTH,
@@ -50,9 +51,12 @@ export function AdminUserAccountDialog({ user, saving, error, onSave, onClose }:
   return (
     <AdminFormDialog open onClose={() => { if (!saving) onClose() }} labelledBy={titleId} panelClassName="p-6">
       <form noValidate onSubmit={submit} className="space-y-4">
-        <div>
-          <h3 id={titleId} className="font-semibold text-gray-900">{t('admin.users.account')}</h3>
-          <p className="text-sm text-gray-500">{user.username}</p>
+        <div className="flex items-center gap-3">
+          <AdminUserAvatar userId={user.id} username={user.username} avatarUrl={user.avatarUrl} />
+          <div>
+            <h3 id={titleId} className="font-semibold text-gray-900">{t('admin.users.account')}</h3>
+            <p className="text-sm text-gray-500">{user.username}</p>
+          </div>
         </div>
         <Input
           id={firstNameId}

@@ -18,6 +18,19 @@ export interface AppleAccountDeletionCredential {
   clientId: string;
 }
 
+/** Translation keys for social sign-in failures; presentation translates them. */
+export const SOCIAL_IDENTITY_ERRORS = {
+  googleNotConfigured: "authErrors.googleNotConfigured",
+  googleCancelled: "authErrors.googleCancelled",
+  appleInvalidIdentity: "authErrors.appleInvalidIdentity",
+  appleIosOnly: "authErrors.appleIosOnly",
+  appleUnavailable: "authErrors.appleUnavailable",
+  appleDeletionAuthorizationMissing: "authErrors.appleDeletionAuthorizationMissing",
+  facebookNotConfigured: "authErrors.facebookNotConfigured",
+  facebookCancelled: "authErrors.facebookCancelled",
+  facebookInvalidIdentity: "authErrors.facebookInvalidIdentity",
+} as const;
+
 export const socialIdentityGateway = {
   async acquire(provider: InfrastructureSocialProvider): Promise<MobileSocialCredential> {
     switch (provider) {
@@ -37,7 +50,7 @@ export const socialIdentityGateway = {
     });
     const clientId = Constants.expoConfig?.extra?.appleClientId;
     if (!credential.authorizationCode || typeof clientId !== "string" || !clientId) {
-      throw new Error("Apple no devolvió la autorización necesaria para eliminar la cuenta.");
+      throw new Error(SOCIAL_IDENTITY_ERRORS.appleDeletionAuthorizationMissing);
     }
     return {
       authorizationCode: credential.authorizationCode,
@@ -49,7 +62,7 @@ export const socialIdentityGateway = {
 async function acquireGoogleCredential(): Promise<MobileSocialCredential> {
   const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
   const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-  if (!webClientId) throw new Error("Google Sign In no está configurado.");
+  if (!webClientId) throw new Error(SOCIAL_IDENTITY_ERRORS.googleNotConfigured);
 
   const { GoogleSignin, isSuccessResponse } = await import(
     "@react-native-google-signin/google-signin"
@@ -58,7 +71,7 @@ async function acquireGoogleCredential(): Promise<MobileSocialCredential> {
   if (Platform.OS === "android") await GoogleSignin.hasPlayServices();
   const response = await GoogleSignin.signIn();
   if (!isSuccessResponse(response) || !response.data.idToken) {
-    throw new Error("Inicio con Google cancelado.");
+    throw new Error(SOCIAL_IDENTITY_ERRORS.googleCancelled);
   }
   return { provider: "GOOGLE", token: response.data.idToken };
 }
@@ -73,7 +86,7 @@ async function acquireAppleCredential(): Promise<MobileSocialCredential> {
     ],
     nonce,
   });
-  if (!credential.identityToken) throw new Error("Apple no devolvió una identidad válida.");
+  if (!credential.identityToken) throw new Error(SOCIAL_IDENTITY_ERRORS.appleInvalidIdentity);
   return {
     provider: "APPLE",
     token: credential.identityToken,
@@ -85,25 +98,25 @@ async function acquireAppleCredential(): Promise<MobileSocialCredential> {
 
 async function requireAppleAuthentication() {
   if (Platform.OS !== "ios") {
-    throw new Error("Apple Sign In está disponible en iPhone y iPad.");
+    throw new Error(SOCIAL_IDENTITY_ERRORS.appleIosOnly);
   }
   const AppleAuthentication = await import("expo-apple-authentication");
   if (!(await AppleAuthentication.isAvailableAsync())) {
-    throw new Error("Apple Sign In no está disponible en este dispositivo.");
+    throw new Error(SOCIAL_IDENTITY_ERRORS.appleUnavailable);
   }
   return AppleAuthentication;
 }
 
 async function acquireFacebookCredential(): Promise<MobileSocialCredential> {
   if (!env.facebookLoginEnabled || !process.env.EXPO_PUBLIC_FACEBOOK_APP_ID) {
-    throw new Error("Facebook Login no está configurado.");
+    throw new Error(SOCIAL_IDENTITY_ERRORS.facebookNotConfigured);
   }
   const { AccessToken, LoginManager, Settings } = await import("react-native-fbsdk-next");
   Settings.initializeSDK();
   const result = await LoginManager.logInWithPermissions(["public_profile", "email"]);
-  if (result.isCancelled) throw new Error("Inicio con Facebook cancelado.");
+  if (result.isCancelled) throw new Error(SOCIAL_IDENTITY_ERRORS.facebookCancelled);
   const access = await AccessToken.getCurrentAccessToken();
-  if (!access?.accessToken) throw new Error("Facebook no devolvió una identidad válida.");
+  if (!access?.accessToken) throw new Error(SOCIAL_IDENTITY_ERRORS.facebookInvalidIdentity);
   return { provider: "FACEBOOK", token: access.accessToken };
 }
 

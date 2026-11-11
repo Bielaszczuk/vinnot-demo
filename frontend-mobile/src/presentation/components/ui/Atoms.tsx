@@ -1,7 +1,8 @@
 /**
- * Badge, Chip, TagPill, Avatar — atomic UI components.
+ * Badge, Chip, TagPill, Avatar, UserHandle — atomic UI components.
  * Rating glasses live in `features/wine/rating/RatingGlasses` (they follow the wine type).
  */
+import { useState } from "react";
 import { Image, StyleSheet, Text, TextStyle, View, ViewStyle } from "react-native";
 import { useTranslation } from "react-i18next";
 import {
@@ -169,6 +170,9 @@ interface AvatarProps {
 
 export function Avatar({ uri, name = "?", size = 40, style }: AvatarProps) {
   const { t } = useTranslation();
+  // Remember the photo that failed, so a broken link shows the initials and a new uri is tried again.
+  const [failedUri, setFailedUri] = useState<string | null>(null);
+  const showPhoto = !!uri && uri !== failedUri;
   const initials = name
     .split(" ")
     .map((w) => w[0] ?? "")
@@ -184,11 +188,12 @@ export function Avatar({ uri, name = "?", size = 40, style }: AvatarProps) {
         style,
       ]}
     >
-      {uri ? (
+      {showPhoto ? (
         <Image
           source={{ uri }}
           style={{ width: size, height: size, borderRadius: size / 2 }}
           accessibilityLabel={t("common.avatarOf", { name })}
+          onError={() => setFailedUri(uri)}
         />
       ) : (
         <Text style={[avatarStyles.initials, { fontSize: size * 0.38 }]}>{initials}</Text>
@@ -196,6 +201,22 @@ export function Avatar({ uri, name = "?", size = 40, style }: AvatarProps) {
     </View>
   );
 }
+
+// ─── UserHandle ───────────────────────────────────────────────────────────────
+/** The `@username` under a display name, small and medium gray; nothing when missing. */
+export function UserHandle({ username, style }: { username?: string | null; style?: TextStyle }) {
+  const handle = username?.trim();
+  if (!handle) return null;
+  return (
+    <Text style={[handleStyles.text, style]} numberOfLines={1}>
+      {`@${handle}`}
+    </Text>
+  );
+}
+
+const handleStyles = StyleSheet.create({
+  text: { ...textStyles.caption, color: lightTokens.textTertiary },
+});
 
 const avatarStyles = StyleSheet.create({
   base: {

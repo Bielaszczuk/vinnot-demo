@@ -22,6 +22,7 @@ const user: AdminUser = {
   lastLoginAt: null,
   points: 0,
   badgeTier: null,
+  avatarUrl: null,
 };
 async function setup(overrides: Partial<AdminUser> = {}) {
   const i18n = createInstance();
@@ -85,4 +86,14 @@ it("hides the seal of a user without a visible tier", async () => {
   await setup({ points: 12, badgeTier: null });
   expect(screen.queryByRole("button", { name: /seal/ })).toBeNull();
   expect(screen.getByText("12 points")).toBeTruthy();
+});
+it("shows the user's photo when they have one", async () => {
+  await setup({ avatarUrl: "https://cdn.vinnot.com/example.jpg" });
+  expect(screen.getByLabelText("Example's avatar").props.source).toEqual({ uri: "https://cdn.vinnot.com/example.jpg" });
+  expect(screen.queryByText("E")).toBeNull();
+});
+it("shows the initial when the user has no photo", async () => {
+  await setup({ avatarUrl: null });
+  expect(screen.getByText("E")).toBeTruthy();
+  expect(screen.queryByLabelText("Example's avatar")).toBeNull();
 });

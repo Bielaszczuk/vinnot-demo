@@ -6,7 +6,9 @@ import { useRouter, type Href } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AtSign, CheckCircle2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import { localizeMessage } from "@/shared/i18n/localizeMessage";
+import { errorMessageKey, localizeMessage } from "@/shared/i18n/localizeMessage";
+import { AUTH_ERROR_MESSAGES } from "@/domain/user/auth.messages";
+import { getMutationErrorCode } from "@/presentation/store/mutationAdapter";
 import {
   completeSocialOnboardingSchema,
   type CompleteSocialOnboardingInput,
@@ -18,18 +20,6 @@ import { useAuth } from "@/presentation/hooks/useAuth";
 import { useCompleteOnboarding } from "@/presentation/hooks/queries/user";
 import { editorial, lightTokens, radii, spacing, iconStrokes } from "@/shared/theme/tokens";
 import { textStyles } from "@/shared/theme/typography";
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (
-    error &&
-    typeof error === "object" &&
-    "message" in error &&
-    typeof error.message === "string"
-  ) {
-    return error.message;
-  }
-  return fallback;
-}
 
 export default function CompleteProfileScreen() {
   const router = useRouter();
@@ -61,7 +51,12 @@ export default function CompleteProfileScreen() {
           clearReturnPath?.();
         },
         onError: (error) => {
-          setServerError(getErrorMessage(error, t("socialOnboarding.error")));
+          // A translated message, never the server text.
+          setServerError(
+            getMutationErrorCode(error) === "USERNAME_ALREADY_EXISTS"
+              ? AUTH_ERROR_MESSAGES.usernameAlreadyExists
+              : errorMessageKey(error, t("socialOnboarding.error")),
+          );
         },
       },
     );

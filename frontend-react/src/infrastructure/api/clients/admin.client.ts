@@ -1,4 +1,4 @@
-import { resolveWineAssetUrls, resolveWinePageAssetUrls } from "@infrastructure/http/resolveApiAssetUrl";
+import { resolveWineAssetUrls, resolveWinePageAssetUrls, withAvatar, withReviewerAvatar } from "@infrastructure/http/resolveApiAssetUrl";
 import { toPatchRequest } from "./patchRequest";
 /**
  * Admin API Client
@@ -155,7 +155,8 @@ export const adminClient = {
   async getUsers(params: { page: number; size: number; search?: string }): Promise<{ items: AdminUserDto[]; totalItems: number }> {
     // The admin endpoint adds each member's points and seal to the user fields.
     const res = await http.get('/admin/users', { params })
-    return normalizePaginated<AdminUserDto>(res.data as Record<string, unknown>)
+    const page = normalizePaginated<AdminUserDto>(res.data as Record<string, unknown>)
+    return { ...page, items: page.items.map((user) => ('avatarUrl' in user ? withAvatar(user) : user)) }
   },
 
   /** Sent as is: an empty last name is a real value, not a field to clear. */
@@ -183,7 +184,8 @@ export const adminClient = {
   // ── Reviews ───────────────────────────────────────────────────
   async getReviews(params: { page: number; size: number; search?: string }): Promise<{ items: AdminReviewDto[]; totalItems: number }> {
     const res = await http.get('/admin/reviews', { params })
-    return normalizePaginated<AdminReviewDto>(res.data)
+    const page = normalizePaginated<AdminReviewDto>(res.data)
+    return { ...page, items: page.items.map(withReviewerAvatar) }
   },
 
   async deleteReview(id: string): Promise<void> {

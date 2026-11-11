@@ -2,6 +2,8 @@ import { notificationsService } from "@/application/services/notifications.servi
 import { eventTicketsService } from "@/application/services/eventTickets.service";
 import { organizerPaymentsService } from "@/application/services/organizerPayments.service";
 import { communityService } from "@/application/services/community.service";
+import { socialService } from "@/application/services/social.service";
+import { tasteQuizService } from "@/application/services/tasteQuiz.service";
 import { adminService } from "@/application/services/admin.service";
 import { adminNotificationsService } from "@/application/services/adminNotifications.service";
 import { adminSocialPostsService } from "@/application/services/adminSocialPosts.service";
@@ -26,6 +28,16 @@ import { winesService } from "@/application/services/wines.service";
 import type { QueryOperationHandler, QueryOperationKey, QueryRequest } from "./types";
 
 const queryHandlers: Record<QueryOperationKey, QueryOperationHandler> = {
+  "social.profile": (p) => socialService.profile(String(p?.userId)),
+  "social.followers": (p) => socialService.followers(String(p?.userId), Number(p?.page ?? 0)),
+  "social.following": (p) => socialService.following(String(p?.userId), Number(p?.page ?? 0)),
+  "social.suggestions": (p) =>
+    socialService.suggestions(p?.size === undefined ? undefined : Number(p.size)),
+  "social.feed": (p) =>
+    socialService.feed(Number(p?.page ?? 0), p?.size === undefined ? undefined : Number(p.size)),
+  "social.reviews": (p) => socialService.reviews(String(p?.userId), Number(p?.page ?? 0)),
+  "social.cellar": (p) => socialService.cellar(String(p?.userId), Number(p?.page ?? 0)),
+  "social.tasteQuiz": () => tasteQuizService.get(),
   "community.overview": () => communityService.overview(),
   "community.moderationOverview": () => communityService.moderationOverview(),
   "community.publications": (p) => communityService.publications(Number(p?.page ?? 0)),

@@ -35,6 +35,18 @@ describe("mapPointsSummary", () => {
     });
   });
 
+  it("knows the point a new follower gives", () => {
+    const summary = mapPointsSummary({
+      points: 1,
+      tier: "BROTE",
+      tierFloor: 0,
+      todayEarned: 1,
+      dailyCap: 40,
+      recent: [{ id: "f1", source: "FOLLOWER_GAINED", points: 1, createdAt: "2026-11-10T10:00:00Z" }],
+    });
+    expect(summary.recent[0]!.source).toBe("FOLLOWER_GAINED");
+  });
+
   it("falls back safely on missing or unknown fields", () => {
     const summary = mapPointsSummary({
       points: 0,

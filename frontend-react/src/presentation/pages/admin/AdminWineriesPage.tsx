@@ -18,8 +18,10 @@ import { AdminDeleteConfirm } from '@components/features/admin/AdminDeleteConfir
 import { Spinner } from '@components/ui/Spinner'
 import { AdminWineryFormDialog } from '@components/features/admin/winery-form/AdminWineryFormDialog'
 import { useAdminWineriesViewModel } from './useAdminWineriesViewModel'
+import { useCountryName } from '@hooks/useCountryName'
 
 export function AdminWineriesPage() {
+  const countryName = useCountryName()
   const {
     t,
     isAdmin,
@@ -78,7 +80,7 @@ export function AdminWineriesPage() {
               <option value="">{t('admin.wineries.allCountries')}</option>
               {countries?.map((country) => (
                 <option key={country.id} value={country.id}>
-                  {country.name}
+                  {countryName(country.name)}
                 </option>
               ))}
             </select>
@@ -132,7 +134,7 @@ export function AdminWineriesPage() {
                       <Link to={`/wineries/${w.id}`} className="font-medium text-gray-900 hover:text-amber-600 transition-colors">{w.name}</Link>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 text-gray-600 text-xs">{w.countryName || ''}{w.regionName ? ` / ${w.regionName}` : ''}</td>
+                  <td className="px-5 py-3.5 text-gray-600 text-xs">{countryName(w.countryName)}{w.regionName ? ` / ${w.regionName}` : ''}</td>
                   <td className="px-5 py-3.5 text-gray-600 text-xs">{w.establishedYear ?? t('admin.common.emptyValue')}</td>
                   <td className="px-5 py-3.5"><span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-xs font-medium">{t('admin.wineries.winesCount', { count: w.winesCount })}</span></td>
                   <td className="px-5 py-3.5 text-right">

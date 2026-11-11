@@ -62,3 +62,12 @@ describe('registration wording shared with the app', () => {
     expect(Object.values(enUS.eventBooking).join(' ')).not.toMatch(/\breservation\b/i)
   })
 })
+
+describe('locale hygiene', () => {
+  it('keeps no stray top-level entries that only echo their own key', () => {
+    for (const copy of [esAR, enUS]) {
+      const echoes = Object.entries(copy).filter(([key, value]) => value === key)
+      expect(echoes).toEqual([])
+    }
+  })
+})

@@ -2,6 +2,7 @@ package com.vinnot.user.infrastructure.persistence.mapper;
 
 import com.vinnot.shared.domain.exception.DomainException;
 import com.vinnot.user.domain.model.User;
+import com.vinnot.user.domain.valueobject.CellarVisibility;
 import com.vinnot.user.domain.valueobject.Email;
 import com.vinnot.user.domain.valueobject.Password;
 import com.vinnot.user.domain.valueobject.PreferredLanguage;
@@ -44,6 +45,8 @@ public final class UserPersistenceMapper {
                 .lastName(entity.getLastName())
                 .phoneNumber(entity.getPhoneNumber())
                 .profileImageUrl(entity.getProfileImageUrl())
+                .bio(entity.getBio())
+                .cellarVisibility(storedCellarVisibility(entity.getCellarVisibility()))
                 .roles(roles)
                 .active(entity.isActive())
                 .locked(entity.isLocked())
@@ -72,6 +75,11 @@ public final class UserPersistenceMapper {
         }
     }
 
+    /** The column has a CHECK constraint; a missing value (an entity built before V87) keeps the default. */
+    private static CellarVisibility storedCellarVisibility(String value) {
+        return Objects.isNull(value) ? CellarVisibility.DEFAULT : CellarVisibility.of(value);
+    }
+
     public static UserJpaEntity toEntity(User user) {
         UserJpaEntity entity = new UserJpaEntity();
         entity.setId(user.getId());
@@ -85,6 +93,8 @@ public final class UserPersistenceMapper {
         entity.setLastName(user.getLastName());
         entity.setPhoneNumber(user.getPhoneNumber());
         entity.setProfileImageUrl(user.getProfileImageUrl());
+        entity.setBio(user.getBio());
+        entity.setCellarVisibility(user.getCellarVisibility().name());
         entity.setRoles(new HashSet<>());
         entity.setActive(user.isActive());
         entity.setLocked(user.isLocked());

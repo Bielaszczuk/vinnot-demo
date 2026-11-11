@@ -15,7 +15,7 @@ published as a review ([Reviews](../reviews/README.md)); the wines come from the
 
 | Actor | What they do in this module |
 |---|---|
-| Signed-in user | Views their cellar, adds, edits and removes wines and publishes notes as reviews |
+| Signed-in user | Views their cellar, adds, edits and removes wines and publishes notes as reviews; sees other members' cellars when their setting allows it |
 | Administrator | Can read another person's cellar and statistics from the API |
 
 ## Business rules
@@ -23,7 +23,8 @@ published as a review ([Reviews](../reviews/README.md)); the wines come from the
 | Rule | Detail | Where |
 |---|---|---|
 | Access | The cellar needs a session and the `CELLAR_MANAGE_OWN` permission | [`CellarController.java`](../../../../backend/src/main/java/com/vinnot/cellar/infrastructure/web/controller/CellarController.java) |
-| Privacy | Each person only sees and changes their own cellar; the per-user routes allow the owner or an administrator | [`CellarController.java`](../../../../backend/src/main/java/com/vinnot/cellar/infrastructure/web/controller/CellarController.java) |
+| Privacy | Each person only changes their own cellar; the full per-user routes, with notes and prices, allow the owner or an administrator | [`CellarController.java`](../../../../backend/src/main/java/com/vinnot/cellar/infrastructure/web/controller/CellarController.java) |
+| Public cellar | Each member chooses who sees their cellar on the public profile: `PUBLIC` (default), `FOLLOWERS` or `PRIVATE`, from `PATCH /users/me` (`cellarVisibility`). `GET /users/{id}/cellar` lists wine, vintage, rating and date added, newest first and only for active wines; it never includes notes or the purchase price and answers 403 `CELLAR_NOT_VISIBLE` when the setting hides it. The owner always sees their own | [Community](../community/architecture.md) |
 | One wine per person | A wine appears only once in each cellar | [`AddWineToCellarCommandHandler.java`](../../../../backend/src/main/java/com/vinnot/cellar/application/command/handler/AddWineToCellarCommandHandler.java) |
 | Personal data | Rating from 0.1 to 5.0 with one decimal (the same as reviews), non-negative price, notes of up to 10000 characters and the tasted vintage (1800 to next year, independent from the catalog vintage), all optional | [`CellarWine.java`](../../../../backend/src/main/java/com/vinnot/cellar/domain/model/CellarWine.java) |
 | Points | Adding a wine by hand earns 1 point for the seal, once per wine ever and up to 3 per day; the entry created by publishing a review earns nothing | [Points and seals](../gamification/README.md) |

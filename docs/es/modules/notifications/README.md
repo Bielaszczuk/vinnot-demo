@@ -27,7 +27,7 @@ para push y atiende las bajas de correo.
 | Cuenta, seguridad, pagos, entradas | Obligatoria, visible | No | — |
 | Envíos de vinos, soporte, moderación | Obligatoria, no visible | No | — |
 | Eventos cerca tuyo | Opcional | Sí; empieza encendida | Solo push, 1 por día |
-| Comunidad | Opcional | Sí; empieza encendida | Comentarios, resúmenes de likes y sello nuevo (`TIER_REACHED`) |
+| Comunidad | Opcional | Sí; empieza encendida | Comentarios, resúmenes de likes, sello nuevo (`TIER_REACHED`) y nuevo seguidor (`NEW_FOLLOWER`) |
 | Recomendaciones | Promocional | Sí; empieza encendida | Solo push, 1 cada 7 días |
 | Novedades | Promocional | Sí; empieza encendida | — |
 

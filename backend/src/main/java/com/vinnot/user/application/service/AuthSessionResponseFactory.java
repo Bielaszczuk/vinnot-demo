@@ -1,5 +1,6 @@
 package com.vinnot.user.application.service;
 
+import com.vinnot.shared.application.port.AvatarUrlResolver;
 import com.vinnot.shared.application.port.TokenService;
 import com.vinnot.user.application.command.response.AuthSessionResponse;
 import com.vinnot.user.application.command.response.AuthenticatedUserResponse;
@@ -19,6 +20,7 @@ public class AuthSessionResponseFactory {
     private final SocialIdentityRepositoryPort socialIdentityRepository;
     private final TokenService tokenService;
     private final LoadUserPermissionsUseCase loadPermissions;
+    private final AvatarUrlResolver avatars;
 
     public AuthSessionResponse create(User user, String refreshToken) {
         List<String> roles = user.getRoles().stream()
@@ -51,7 +53,7 @@ public class AuthSessionResponseFactory {
                 user.getFirstName(),
                 user.getLastName(),
                 user.getPhoneNumber(),
-                user.getProfileImageUrl(),
+                avatars.resolve(user.getProfileImageUrl()),
                 roles,
                 permissions,
                 user.isActive(),

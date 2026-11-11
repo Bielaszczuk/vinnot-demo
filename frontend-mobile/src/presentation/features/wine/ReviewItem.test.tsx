@@ -3,6 +3,8 @@ import { Alert, StyleSheet } from "react-native";
 import { ReviewItem } from "./ReviewItem";
 import type { WineReview } from "@/domain/wine/wine.types";
 const mockAuth = { user: { id: "reader" }, roles: [] as string[] };
+const mockPush = jest.fn();
+jest.mock("expo-router", () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock("@/presentation/hooks/useAuth", () => ({
   useAuth: () => ({
     user: mockAuth.user,
@@ -154,4 +156,29 @@ it("shows the reviewer's seal after the name and keeps the name when there is no
   rerender(<ReviewItem wineId="wine" review={review} onToggleComments={jest.fn()} onEdit={jest.fn()} />);
   expect(screen.queryByRole("button", { name: "points.badgeLabel" })).toBeNull();
   expect(screen.getByText("Author")).toBeTruthy();
+});
+
+it("opens the author's public profile from the avatar and the name", () => {
+  mockAuth.user = { id: "reader" };
+  mockAuth.roles = [];
+  mockPush.mockClear();
+  render(<ReviewItem wineId="wine" review={review} onToggleComments={jest.fn()} onEdit={jest.fn()} />);
+  fireEvent.press(screen.getByLabelText("social.openProfileA11y"));
+  expect(mockPush).toHaveBeenCalledWith({ pathname: "/(app)/users/[id]", params: { id: "author" } });
+});
+it("shows the reviewer's @username under their name", () => {
+  render(
+    <ReviewItem
+      wineId="wine"
+      review={{ ...review, reviewer: { id: "author", username: "author_handle", displayName: "Author", avatarUrl: null, totalReviews: 3, badgeTier: null } }}
+      onToggleComments={jest.fn()}
+      onEdit={jest.fn()}
+    />,
+  );
+  expect(screen.getByText("Author")).toBeTruthy();
+  expect(screen.getByText("@author_handle")).toBeTruthy();
+});
+it("shows no @username when the reviewer has none", () => {
+  render(<ReviewItem wineId="wine" review={{ ...review, reviewer: null }} onToggleComments={jest.fn()} onEdit={jest.fn()} />);
+  expect(screen.queryByText(/^@/)).toBeNull();
 });

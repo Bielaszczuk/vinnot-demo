@@ -2,6 +2,7 @@ import { useEffect, useMemo, useReducer, useRef } from "react";
 import { authService } from "@/application/services/auth.service";
 import { socialAuthService } from "@/application/services/socialAuth.service";
 import { passwordResetLinkMessage } from "@/domain/user/auth.messages";
+import { errorMessageKey } from "@/shared/i18n/localizeMessage";
 
 /** Presentation facade for public account actions used by Expo Router shells. */
 export function useAccountActions() {
@@ -45,7 +46,7 @@ export function useVerifyEmailAction(token: string, fallbackMessage: string) {
       .catch((reason: unknown) => {
         dispatch({
           type: "error",
-          message: reason instanceof Error ? reason.message : fallbackMessage,
+          message: errorMessageKey(reason, fallbackMessage),
         });
       });
   }, [fallbackMessage, token]);
@@ -78,7 +79,7 @@ export function usePasswordResetLink(
       .catch((reason: unknown) => {
         dispatch({
           isChecking: false,
-          error: reason instanceof Error ? reason.message : missingTokenMessage,
+          error: errorMessageKey(reason, missingTokenMessage),
         });
       });
   }, [missingTokenMessage, token]);

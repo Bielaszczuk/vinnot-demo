@@ -40,6 +40,7 @@
 - The comment list is not paged.
 - The comment count only counts approved ones.
 - Deleting someone else's comment sends a `CONTENT_REMOVED` email to its author.
+- Each comment shows the author's photo (a person icon on the web or the initials in the app when it is missing or fails to load), their name with the seal and their `@username` below, smaller and in gray.
 
 ## Diagram
 

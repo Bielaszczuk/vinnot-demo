@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWineRoutes } from "@/presentation/hooks/queries/wineRoute";
 import { useCountries, useRegions } from "@/presentation/hooks/queries/wine";
 import { useDebounce } from "@/presentation/hooks/ui";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 import type { RouteDifficulty, WineRoute } from "@/domain/route/route.types";
 
 const PAGE_SIZE = 20;
 
 export function useWineRoutesListViewModel() {
+  const countryName = useCountryName();
   const [search, setSearch] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState<RouteDifficulty | "ALL">("ALL");
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -67,7 +69,7 @@ export function useWineRoutesListViewModel() {
         selectedDifficulty === "ALL" || route.difficulty === selectedDifficulty;
       const matchesCountry = !selectedCountry || route.country === selectedCountry;
       const matchesRegion = !selectedRegion || route.region === selectedRegion;
-      const haystack = [route.name, route.description, route.region, route.country, ...route.tags]
+      const haystack = [route.name, route.description, route.region, route.country, countryName(route.country), ...route.tags]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -79,7 +81,7 @@ export function useWineRoutesListViewModel() {
         (!debouncedSearch || haystack.includes(debouncedSearch))
       );
     });
-  }, [debouncedSearch, loadedRoutes, selectedCountry, selectedDifficulty, selectedRegion]);
+  }, [countryName, debouncedSearch, loadedRoutes, selectedCountry, selectedDifficulty, selectedRegion]);
 
   const hasActiveFilters = !!(
     search ||

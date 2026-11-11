@@ -88,13 +88,13 @@ public class ConnectPaymentAccountService implements ConnectPaymentAccountUseCas
 
     private void requireOrganizer(UUID ownerId) {
         var user = users.findById(ownerId).orElseThrow(() -> new BusinessRuleViolationException(
-                "PAYMENT_ACCOUNT_FORBIDDEN", "No pudimos vincular esta cuenta."));
+                "PAYMENT_ACCOUNT_FORBIDDEN", "This account could not be linked."));
         if (!user.isActive() || user.isLocked() || !(user.hasRole(Role.PARTNER) || user.hasRole(Role.ADMIN))) {
-            throw new BusinessRuleViolationException("PAYMENT_ACCOUNT_FORBIDDEN", "Esta cuenta no puede recibir pagos de eventos.");
+            throw new BusinessRuleViolationException("PAYMENT_ACCOUNT_FORBIDDEN", "This account cannot receive event payments.");
         }
     }
 
     private BusinessRuleViolationException invalidAttempt() {
-        return new BusinessRuleViolationException("PAYMENT_CONNECTION_EXPIRED", "La vinculación venció o ya fue utilizada. Volvé a iniciarla.");
+        return new BusinessRuleViolationException("PAYMENT_CONNECTION_EXPIRED", "The link expired or was already used. Start it again.");
     }
 }

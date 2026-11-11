@@ -6,6 +6,7 @@
  */
 
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ExternalMapGate } from './ExternalMapGate'
 import { Map } from 'lucide-react'
 import { Icon } from './Icon'
@@ -39,6 +40,7 @@ function LoadedGoogleMapsEmbed({
   height = '450px',
   mapType = 'roadmap',
 }: GoogleMapsEmbedProps) {
+  const { t } = useTranslation()
   const { embedUrl, hasValidConfig } = useMemo(() => {
     if (!API_KEY) return { embedUrl: '', hasValidConfig: false }
 
@@ -94,11 +96,7 @@ function LoadedGoogleMapsEmbed({
       >
         <div className="p-6 text-center">
           <Icon icon={Map} size="xl" className="mx-auto mb-2 text-gray-400" />
-          <p className="text-sm text-gray-600">
-            {!API_KEY
-              ? 'Google Maps API Key no configurada'
-              : 'Configuración de mapa incompleta'}
-          </p>
+          <p className="text-sm text-gray-600">{t('externalMaps.unavailable')}</p>
         </div>
       </div>
     )

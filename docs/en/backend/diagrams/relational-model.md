@@ -2,7 +2,7 @@
 
 ## Notation and scope
 
-This ERD describes the accumulated Flyway V1–V69 schema. It selects columns
+This ERD describes the accumulated Flyway V1–V89 schema. It selects columns
 relevant to identity, relationships, and invariants; the full attribute overview
 is in the [data model](../data/database-model.md) and migrations. It is not a JPA
 class diagram.
@@ -31,6 +31,8 @@ erDiagram
   varchar phone_number "NULL"
   varchar preferred_language
   varchar timezone
+  varchar bio "NULL"
+  varchar cellar_visibility
  }
  SOCIAL_IDENTITIES {
   uuid id PK
@@ -61,9 +63,9 @@ erDiagram
  USERS ||--o{ USER_ACTION_TOKENS : user_id
 ```
 
-[View the full “Identity and credentials” diagram](https://images.vinnot.com/docs/diagrams/v1/en/backend-diagrams-relational-model-26f47df18d72.svg)
+[View the full “Identity and credentials” diagram](https://images.vinnot.com/docs/diagrams/v1/en/backend-diagrams-relational-model-eaf8c8cab1af.svg)
 
-All user references in this block use `ON DELETE CASCADE`. Social identity has composite uniqueness on `(provider, provider_subject)` and `(user_id, provider)`. Action tokens store `used_at`, not a status enum. V7 adds `target_value` for email changes. V57 widens `lock_reason` to 300 characters. Refresh stores a hash and replacement hash; the replacement reference is text, not a FK.
+All user references in this block use `ON DELETE CASCADE`. Social identity has composite uniqueness on `(provider, provider_subject)` and `(user_id, provider)`. Action tokens store `used_at`, not a status enum. V7 adds `target_value` for email changes. V57 widens `lock_reason` to 300 characters. Refresh stores a hash and replacement hash; the replacement reference is text, not a FK. V87 adds the public `bio` to `users` (up to 160 characters, optional) and `cellar_visibility` (`varchar(20) NOT NULL`, default PUBLIC, CHECK PUBLIC, FOLLOWERS or PRIVATE); see [Social and taste profile](#social-and-taste-profile-v87v89).
 
 ## Authorization
 
@@ -1026,3 +1028,39 @@ erDiagram
 [View the full “Social publishing (V82–V84)” diagram](https://images.vinnot.com/docs/diagrams/v1/en/backend-diagrams-relational-model-5fdf7a8bfdbf.svg)
 
 The foreign keys `social_publications.post_id` and `social_post_metrics.publication_id` are `ON DELETE CASCADE`. `social_publications` has one row per post and network (UNIQUE `post_id, network`, which also indexes the foreign key) and indexes on `status` and `published_at`; CHECKs on `network` (INSTAGRAM, FACEBOOK, THREADS, TIKTOK) and `status` (QUEUED, PUBLISHING, PUBLISHED, DRAFT_SENT, FAILED). `social_post_metrics` keeps one snapshot per publication and day (PK `publication_id, captured_on`); a null metric is one the network does not give. `social_accounts` has one row per network connected with OAuth (Threads and TikTok), CHECKs on `network` and `status` (CONNECTED, REFRESH_FAILED); tokens are stored encrypted with AES-256-GCM, `connected_by` is the administrator's id without a foreign key and `refresh_claimed_until` is the refresh lease. V82 adds `content_pillars.auto_approve` (`false`) and `social_posts.publishing` (JSONB `{startedAt, finishedAt, error}`, null until it starts); V83 adds `content_pillars.active` (`true`); V84 inserts the `TERROIR`, `WINEMAKING`, `HISTORY`, `REGION`, `TASTING` and `SERVICE` pillars, rewrites the `QUIZ` and `CURIOUS_FACT` briefs and switches `HUMOR` off. All three migrations are additive.
+
+## Social and taste profile (V87–V89)
+
+```mermaid
+erDiagram
+ USERS {
+  uuid id PK
+  varchar bio "NULL"
+  varchar cellar_visibility
+ }
+ USER_FOLLOWS {
+  uuid follower_id PK,FK
+  uuid followee_id PK,FK
+  timestamptz created_at
+ }
+ USER_TASTE_QUIZ {
+  uuid user_id PK,FK
+  varchar status
+  jsonb answers "NULL"
+  timestamptz updated_at
+ }
+ USER_TASTE_ADJUSTMENTS {
+  uuid user_id PK,FK
+  varchar trait PK
+  smallint score
+  timestamptz updated_at
+ }
+ USERS ||--o{ USER_FOLLOWS : follower_id
+ USERS ||--o{ USER_FOLLOWS : followee_id
+ USERS ||--o| USER_TASTE_QUIZ : user_id
+ USERS ||--o{ USER_TASTE_ADJUSTMENTS : user_id
+```
+
+[View the full “Social and taste profile (V87–V89)” diagram](https://images.vinnot.com/docs/diagrams/v1/en/backend-diagrams-relational-model-70494a1e7e66.svg)
+
+The three tables belong to the community module and reference `users` with `ON DELETE CASCADE`. `user_follows` (V87) stores an asymmetric follow that needs no approval: the PK `(follower_id, followee_id)` prevents duplicates, a CHECK prevents following oneself, the PK serves "who I follow" and `idx_user_follows_followee (followee_id, created_at DESC)` serves "who follows me", newest first. A block in `user_blocks` ([Community and private evidence](#community-and-private-evidence-v24)) deletes the pair's follows in both directions in the same transaction; that is a use-case rule, not an FK. `user_taste_quiz` (V88) has one row per member: `status` COMPLETED or SKIPPED, and `answers` (an object of question key to option key) present if and only if the status is COMPLETED, both enforced by CHECKs; no row means the quiz is still pending. `user_taste_adjustments` (V89) stores the member's manual palate score, one per member and trait: PK `(user_id, trait)`, CHECKs on `trait` (ACIDITY, BODY, TANNIN or SWEETNESS) and `score` (0 to 100); no row means the trait shows its computed value. The public profile combines these tables with `user_taste_affinities` ([Engagement and activity](#engagement-and-activity-v52-v66v67)) and the wines' AI profiles; that computation is not persisted. All three migrations are additive.

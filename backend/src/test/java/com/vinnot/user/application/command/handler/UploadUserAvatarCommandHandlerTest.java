@@ -1,5 +1,6 @@
 package com.vinnot.user.application.command.handler;
 
+import com.vinnot.shared.infrastructure.storage.PublicAvatarUrlResolver;
 import static org.mockito.Mockito.mock;
 import com.vinnot.user.application.port.out.ProfilePointsPort;
 import com.vinnot.shared.application.port.FileStoragePort;
@@ -52,7 +53,8 @@ class UploadUserAvatarCommandHandlerTest {
                 "avatar.jpg",
                 "image/jpeg",
                 3);
-        handler = new UploadUserAvatarCommandHandler(userRepository, fileStorage, points);
+        handler = new UploadUserAvatarCommandHandler(userRepository, fileStorage, points,
+                new PublicAvatarUrlResolver("https://api.vinnot.test/api"));
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
     }
 
@@ -70,8 +72,9 @@ class UploadUserAvatarCommandHandlerTest {
 
         String result = handler.execute(command);
 
-        assertThat(result).isEqualTo(replacement);
-        assertThat(user.getProfileImageUrl()).isEqualTo(replacement);
+        assertThat(result).as("the response carries the URL clients load")
+                .isEqualTo("https://api.vinnot.test" + replacement);
+        assertThat(user.getProfileImageUrl()).as("the stored value stays relative").isEqualTo(replacement);
         verify(userRepository).save(user);
         verify(fileStorage).deleteAvatar(previous, user.getId());
         verify(points).profileChanged(user);
@@ -86,7 +89,7 @@ class UploadUserAvatarCommandHandlerTest {
                 command.size(), command.userId())).thenReturn(replacement);
         doThrow(new IllegalStateException("points unavailable")).when(points).profileChanged(user);
 
-        assertThat(handler.execute(command)).isEqualTo(replacement);
+        assertThat(handler.execute(command)).isEqualTo("https://api.vinnot.test" + replacement);
 
         verify(userRepository).save(user);
         verify(fileStorage).deleteAvatar(previous, user.getId());
@@ -121,7 +124,7 @@ class UploadUserAvatarCommandHandlerTest {
         doThrow(new IllegalStateException("storage unavailable"))
                 .when(fileStorage).deleteAvatar(previous, user.getId());
 
-        assertThat(handler.execute(command)).isEqualTo(replacement);
+        assertThat(handler.execute(command)).isEqualTo("https://api.vinnot.test" + replacement);
         assertThat(user.getProfileImageUrl()).isEqualTo(replacement);
     }
 }

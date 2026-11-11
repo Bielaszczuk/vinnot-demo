@@ -46,9 +46,19 @@ export class ApiError extends Error {
 
 // ─── Network Error ────────────────────────────────────────────────────────────
 
+/**
+ * Translation keys for transport failures. Infrastructure stays free of i18n:
+ * presentation translates these keys for the active locale.
+ */
+export const TRANSPORT_ERROR_MESSAGES = {
+  offline: "authErrors.offline",
+  timeout: "authErrors.timeout",
+  unexpected: "authErrors.unexpected",
+} as const;
+
 export class NetworkError extends Error {
   constructor(
-    message = "Sin conexión a internet",
+    message: string = TRANSPORT_ERROR_MESSAGES.offline,
     public readonly code: "NETWORK_ERROR" | "TIMEOUT" = "NETWORK_ERROR",
   ) {
     super(message);
@@ -85,14 +95,14 @@ export function mapAxiosError(err: AxiosError<BackendError>): ApiError | Network
       });
     }
     if (err.code === "ECONNABORTED" || err.code === "ETIMEDOUT") {
-      return new NetworkError("La solicitud tardó demasiado", "TIMEOUT");
+      return new NetworkError(TRANSPORT_ERROR_MESSAGES.timeout, "TIMEOUT");
     }
     return new NetworkError();
   }
 
   const { status, data } = err.response;
   const message =
-    data?.message ?? data?.error ?? err.message ?? "Ha ocurrido un error inesperado";
+    data?.message ?? data?.error ?? err.message ?? TRANSPORT_ERROR_MESSAGES.unexpected;
   const code = data?.code ?? data?.error ?? `HTTP_${status}`;
 
   return new ApiError(status, code, message, data?.details, retryAfterDeadline(err.response.headers?.["retry-after"]));

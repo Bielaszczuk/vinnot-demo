@@ -8,6 +8,7 @@ This manual explains how to use the Vinnot website ([vinnot.com](https://vinnot.
 - Create an account and sign in
 - Recover your password
 - Accept the terms
+- Taste quiz
 - Find your way around
 - Search for wines
 - View a wine and its winery
@@ -105,6 +106,37 @@ Notes:
 - The legal centre and "Contact" stay available without accepting.
 
 [UC-LEG-02](../modules/legal/use-cases/uc-leg-02-accept-at-sign-up.md) · [UC-LEG-03](../modules/legal/use-cases/uc-leg-03-check-acceptance.md) · [UC-LEG-04](../modules/legal/use-cases/uc-leg-04-accept-current-version.md) · [UC-LEG-05](../modules/legal/use-cases/uc-leg-05-decline-and-sign-out.md)
+
+## Taste quiz
+
+The taste quiz is five illustrated questions that build a first taste profile, even before you rate any wine. After you sign in, if you have not taken it yet and have rated fewer than 5 wines, the site takes you to the quiz once.
+
+1. On each question, choose the card that tempts you most. The option is highlighted and the quiz moves on to the next question by itself.
+2. To change an answer, press "Back": your choice is still marked.
+3. After the fifth question, wait about thirteen seconds while "Defining your taste profile" calmly shows a pen drawing your picks into a tasting journal, then a glass filling with wine, a brush blending colors on a palette and shaping your taste wheel ("Shaping your taste profile").
+4. Your public profile opens with the "Taste profile" card and the note "Based on your taste quiz".
+
+Notes:
+
+- "Skip" is on every question. If you skip it, the site does not offer it again and you return to the page you were on.
+- You can take or retake it whenever you like from your public profile, with "Take the taste quiz" or "Retake the quiz". When retaking, "Skip" leaves without erasing your previous answers.
+- Your answers are never shown to anyone. As you rate wines, your ratings replace what came from the quiz; the taste wheel appears once you rate 5 wines.
+- If the quiz cannot be saved, press "Try again": your answers are kept.
+
+To read the taste wheel, choose "Grapes", "Styles" or "Regions" above it: the wheel shows one kind at a time, as a flower of watercolor petals: the longer the petal, the higher your average score. Tap a petal, on the wheel or in the list, to see in the center what it is, its average score and how many wines you rated; tap it again to clear the highlight. In "Grapes", the color tells whether the grape goes into reds, whites or rosés.
+
+To refine your palate your way, adjust the structure of your taste profile:
+
+1. Open your public profile and, on the "Taste profile" card, press "Adjust" next to "Structure".
+2. Drag the marker of each bar (Acidity, Body, Tannin and Sweetness), or tap the bar, to fill or empty it. With the keyboard, the arrows move it a little and Home and End take it to either end. The level word changes as you move it.
+3. Press "Save". Only the bars you changed are saved, and each shows the "Adjusted" tag. "Cancel" leaves everything as it was.
+
+Notes:
+
+- What you set by hand wins over what your ratings and the quiz calculate.
+- To go back to the calculated values, press "Adjust" and then "Reset to calculated".
+- A bar without data starts in the middle and is only saved if you move it.
+- Only you see these controls; visitors to your profile see the result.
 
 ## Find your way around
 
@@ -451,6 +483,7 @@ From "My Profile" you manage your details, your security and your account.
 **Language**
 
 1. Use the language selector in the header and choose "Español" or "English".
+2. Interface text, form messages and country names switch to the chosen language. Wine and winery names and what users write are not translated.
 
 **Deactivate or delete the account**
 

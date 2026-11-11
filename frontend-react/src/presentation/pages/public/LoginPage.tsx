@@ -10,6 +10,7 @@ import { Input } from '@components/ui/Input'
 import { AlertBanner } from '@components/feedback/AlertBanner'
 import { useLoginViewModel } from './useLoginViewModel'
 import { AuthSocialButtons } from '@components/auth/AuthSocialButtons'
+import { fieldErrorMessage } from '@presentation/feedback/fieldErrorMessage'
 
 export function LoginPage() {
   const {
@@ -88,7 +89,7 @@ export function LoginPage() {
               type="email"
               autoComplete="email"
               placeholder="your@email.com"
-              error={errors.email?.message}
+              error={fieldErrorMessage(t, errors.email)}
               {...register('email')}
             />
 
@@ -97,7 +98,7 @@ export function LoginPage() {
               type="password"
               autoComplete="current-password"
               placeholder="••••••••"
-              error={errors.password?.message}
+              error={fieldErrorMessage(t, errors.password)}
               {...register('password')}
             />
 

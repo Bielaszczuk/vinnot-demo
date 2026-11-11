@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom'
 import { render, screen } from "@testing-library/react";
 import { beforeEach, it, expect, vi } from "vitest";
 import { ReviewsList } from "./ReviewsList";
@@ -87,7 +88,7 @@ it.each([
   async (role, id, edit, remove) => {
     state.id = id;
     state.roles = [role];
-    render(<ReviewsList wineId="wine" />);
+    render(<MemoryRouter><ReviewsList wineId="wine" /></MemoryRouter>);
     await screen.findByText("Author");
     expect(!!screen.queryByRole("button", { name: "common.edit" })).toBe(edit);
     expect(!!screen.queryByRole("button", { name: "common.delete" })).toBe(
@@ -100,7 +101,7 @@ it('pins an older own review missing from the recent page and preserves its edit
   state.ownReviews = [{ ...state.reviews[0]!, id: 'older-own-review', reviewer: { id: 'reader', displayName: 'Own author' } }]
   const scroll = vi.fn()
   HTMLElement.prototype.scrollIntoView = scroll
-  render(<ReviewsList wineId="wine" focusOwnReview />)
+  render(<MemoryRouter><ReviewsList wineId="wine" focusOwnReview /></MemoryRouter>)
   await screen.findByText('Own author')
   await screen.findByText('Author')
   expect(screen.getAllByText('Own author')).toHaveLength(1)
@@ -109,29 +110,29 @@ it('pins an older own review missing from the recent page and preserves its edit
 })
 it('does not pin an own review during an ordinary visit or show a composer while locating it', async () => {
   state.ownReviews = [{ ...state.reviews[0]!, id: 'older-own-review', reviewer: { id: 'reader', displayName: 'Own author' } }]
-  const view = render(<ReviewsList wineId="wine" />)
+  const view = render(<MemoryRouter><ReviewsList wineId="wine" /></MemoryRouter>)
   await screen.findByText('Author')
   expect(screen.queryByText('Own author')).toBeNull()
   state.ownLoading = true
-  view.rerender(<ReviewsList wineId="wine" focusOwnReview />)
+  view.rerender(<MemoryRouter><ReviewsList wineId="wine" focusOwnReview /></MemoryRouter>)
   expect(screen.getByRole('status', { name: 'reviews.loading' })).toBeInTheDocument()
 })
 
 it('opens the review form when the hero shortcut asks to write one', async () => {
-  const view = render(<ReviewsList wineId="wine" />)
+  const view = render(<MemoryRouter><ReviewsList wineId="wine" /></MemoryRouter>)
   await screen.findByText('Author')
   expect(screen.queryByText('Review form open')).toBeNull()
-  view.rerender(<ReviewsList wineId="wine" writeRequest={1} />)
+  view.rerender(<MemoryRouter><ReviewsList wineId="wine" writeRequest={1} /></MemoryRouter>)
   expect(screen.getByText('Review form open')).toBeInTheDocument()
 })
 it('pins the own review instead of opening the form for a reader who already reviewed', async () => {
   state.ownReviews = [{ ...state.reviews[0]!, id: 'older-own-review', reviewer: { id: 'reader', displayName: 'Own author' } }]
   const scroll = vi.fn()
   HTMLElement.prototype.scrollIntoView = scroll
-  const view = render(<ReviewsList wineId="wine" />)
+  const view = render(<MemoryRouter><ReviewsList wineId="wine" /></MemoryRouter>)
   await screen.findByText('Author')
   expect(screen.queryByText('Own author')).toBeNull()
-  view.rerender(<ReviewsList wineId="wine" writeRequest={1} pinOwnReview />)
+  view.rerender(<MemoryRouter><ReviewsList wineId="wine" writeRequest={1} pinOwnReview /></MemoryRouter>)
   await screen.findByText('Own author')
   expect(screen.queryByText('Review form open')).toBeNull()
   // The page glides to the reviews card itself; pinning does not jump on top of it.

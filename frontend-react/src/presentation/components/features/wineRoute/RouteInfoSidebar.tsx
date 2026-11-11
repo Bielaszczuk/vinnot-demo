@@ -7,6 +7,7 @@
 
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useCountryName } from '@hooks/useCountryName'
 import { Clock, Info, MapPin, Map as MapIcon, TrendingUp } from 'lucide-react'
 import { Button } from '@components/ui/Button'
 import { Icon } from '@components/ui/Icon'
@@ -44,6 +45,7 @@ export function RouteInfoSidebar({
   totalDistanceKm,
 }: RouteInfoSidebarProps) {
   const { t } = useTranslation()
+  const countryName = useCountryName()
   const diffConf = route.difficulty ? DIFFICULTY_CONFIG[route.difficulty] : undefined
 
   const startNavigation = useCallback(() => {
@@ -187,7 +189,7 @@ export function RouteInfoSidebar({
           />
           <QuickInfoRow
             label={t('wines.country', 'Country')}
-            value={<span className="font-medium text-gray-700">{route.country}</span>}
+            value={<span className="font-medium text-gray-700">{countryName(route.country)}</span>}
           />
         </div>
       </div>

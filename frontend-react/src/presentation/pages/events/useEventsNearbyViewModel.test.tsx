@@ -6,14 +6,15 @@ import { useEventsNearbyViewModel } from './useEventsNearbyViewModel';
 import { useGeolocation } from '@hooks/useGeolocation';
 import { useEvents } from '@hooks/queries/event/useEvents';
 import { useDiscoverEvents } from '@hooks/queries/event/useDiscoverEvents';
-vi.mock('react-i18next',()=>({useTranslation:()=>({t:(key:string)=>key})}));
+const lang = vi.hoisted(() => ({ value: 'es-AR' }))
+vi.mock('react-i18next',()=>({useTranslation:()=>({t:(key:string)=>key,i18n:{language:lang.value}})}));
 vi.mock('@hooks/useDebounce',()=>({useDebounce:(value:string)=>value}));
 vi.mock('@hooks/useGeolocation',()=>({useGeolocation:vi.fn()}));
 const motion = vi.hoisted(() => ({ reduced: false }))
 vi.mock('@hooks/useReducedMotion', () => ({ useReducedMotion: () => motion.reduced }))
 vi.mock('@hooks/queries/event/useEvents',()=>({useEvents:vi.fn()}));
 vi.mock('@hooks/queries/event/useDiscoverEvents',()=>({useDiscoverEvents:vi.fn()}));
-vi.mock('@hooks/queries/wine/useCountries',()=>({useCountries:()=>({data:[]})}));
+vi.mock('@hooks/queries/wine/useCountries',()=>({useCountries:()=>({data:[{id:'br',name:'Brasil'}]})}));
 vi.mock('@hooks/queries/wine/useRegions',()=>({useRegions:()=>({data:[]})}));
 afterEach(cleanup);
 const entries = { current: ['/events'] };
@@ -21,6 +22,7 @@ function renderHook<T>(callback: () => T) {
  return renderBare(callback, { wrapper: ({ children }: { children: ReactNode }) => <MemoryRouter initialEntries={entries.current}>{children}</MemoryRouter> });
 }
 beforeEach(()=>{
+ lang.value='es-AR';
  entries.current=['/events'];
  window.scrollTo = vi.fn() as never;
  vi.mocked(useGeolocation).mockReturnValue({latitude:0,longitude:0,error:null,loading:false});
@@ -93,3 +95,12 @@ describe('page change scroll',()=>{
  it('scrolls smoothly to the top when motion is allowed',()=>{const {result}=renderHook(()=>useEventsNearbyViewModel());act(()=>result.current.goToPage(1));expect(window.scrollTo).toHaveBeenCalledWith({top:0,behavior:'smooth'});});
  it('jumps to the top without smooth scrolling under reduced motion',()=>{motion.reduced=true;const {result}=renderHook(()=>useEventsNearbyViewModel());act(()=>result.current.goToPage(1));expect(window.scrollTo).toHaveBeenCalledWith({top:0,behavior:'auto'});});
 });
+
+describe('country filter labels', () => {
+  it('labels countries in the interface language while the option value stays the stored name', () => {
+    lang.value = 'en-US'
+    expect(renderHook(() => useEventsNearbyViewModel()).result.current.countryOptions).toEqual([{ value: 'Brasil', label: 'Brazil' }])
+    lang.value = 'es-AR'
+    expect(renderHook(() => useEventsNearbyViewModel()).result.current.countryOptions).toEqual([{ value: 'Brasil', label: 'Brasil' }])
+  })
+})

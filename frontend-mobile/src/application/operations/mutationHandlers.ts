@@ -2,6 +2,10 @@ import { notificationsService } from "@/application/services/notifications.servi
 import type { NotificationCategory } from "@/domain/notification/notificationPreferences";
 import { organizerPaymentsService } from "@/application/services/organizerPayments.service";
 import { communityService } from "@/application/services/community.service";
+import { socialService } from "@/application/services/social.service";
+import { tasteQuizService } from "@/application/services/tasteQuiz.service";
+import type { TasteQuizAnswers } from "@/domain/tasteQuiz/tasteQuiz.types";
+import type { TasteStructureAdjustment } from "@/domain/social/social.types";
 import { adminService } from "@/application/services/admin.service";
 import { adminNotificationsService } from "@/application/services/adminNotifications.service";
 import type { AnnouncementDraft } from "@/domain/admin/announcement";
@@ -73,6 +77,14 @@ const mutationHandlers: Record<MutationOperationKey, MutationOperationHandler> =
   "community.publication.decide": p => communityService.decidePublication(getPayload<Parameters<typeof communityService.decidePublication>[0]>(p)),
   "community.report": p => communityService.report(getPayload<Parameters<typeof communityService.report>[0]>(p)),
   "community.block": p => communityService.block(String(p?.id)),
+  "social.follow": p => socialService.follow(String(p?.userId)),
+  "social.unfollow": p => socialService.unfollow(String(p?.userId)),
+  // The quiz is part of the own taste profile, so the "Social" tag refreshes the profile too.
+  "social.tasteQuiz.complete": p => tasteQuizService.complete(p?.answers as TasteQuizAnswers),
+  "social.tasteQuiz.skip": () => tasteQuizService.skip(),
+  // Manual structure values change the own profile, which the "Social" tag refreshes.
+  "social.tasteTraits.adjust": p => socialService.adjustStructure(p?.structure as TasteStructureAdjustment),
+  "social.tasteTraits.reset": () => socialService.resetStructure(),
   "community.unblock": p => communityService.unblock(String(p?.id)),
   "community.remove": (params) => communityService.remove(String(params?.id), String(params?.decision ?? "")),
   "community.decide": p => communityService.decide(String(p?.id), p?.status as Parameters<typeof communityService.decide>[1], String(p?.decision ?? "")),

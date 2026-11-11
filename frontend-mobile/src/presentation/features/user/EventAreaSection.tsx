@@ -5,6 +5,7 @@ import { Button } from "@/presentation/components/ui/Button";
 import { MotionPressable } from "@/presentation/components/ui/MotionPressable";
 import { SearchField } from "@/presentation/components/ui/TextField";
 import { isRegionQuery, isSelectedRegion } from "@/domain/notification/eventArea";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 import { lightTokens, radii, wine, iconStrokes } from "@/shared/theme/tokens";
 import { textStyles } from "@/shared/theme/typography";
 import { useEventArea } from "./useEventArea";
@@ -144,6 +145,7 @@ function RegionSearch({ vm }: { vm: ViewModel }) {
 }
 
 function RegionResults({ vm }: { vm: ViewModel }) {
+  const countryName = useCountryName();
   const { t } = vm;
   if (vm.regionsLoading) {
     return <ActivityIndicator accessibilityLabel={t("common.loading")} color={wine[700]} style={styles.loader} />;
@@ -185,7 +187,7 @@ function RegionResults({ vm }: { vm: ViewModel }) {
           >
             <View style={styles.regionText}>
               <Text style={[styles.regionName, selected && styles.regionNameSelected]}>{region.name}</Text>
-              <Text style={styles.regionCountry}>{region.countryName}</Text>
+              <Text style={styles.regionCountry}>{countryName(region.countryName)}</Text>
             </View>
             {selected && <Check size={18} color={wine[700]} strokeWidth={iconStrokes.regular} />}
           </MotionPressable>

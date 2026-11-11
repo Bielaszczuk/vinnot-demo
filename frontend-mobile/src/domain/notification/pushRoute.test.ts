@@ -11,6 +11,9 @@ describe("toPushRoute", () => {
     ["/partner", "/partner"],
     ["/points", "/points"],
     ["/wines/11111111-2222-3333-4444-555555555555", "/wines/11111111-2222-3333-4444-555555555555"],
+    // NEW_FOLLOWER opens the follower's public profile; the query is still dropped.
+    ["/users/11111111-2222-3333-4444-555555555555", "/users/11111111-2222-3333-4444-555555555555"],
+    ["/users/AAAAAAAA-2222-3333-4444-555555555555?from=push", "/users/AAAAAAAA-2222-3333-4444-555555555555"],
   ])("keeps the in-app route %s", (input, expected) => {
     expect(toPushRoute(input)).toBe(expected);
   });
@@ -36,6 +39,10 @@ describe("toPushRoute", () => {
     ["/partner/events/abc"],
     ["/points/abc"],
     ["/profile"],
+    ["/users"],
+    ["/users/ana"],
+    ["/users/11111111-2222-3333-4444-555555555555/followers"],
+    ["/users/11111111-2222-3333-4444-55555555555"],
   ])("ignores %p", (input) => {
     expect(toPushRoute(input)).toBeNull();
   });

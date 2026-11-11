@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type BaseSyntheticEvent } from 'rea
 import { useForm, useWatch, type FieldError, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
+import { useCountryName } from '@hooks/useCountryName'
 import { useDiscardGuard } from '@hooks/useDiscardGuard'
 import { useAdminCountries, useAdminRegions } from '@hooks/queries/admin/useAdminRegions'
 import type { AdminRoute, AdminRouteStop } from '@domain/admin/admin.types'
@@ -41,6 +42,7 @@ function placeOptions(names: PlaceOption[], current: string): PlaceOption[] {
 /** Presentation orchestration of the route editor; persistence stays in the page use case. */
 export function useAdminRouteEditor({ route, saving, winery, onSave, onClose }: AdminRouteEditorOptions) {
   const { t } = useTranslation()
+  const countryName = useCountryName()
   const formId = useId()
   const [initialStops] = useState(() => sortRouteStops(route.stops))
   const stopsEditor = useAdminRouteStops(initialStops, winery)
@@ -138,9 +140,9 @@ export function useAdminRouteEditor({ route, saving, winery, onSave, onClose }: 
   ].filter((message): message is string => !!message))]
 
   const countryOptions = placeOptions(
-    countries.map((country) => ({ value: country.name, label: country.name })),
+    countries.map((country) => ({ value: country.name, label: countryName(country.name) })),
     values.country,
-  ).map((option) => ({ ...option, label: countries.find((country) => country.id === option.value)?.name ?? option.label }))
+  ).map((option) => ({ ...option, label: countryName(countries.find((country) => country.id === option.value)?.name ?? option.label) }))
   const regionOptions = placeOptions(regions.map((region) => ({ value: region.name, label: region.name })), values.region)
 
   return {

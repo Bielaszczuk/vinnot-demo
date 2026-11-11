@@ -28,6 +28,14 @@ de access, refresh y usuario sólo se leen como legado y se eliminan al migrar. 
 La caché RTK es de memoria; declarar `QUERY_CACHE` no implementa persistencia.
 El escáner guarda URI/OCR en estado: limpiar referencias no borra el archivo.
 Avatar y selección de imagen tienen servicios separados del transporte multipart.
+Los clientes de API convierten las rutas de archivos del backend (`/api/uploads/...`)
+en URLs absolutas con `resolveApiAssetUrl`, porque React Native no carga URIs
+relativas: usuarios, auth, social, reseñas y comentarios de vinos
+(`resolveAuthorAssetUrls`), usuarios y reseñas de administración. Las URLs absolutas
+pasan sin cambios, así que es idempotente. El átomo `Avatar` muestra las iniciales
+cuando la foto no carga y vuelve a intentar cuando cambia la URI. La fila y la hoja de
+acciones de usuarios de administración muestran la foto con `Avatar`, con la inicial
+del usuario como respaldo.
 
 ## Resolución de idioma
 
@@ -66,6 +74,35 @@ No existe cabecera HTTP global de idioma. Disponer de diccionarios no certifica
 que todo texto de cada componente use i18n. El alcance se verifica por claves
 y consumidores; no se traducen automáticamente nombres comerciales o input
 del usuario.
+
+### Nombres de países
+
+El catálogo guarda cada país con su código ISO y un nombre en español, y la API
+devuelve solo ese nombre (`countryName`, `country.name`, regiones). Hermes no
+tiene `Intl.DisplayNames`, así que
+[`countryNames.ts`](../../../../frontend-mobile/src/domain/location/countryNames.ts)
+mantiene una tabla de los 116 países sembrados (código ISO a español e inglés).
+`localizeCountryName` compara el nombre guardado sin distinguir mayúsculas ni
+acentos, también acepta el código ISO (la fila `MG` se resuelve como Madagascar)
+y devuelve el nombre guardado sin cambios cuando no lo conoce. Los componentes
+lo leen ligado al idioma actual con `useCountryName`. Solo cambia lo que se
+muestra: las pantallas de vino, cava, bodega, ruta, evento y zona de eventos y
+los selectores de administración siguen enviando a la API el nombre o el id
+guardado.
+
+### Mensajes de error
+
+El usuario nunca ve texto del servidor ni de la plataforma. La capa de
+transporte ([`errors.ts`](../../../../frontend-mobile/src/infrastructure/api/errors.ts))
+y el gateway de inicio de sesión social devuelven claves de traducción
+(`authErrors.offline`, `authErrors.timeout`, `authErrors.unexpected`,
+`authErrors.googleCancelled`, etc.) y no dependen de i18next. `auth.service`
+traduce los códigos conocidos del backend a su propia clave y cualquier otro
+código al mensaje de respaldo traducido de la operación. `errorMessageKey` (en
+`localizeMessage.ts`) y `getMutationErrorMessage` conservan solo un mensaje que
+sea una clave de traducción y, si no, devuelven el respaldo de la pantalla; la
+presentación traduce el resultado. La búsqueda de zona de eventos muestra un
+mensaje traducido en lugar del texto del geocodificador.
 
 ### Idioma del panel administrativo
 
@@ -193,6 +230,10 @@ en lugar de publicarse sin el parche.
 - [eas.json](../../../../frontend-mobile/eas.json)
 - [src/shared/config/constants.ts](../../../../frontend-mobile/src/shared/config/constants.ts)
 - [src/shared/i18n/language.ts](../../../../frontend-mobile/src/shared/i18n/language.ts)
+- [src/shared/i18n/localizeMessage.ts](../../../../frontend-mobile/src/shared/i18n/localizeMessage.ts)
+- [src/domain/location/countryNames.ts](../../../../frontend-mobile/src/domain/location/countryNames.ts)
+- [src/presentation/hooks/useCountryName.ts](../../../../frontend-mobile/src/presentation/hooks/useCountryName.ts)
+- [src/infrastructure/api/errors.ts](../../../../frontend-mobile/src/infrastructure/api/errors.ts)
 - [src/infrastructure/storage/authSession.storage.ts](../../../../frontend-mobile/src/infrastructure/storage/authSession.storage.ts)
 - [src/infrastructure/storage/uiPreferences.storage.ts](../../../../frontend-mobile/src/infrastructure/storage/uiPreferences.storage.ts)
 

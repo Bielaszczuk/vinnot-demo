@@ -1,5 +1,6 @@
 package com.vinnot.user.application.query.handler;
 
+import com.vinnot.shared.infrastructure.storage.PublicAvatarUrlResolver;
 import com.vinnot.shared.domain.exception.EntityNotFoundException;
 import com.vinnot.shared.domain.valueobject.PageResult;
 import com.vinnot.user.application.port.out.CellarQueryPort;
@@ -34,6 +35,8 @@ import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.eq;
 
 class UserCatalogQueryHandlersTest {
+    private static final String AVATAR = "https://api.vinnot.test/api/uploads/avatars/user.webp";
+    private final PublicAvatarUrlResolver avatars = new PublicAvatarUrlResolver("https://api.vinnot.test/api");
 
     @Test
     void returnsAUserWithLinkedIdentityProvidersOrReportsItsAbsence() {
@@ -47,7 +50,7 @@ class UserCatalogQueryHandlersTest {
                         user.getId(), SocialProvider.GOOGLE, "subject",
                         user.getEmail().getValue())));
         GetUserByIdQueryHandler handler =
-                new GetUserByIdQueryHandler(users, identities);
+                new GetUserByIdQueryHandler(users, identities, avatars);
 
         var response = handler.execute(new GetUserByIdQuery(user.getId()));
 
@@ -55,6 +58,10 @@ class UserCatalogQueryHandlersTest {
         assertThat(response.socialProviders()).containsExactly("GOOGLE");
         assertThat(response.hasSocialIdentity()).isTrue();
         assertThat(response.hasPassword()).as("linking Google keeps the password the owner chose").isTrue();
+        assertThat(response.avatarUrl()).isEqualTo(AVATAR);
+        assertThat(response.profileImageUrl()).isEqualTo(AVATAR);
+        assertThat(response.username()).isEqualTo("wine-user");
+        assertThat(response.email()).isEqualTo("user@example.com");
 
         User social = User.createSocial("vinnoter-abc12345", Email.of("social@vinnot.com"),
                 Password.fromHash("unusable"), "So", "Cial");
@@ -96,12 +103,16 @@ class UserCatalogQueryHandlersTest {
                 .thenReturn(PageResult.of(List.of(user), 0, 100, 1));
         when(users.findAll(any()))
                 .thenReturn(PageResult.of(List.of(user), 0, 20, 1));
-        SearchUsersQueryHandler handler = new SearchUsersQueryHandler(users);
+        SearchUsersQueryHandler handler = new SearchUsersQueryHandler(users, avatars);
 
         assertThat(handler.execute(new SearchUsersQuery("wine", 0, 500)).content())
                 .hasSize(1);
         assertThat(handler.execute(new SearchUsersQuery(" ", 0, 20)).content())
-                .hasSize(1);
+                .singleElement()
+                .satisfies(listed -> {
+                    assertThat(listed.avatarUrl()).isEqualTo(AVATAR);
+                    assertThat(listed.fullName()).isEqualTo("Wine User");
+                });
         verify(users).searchByKeyword(
                 eq("wine"), any());
         verify(users).findAll(any());
@@ -120,11 +131,13 @@ class UserCatalogQueryHandlersTest {
     }
 
     private User user() {
-        return User.create(
+        User user = User.create(
                 "wine-user",
                 Email.of("user@example.com"),
                 Password.fromHash("hash"),
                 "Wine",
                 "User");
+        user.updateProfileImage("/api/uploads/avatars/user.webp");
+        return user;
     }
 }

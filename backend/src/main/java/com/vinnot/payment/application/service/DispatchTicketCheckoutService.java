@@ -35,10 +35,10 @@ public final class DispatchTicketCheckoutService implements DispatchTicketChecko
         // An attempt whose registration or organizer was deleted is history only; it can never be paid again.
         var attempt = attempts.find(attemptId, buyerId).filter(found -> found.snapshot().linked())
                 .orElseThrow(() -> new BusinessRuleViolationException(
-                "PAYMENT_CHECKOUT_NOT_FOUND", "No encontramos este intento de pago."));
+                "PAYMENT_CHECKOUT_NOT_FOUND", "This payment attempt was not found."));
         var snapshot = attempt.snapshot();
         if (!snapshot.expiresAt().isAfter(clock.instant())) {
-            throw new BusinessRuleViolationException("PAYMENT_CHECKOUT_EXPIRED", "El plazo de la reserva venció.");
+            throw new BusinessRuleViolationException("PAYMENT_CHECKOUT_EXPIRED", "The reservation time expired.");
         }
         eligibility.verify(snapshot);
         if (attempt.status() == CheckoutAttempt.Status.READY) {
@@ -50,7 +50,7 @@ public final class DispatchTicketCheckoutService implements DispatchTicketChecko
         var seller = credentials.findCredentials(snapshot.organizerId()).filter(value ->
                 value.sellerId().equals(snapshot.sellerId()) && value.expiresAt().isAfter(snapshot.expiresAt()))
                 .orElseThrow(() -> new BusinessRuleViolationException("PAYMENT_ACCOUNT_UNAVAILABLE",
-                        "El organizador debe revisar su conexión de pagos."));
+                        "The organizer must check their payment connection."));
         if (attempts.claim(attemptId, buyerId, clock.instant()).isEmpty()) {
             return Optional.empty();
         }
@@ -74,6 +74,6 @@ public final class DispatchTicketCheckoutService implements DispatchTicketChecko
             // The committed CREATING claim survives and remains eligible for reconciliation after recovery.
         }
         throw new ExternalServiceUnavailableException("PAYMENT_CHECKOUT_UNCERTAIN",
-                "Estamos verificando el inicio del pago. Revisá tu reserva antes de volver a intentar.", null);
+                "The payment start is being verified. Check your reservation before trying again.", null);
     }
 }

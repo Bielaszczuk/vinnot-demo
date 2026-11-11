@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import { readdirSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { readdirSync, mkdirSync, mkdtempSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -118,6 +118,26 @@ export function preflightPlan({ impact, branch, base, tests, tools, evidence, pl
   return { steps, notices };
 }
 
+/**
+ * `npm ci` deletes node_modules, so a Metro server started from this checkout's app dies mid-run
+ * (#455). Returns why the preflight must stop, or null when no such server is running.
+ */
+export function metroConflict({ metroCwds, mobileDir }) {
+  const running = metroCwds.find(cwd => cwd === mobileDir || cwd.startsWith(`${mobileDir}/`));
+  return running ? `Metro is running from ${running}. Stop it before the preflight: its npm ci removes node_modules under Metro.` : null;
+}
+
+/** Working directories of the processes listening on Metro's port; empty when lsof is unavailable. */
+function metroWorkingDirectories() {
+  try {
+    const pids = execFileSync('lsof', ['-nP', '-iTCP:8081', '-sTCP:LISTEN', '-t'], { encoding: 'utf8' }).split('\n').filter(Boolean);
+    return pids.flatMap(pid => execFileSync('lsof', ['-a', '-p', pid, '-d', 'cwd', '-Fn'], { encoding: 'utf8' })
+      .split('\n').filter(line => line.startsWith('n')).map(line => line.slice(1)));
+  } catch {
+    return [];
+  }
+}
+
 async function main(argv) {
   // Local, read-only validation. Never dispatches a workflow, pushes or deploys.
   if (process.versions.node.split('.')[0] !== '22') throw new Error('Local preflight requires Node 22, matching CI application checks');
@@ -130,6 +150,8 @@ async function main(argv) {
   const impact = all ? fullImpact() : classifyChanges(paths);
   const branch = git(['rev-parse', '--abbrev-ref', 'HEAD']).trim();
   console.log(JSON.stringify({ base, branch, paths, impact }));
+  const metro = impact.mobile && metroConflict({ metroCwds: metroWorkingDirectories(), mobileDir: realpathSync('frontend-mobile') });
+  if (metro) throw new Error(metro);
   await verifyWorkflowPolicy({ online: true });
   const tools = join(tmpdir(), 'vinnot-ci-preflight-tools');
   const evidence = mkdtempSync(join(tmpdir(), 'vinnot-ci-preflight-evidence-'));

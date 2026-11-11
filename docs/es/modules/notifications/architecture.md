@@ -829,6 +829,15 @@ al entregar.
   [puntos y sellos](../gamification/README.md), el módulo de gamificación lo encola en la
   cola durable de efectos una sola vez por persona y nivel. Bajar de nivel y volver a
   subir no lo repite, y el cálculo histórico de V70 nunca lo envía.
+- `NEW_FOLLOWER` (solo push; «Nuevo seguidor», «<nombre> empezó a seguirte.», con
+  plantillas en español e inglés en `push/community_*.properties`): cuando alguien
+  empieza a seguir a un miembro (#541), `PushNewFollowerNotifier` del módulo de
+  comunidad lo encola en la transacción del seguimiento con el nombre público del
+  seguidor; el push abre `/users/<followerId>`. Nunca se puede seguir con un bloqueo
+  de por medio. Clave de deduplicación
+  `new-follower:<followerId>:<followeeId>:<fecha UTC>`, así seguir, dejar de seguir y
+  volver a seguir envía como máximo un push por día. No hay bandeja dentro de la app:
+  el push es el aviso.
 
 ### Anuncios de administradores y controles de push
 

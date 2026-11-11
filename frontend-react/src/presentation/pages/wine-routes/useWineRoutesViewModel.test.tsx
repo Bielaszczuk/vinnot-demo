@@ -5,12 +5,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useWineRoutesViewModel } from './useWineRoutesViewModel'
 import { useWineRoutes } from '@hooks/queries/wineRoute/useWineRoutes'
 
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }))
+const lang = vi.hoisted(() => ({ value: 'es-AR' }))
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key, i18n: { language: lang.value } }) }))
 vi.mock('@hooks/useDebounce', () => ({ useDebounce: (value: string) => value }))
 const motion = vi.hoisted(() => ({ reduced: false }))
 vi.mock('@hooks/useReducedMotion', () => ({ useReducedMotion: () => motion.reduced }))
 vi.mock('@hooks/queries/wineRoute/useWineRoutes', () => ({ useWineRoutes: vi.fn() }))
-vi.mock('@hooks/queries/wine/useCountries', () => ({ useCountries: () => ({ data: [{ id: 'ar', name: 'Argentina' }] }) }))
+vi.mock('@hooks/queries/wine/useCountries', () => ({ useCountries: () => ({ data: [{ id: 'ar', name: 'Argentina' }, { id: 'br', name: 'Brasil' }] }) }))
 vi.mock('@hooks/queries/wine/useRegions', () => ({ useRegions: () => ({ data: [{ id: 'mza', name: 'Mendoza', countryId: 'ar' }] }) }))
 
 const serverPage = {
@@ -19,6 +20,7 @@ const serverPage = {
 }
 
 beforeEach(() => {
+  lang.value = 'es-AR'
   window.scrollTo = vi.fn() as never
   vi.mocked(useWineRoutes).mockReturnValue({
     data: serverPage, isLoading: false, isError: false, error: null, refetch: vi.fn(),
@@ -84,4 +86,13 @@ describe('page change scroll', () => {
     act(() => result.current.vm.goToPage(1))
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'auto' })
   })
+})
+
+it('labels countries in the interface language while the option value stays the stored name', () => {
+  lang.value = 'en-US'
+  expect(setup().result.current.vm.countryOptions).toEqual([
+    { value: 'Argentina', label: 'Argentina' }, { value: 'Brasil', label: 'Brazil' },
+  ])
+  lang.value = 'es-AR'
+  expect(setup().result.current.vm.countryOptions).toContainEqual({ value: 'Brasil', label: 'Brasil' })
 })

@@ -63,6 +63,30 @@ flowchart LR
 The module queries the wine catalog through a `wine` port and wineries through
 a `winery` port. It does not import external JPA entities.
 
+### Aroma families
+
+`ClassifySensoryFamiliesUseCase` (implemented by
+`SensoryFamilyClassificationService`) groups free-text aroma and flavor
+descriptors, in Spanish or English, into aroma families without calling the AI.
+Each descriptor is classified with `SensoryNote.fromDescriptor` and each note
+with `SensoryFamily.of`; the result is the family keys, in enum order, that at
+least one descriptor belongs to. Blank, missing or unknown descriptors are
+ignored. The community social profile uses it for a member's taste traits (see
+[Community](../community/architecture.md)).
+
+| Family | Notes |
+|---|---|
+| `FRUIT` | Every fruit note except `DRIED_FRUIT` and `JAM` |
+| `FLORAL` | `HONEYSUCKLE`, `WHITE_FLOWERS`, `CHAMOMILE`, `ROSE`, `VIOLET` |
+| `HERBAL` | `ROASTED_PEPPER`, `RED_PEPPER`, `GREEN_PEPPER`, `DRIED_HERBS`, `TOMATO_LEAF`, `DRIED_LEAF`, `BAY_LEAF`, `FRESH_HERBS`, `TEA`, `BLACK_OLIVE` |
+| `SPICE` | `SWEET_SPICE`, `GINGER`, `ANISE`, `WHITE_PEPPER`, `BLACK_PEPPER` |
+| `OAK` | `VANILLA`, `COFFEE`, `CHOCOLATE`, `OAK`, `SMOKE`, `TOBACCO`, `NUTS`, `BUTTER`, `CARAMEL` |
+| `MINERAL` | `MINERAL`, `SALINE`, `WET_EARTH`, `LEATHER` |
+
+`DRIED_FRUIT`, `JAM`, `HONEY`, `MOLASSES` and `BREAD` belong to no family.
+`SensoryFamily.of` names every note in an exhaustive `switch`, so a new note does
+not compile until it is given a family (or none).
+
 ### Languages as an atomic bundle
 
 `AiContentLanguage` currently supports `es` and `en`. Regional tags are

@@ -621,6 +621,15 @@ Cada merge a `main` publica la documentación en Cloudflare Pages:
    commit tiene que figurar como exitoso.
 3. Si quedó en cola más de 10 minutos o falló al clonar el repositorio: cancelarlo y
    usar **Retry deployment**.
+4. Actualizar la copia pública del código, `Bielaszczuk/vinnot-demo`, a la que apuntan
+   los enlaces a código del sitio. El script copia `main` sin historial, pasa
+   `gitleaks` y sube un commit con `[skip ci]` por SSH; sin `--push` solo muestra el
+   plan:
+
+   ```bash
+   node scripts/sync-public-demo.mjs
+   node scripts/sync-public-demo.mjs --push
+   ```
 
 ## 10. Cierre
 
@@ -661,6 +670,8 @@ npx eas-cli@25.3.0 update:republish --group <id-del-grupo-anterior>
 | Síntoma | Causa y solución |
 |---|---|
 | El preflight se queda quieto varios minutos en un test de backend | Testcontainers perdió la conexión con su Postgres. Cortar el preflight (`Ctrl+C`) y volver a correrlo. |
+| El preflight se detiene con «Metro is running from …» | Metro corre desde la app de esta misma carpeta y el `npm ci` del preflight le borraría `node_modules`. Cortar Metro (`Ctrl+C`), correr el preflight y volver a abrirlo; o correr el preflight desde otro worktree. |
+| El simulador queda en el splash después de recargar | La app quedó esperando un bundle que Metro ya no sirve. Cerrarla con `xcrun simctl terminate booted com.vinnot.app.dev` y abrirla de nuevo; si se repite, reiniciar Metro con `npx expo start --clear`. |
 | El preflight falla en `expo-doctor` con versiones esperadas distintas | Expo publicó parches nuevos. Actualizarlos con `npx expo install --fix` implica build nativo (8.B). Si la entrega tiene que salir por OTA, se puede postergar agregando el paquete a `expo.install.exclude` en `frontend-mobile/package.json` y sacarlo en el próximo build nativo. Hoy están excluidos `react-native` (se espera 0.88.1, el proyecto usa 0.88.0) y, desde #489, los parches de SDK 58 `expo` 58.0.22, `expo-build-properties` 58.0.12, `expo-dev-client` 58.0.18, `expo-router` 58.0.29, `expo-updates` 58.0.20 y `react-native-screens` 4.30.1 y, desde #504, `expo-constants` 58.0.15, `expo-linking` 58.0.16, `expo-notifications` 58.1.8, `expo-splash-screen` 58.0.13, `jest-expo` 58.0.14 y `react-native-safe-area-context` 5.11.1 (el proyecto usa el parche o la versión menor anterior de cada uno). |
 | `Local preflight requires Node 22` | `nvm use 22` y repetir. |
 | La validación de iOS en CI falla compilando `ExpoModulesJSI` | El runner tiene un Xcode más viejo que el que pide Expo. Revisar `DEVELOPER_DIR` y `runs-on` en `.github/workflows/ios-native-validation.yml`. |

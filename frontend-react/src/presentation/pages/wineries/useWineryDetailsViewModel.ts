@@ -6,12 +6,14 @@ import { useWineryWines } from '@hooks/queries/winery/useWineryWines'
 import { useUpdateWineryCoordinates } from '@hooks/queries/winery/useUpdateWineryCoordinates'
 import { useGeocoding } from '@hooks/useGeocoding'
 import { useBackNavigation } from '@hooks/useBackNavigation'
+import { useCountryName } from '@hooks/useCountryName'
 import { isNotFoundError } from '@/presentation/feedback/illustratedState'
 import type { Winery } from '@domain/winery/winery.types'
 import { localizedWineryDescription } from '@domain/winery/winery.mappers'
 
 export function useWineryDetailsViewModel() {
   const { t, i18n } = useTranslation()
+  const countryName = useCountryName()
   const { id } = useParams<{ id: string }>()
 
   const { data: winery, isLoading, isError, error, refetch } = useWinery(id)
@@ -110,7 +112,7 @@ export function useWineryDetailsViewModel() {
   const locationParts: string[] = []
   if (displayWinery?.subregion) locationParts.push(displayWinery.subregion)
   if (displayWinery?.regionName) locationParts.push(displayWinery.regionName)
-  if (displayWinery?.countryName) locationParts.push(displayWinery.countryName)
+  if (displayWinery?.countryName) locationParts.push(countryName(displayWinery.countryName))
   const locationText = locationParts.join(', ')
 
   const goBack = useBackNavigation('/wines')

@@ -1,5 +1,6 @@
 package com.vinnot.review.application.query.handler;
 
+import com.vinnot.shared.infrastructure.storage.PublicAvatarUrlResolver;
 import static org.mockito.Mockito.times;
 import com.vinnot.review.application.port.out.ReviewerBadgePort;
 import com.vinnot.review.application.port.out.ReviewCommentRepositoryPort;
@@ -27,6 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 class GetReviewsByWineQueryHandlerTest {
+    private static final PublicAvatarUrlResolver AVATARS = new PublicAvatarUrlResolver("https://api.vinnot.test/api");
     private final ReviewerBadgePort badges = mock(ReviewerBadgePort.class);
 
     @Test
@@ -43,7 +45,7 @@ class GetReviewsByWineQueryHandlerTest {
                 PageQuery.of(0, 10, "rating", PageQuery.SortDirection.ASC)))
                 .thenReturn(PageResult.of(List.of(review), 0, 10, 1));
         when(users.findAllByIds(Set.of(userId))).thenReturn(List.of(
-                new UserQueryPort.UserData(userId, "ana", null, null, "avatar")));
+                new UserQueryPort.UserData(userId, "ana", null, null, "/api/uploads/avatars/ana.webp")));
         when(reviews.countByUserIds(Set.of(userId))).thenReturn(Map.of(userId, 1L));
         when(comments.countByReviewIds(Set.of(review.getId())))
                 .thenReturn(Map.of(review.getId(), 2L));
@@ -52,7 +54,7 @@ class GetReviewsByWineQueryHandlerTest {
                 .thenReturn(Set.of(review.getId()));
         when(badges.badgeTiers(Set.of(userId))).thenReturn(Map.of(userId, "RACIMO"));
 
-        var result = new GetReviewsByWineQueryHandler(reviews, users, comments, likes, badges)
+        var result = new GetReviewsByWineQueryHandler(reviews, users, comments, likes, badges, AVATARS)
                 .execute(new GetReviewsByWineQuery(
                         wineId, 0, 10, "rating_low", currentUserId));
 
@@ -61,6 +63,9 @@ class GetReviewsByWineQueryHandlerTest {
             assertThat(response.commentsCount()).isEqualTo(2);
             assertThat(response.likedByCurrentUser()).isTrue();
             assertThat(response.reviewer().badgeTier()).isEqualTo("RACIMO");
+            assertThat(response.reviewer().avatarUrl()).isEqualTo("https://api.vinnot.test/api/uploads/avatars/ana.webp");
+            assertThat(response.reviewer().username()).isEqualTo("ana");
+            assertThat(response.reviewer().totalReviews()).isEqualTo(1);
         });
         verify(badges, times(1)).badgeTiers(Set.of(userId));
     }
@@ -81,7 +86,7 @@ class GetReviewsByWineQueryHandlerTest {
                 .thenReturn(empty);
         when(users.findAllByIds(Set.of())).thenReturn(List.of());
         GetReviewsByWineQueryHandler handler =
-                new GetReviewsByWineQueryHandler(reviews, users, comments, likes, badges);
+                new GetReviewsByWineQueryHandler(reviews, users, comments, likes, badges, AVATARS);
 
         assertThat(handler.execute(new GetReviewsByWineQuery(
                 wineId, 0, 10, "popular", null)).content()).isEmpty();
@@ -102,7 +107,7 @@ class GetReviewsByWineQueryHandlerTest {
                 new UserQueryPort.UserData(owner, "author", "Own", "Author", null)));
         when(comments.countByReviewIds(Set.of(own.getId())))
                 .thenReturn(Map.of(own.getId(), 3L));
-        var handler = new GetReviewsByWineQueryHandler(reviews, users, comments, likes, badges);
+        var handler = new GetReviewsByWineQueryHandler(reviews, users, comments, likes, badges, AVATARS);
 
         var result = handler.execute(new GetReviewsByWineQuery(wine, 0, 1, "mine", owner));
 
@@ -122,7 +127,7 @@ class GetReviewsByWineQueryHandlerTest {
     void ownReviewWithoutAuthenticationOrWithoutAnExistingReviewIsEmpty() {
         ReviewRepositoryPort reviews = mock(ReviewRepositoryPort.class);
         var handler = new GetReviewsByWineQueryHandler(reviews, mock(UserQueryPort.class),
-                mock(ReviewCommentRepositoryPort.class), mock(ReviewLikeRepositoryPort.class), badges);
+                mock(ReviewCommentRepositoryPort.class), mock(ReviewLikeRepositoryPort.class), badges, AVATARS);
         UUID wine = UUID.randomUUID();
         UUID owner = UUID.randomUUID();
         when(reviews.findByWineIdAndUserId(wine, owner)).thenReturn(Optional.empty());

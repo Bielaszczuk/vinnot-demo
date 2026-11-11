@@ -186,6 +186,6 @@ public final class MercadoPagoPaymentAdapter implements PaymentProviderGateway {
 
     private static ExternalServiceUnavailableException unavailable() {
         return new ExternalServiceUnavailableException("PAYMENT_PROVIDER_UNAVAILABLE",
-                "Estamos verificando el pago. Volvé a consultar el estado de tu reserva.", null);
+                "The payment is being verified. Check your reservation status again.", null);
     }
 }

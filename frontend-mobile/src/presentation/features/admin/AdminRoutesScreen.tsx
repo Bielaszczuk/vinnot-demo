@@ -24,6 +24,7 @@ import {
 } from "@/presentation/features/admin";
 import { useAdminRoutes, useAdminRouteMutations } from "@/presentation/hooks/queries/admin";
 import { useAuth } from "@/presentation/hooks/useAuth";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 import { useDebounce } from "@/presentation/hooks/ui";
 import { ROLES } from "@/shared/config/roles";
 import { editorial, lightTokens, layout, radii, systemColors, wine } from "@/shared/theme/tokens";
@@ -69,10 +70,11 @@ function RouteRow({
   onDelete: () => void;
 }) {
   const { t } = useTranslation();
+  const countryName = useCountryName();
   const badge =
     STATUS_STYLES[item.status] ?? STATUS_STYLES[item.status.toUpperCase()] ?? STATUS_STYLES.draft!;
   const meta = [
-    item.region ?? item.country,
+    item.region ?? countryName(item.country),
     item.difficulty
       ? t(`admin.routes.difficulty.${item.difficulty.toLowerCase()}`, {
           defaultValue: item.difficulty,
@@ -95,7 +97,7 @@ function RouteRow({
           </View>
         </View>
         <Text numberOfLines={1} style={rowStyles.country}>
-          {item.country}
+          {countryName(item.country)}
         </Text>
         {!!meta && <Text style={rowStyles.meta}>{meta}</Text>}
       </View>

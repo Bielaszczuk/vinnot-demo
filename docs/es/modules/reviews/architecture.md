@@ -185,6 +185,14 @@ handler lo calcula con los IDs liked del usuario; sin usuario actual queda en
 incluye `publicationStatus` y limita la identidad del autor a datos públicos. La UI no recibe email, roles
 internos ni tokens.
 
+El autor de una reseña o de un comentario llega como `reviewer` con `id`,
+`username`, `displayName`, `avatarUrl` y `badgeTier` (la reseña suma
+`totalReviews`, que hoy siempre se envía en 0). `ReviewerInfoResolver` lo arma con `UserQueryPort`,
+`ReviewerBadgePort` y `AvatarUrlResolver`, así `avatarUrl` siempre es una URL
+absoluta o `null` (ver [Valor guardado y URL que recibe el cliente](../users/architecture.md#valor-guardado-y-url-que-recibe-el-cliente)).
+Los clientes web y app vuelven a resolver la foto del autor al mapear reseñas y
+comentarios; con una URL absoluta no cambia nada.
+
 ### Frontends
 
 Web y mobile acceden mediante presentación → servicio de aplicación → cliente HTTP. El backend no controla query keys ni su invalidación. La respuesta de creación/edición y las lecturas de reseñas se transforman a modelos de frontend antes de renderizar.
@@ -234,26 +242,28 @@ pantallas de moderación están en [Administración](../admin/README.md).
 | Pieza | Qué hace |
 |---|---|
 | [`ReviewsList.tsx`](../../../../frontend-react/src/presentation/components/features/wine/ReviewsList.tsx) | Páginas de 20 con orden reciente o popular, la reseña propia primero, alta y edición, confirmación al eliminar y like optimista que se revierte si falla |
-| [`ReviewCard.tsx`](../../../../frontend-react/src/presentation/components/features/wine/ReviewCard.tsx) | Autor, estrellas, texto, fecha, contadores y etiqueta de estado; like y comentarios deshabilitados si la reseña no está aprobada |
+| [`ReviewCard.tsx`](../../../../frontend-react/src/presentation/components/features/wine/ReviewCard.tsx) | Autor con foto (o un ícono de persona si falta o no carga), nombre y sello, y su `@usuario` debajo en gris; la foto y el nombre abren su perfil público (`/users/{id}`). Estrellas, texto, fecha, contadores y etiqueta de estado; like y comentarios deshabilitados si la reseña no está aprobada |
 | [`ReviewForm.tsx`](../../../../frontend-react/src/presentation/components/features/wine/ReviewForm.tsx) | Control de la botella de 0.1 a 5.0, título de hasta 255 caracteres, comentario y aviso de publicación inmediata |
-| [`ReviewComments.tsx`](../../../../frontend-react/src/presentation/components/features/wine/ReviewComments.tsx) | Lista de comentarios, alta de hasta 2000 caracteres y eliminación con confirmación |
+| [`ReviewComments.tsx`](../../../../frontend-react/src/presentation/components/features/wine/ReviewComments.tsx) | Lista de comentarios con foto del autor (o un ícono de persona), nombre, sello y `@usuario` debajo en gris; alta de hasta 2000 caracteres y eliminación con confirmación |
 | [`hooks/queries/wine`](../../../../frontend-react/src/presentation/hooks/queries/wine/) | Consultas y mutaciones; al crear o eliminar se recargan la ficha, el catálogo, la cava y los datos de comunidad |
 | [`wines.service.ts`](../../../../frontend-react/src/application/services/wines.service.ts) | Mapea los DTO; un 409 o 422 al crear o editar se trata como conflicto de estado y recarga la lista |
 | [`wines.reviews.client.ts`](../../../../frontend-react/src/infrastructure/api/clients/wines.reviews.client.ts) | Endpoints de `/wines/{wineId}/reviews` |
 
 ## App
 
-Las reseñas aparecen en la ficha del vino,
-`frontend-mobile/app/(app)/(tabs)/wines/[id].tsx`, que con `?review=mine` lleva
-a la reseña propia. La cava también permite publicar una nota como reseña
+Las reseñas cierran la pestaña «Info» de la ficha del vino,
+`frontend-mobile/app/(app)/(tabs)/wines/[id].tsx`. Con `?tab=reviews` (el contador
+de las tarjetas) la ficha baja hasta ellas y con `?review=mine` lleva a la reseña
+propia; [`useWineReviewFocus.ts`](../../../../frontend-mobile/src/presentation/hooks/ui/useWineReviewFocus.ts)
+hace ese desplazamiento. La cava también permite publicar una nota como reseña
 ([Cava](../cellar/README.md)).
 
 | Pieza | Qué hace |
 |---|---|
 | [`ReviewsList.tsx`](../../../../frontend-mobile/src/presentation/features/wine/ReviewsList.tsx) | Páginas de 10 con «Anterior» y «Siguiente», orden «Más recientes» o «Más valoradas» cuando hay más de una reseña, la reseña propia primero en la primera página y el formulario cuando todavía no hay reseña propia |
-| [`ReviewItem.tsx`](../../../../frontend-mobile/src/presentation/features/wine/ReviewItem.tsx) | Autor con su sello, puntaje en copas llenas según la fracción, texto, etiqueta de estado, like, edición y eliminación con confirmación |
+| [`ReviewItem.tsx`](../../../../frontend-mobile/src/presentation/features/wine/ReviewItem.tsx) | Autor con foto (sus iniciales si falta o no carga), nombre, sello y `@usuario` debajo en gris; tocar el autor abre su perfil público. Puntaje en copas llenas según la fracción, texto, etiqueta de estado, like, edición y eliminación con confirmación |
 | [`ReviewForm.tsx`](../../../../frontend-mobile/src/presentation/features/wine/ReviewForm.tsx) y [`ReviewFormFields.tsx`](../../../../frontend-mobile/src/presentation/features/wine/ReviewFormFields.tsx) | Control de la botella sobre las copas, de 0.1 a 5.0 (también se toca una copa), título de hasta 255 caracteres, comentario y aviso de publicación inmediata |
-| [`ReviewComments.tsx`](../../../../frontend-mobile/src/presentation/features/wine/ReviewComments.tsx) | Lista de comentarios, alta de hasta 2000 caracteres y eliminación con confirmación |
+| [`ReviewComments.tsx`](../../../../frontend-mobile/src/presentation/features/wine/ReviewComments.tsx) | Lista de comentarios con foto del autor (o sus iniciales), nombre, sello y `@usuario` debajo en gris; alta de hasta 2000 caracteres y eliminación con confirmación |
 | [`useWines.ts`](../../../../frontend-mobile/src/presentation/hooks/queries/wine/useWines.ts) | Consultas y mutaciones de reseñas, likes y comentarios |
 | [`wines.service.ts`](../../../../frontend-mobile/src/application/services/wines.service.ts) | Mapea los DTO a modelos de la app |
 | [`wines.client.ts`](../../../../frontend-mobile/src/infrastructure/api/clients/wines.client.ts) | Endpoints de `/wines/{wineId}/reviews` |

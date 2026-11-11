@@ -7,8 +7,8 @@
 | Plataformas | Web, APK |
 | Actores | Usuario autenticado |
 | IDs en Lucidchart | [WEB UC-ACC-01](https://lucid.app/lucidchart/9f11a16b-bb5a-42fc-a9e8-0852b17bd241/edit), [APK UC-ACC-01](https://lucid.app/lucidchart/e095dd25-e8ac-41ba-bf5b-396e1055f217/edit) |
-| Requisitos | [`RF-WEB-USR-17`](../requirements.md), [`RF-WEB-USR-18`](../requirements.md), [`RF-APK-USR-18`](../requirements.md), [`RF-APK-USR-19`](../requirements.md), [`RF-APK-USR-20`](../requirements.md) |
-| Casos de prueba | [`CP-USR-37`](../testing.md) |
+| Requisitos | [`RF-WEB-USR-17`](../requirements.md), [`RF-WEB-USR-18`](../requirements.md), [`RF-APK-USR-18`](../requirements.md), [`RF-APK-USR-19`](../requirements.md), [`RF-APK-USR-20`](../requirements.md), [`RF-APK-USR-36`](../requirements.md) |
+| Casos de prueba | [`CP-USR-37`](../testing.md), [`CP-USR-70`](../testing.md) |
 
 ## Precondiciones
 
@@ -23,21 +23,48 @@
 1. La persona abre su perfil.
 2. El cliente usa la identidad de `GET /auth/me` y pide `GET /users/me/stats`.
 3. La API suma reseñas y promedio, vinos en la cava e inscripciones a eventos, a través de puertos de otros módulos.
-4. El cliente muestra los datos.
+4. El cliente muestra los datos, en el orden de cada plataforma (ver Reglas de negocio).
 
 ## Flujos alternativos
 
-No tiene.
+- R1. En la app, la persona toca un acceso rápido: abre su cava, sus entradas, su perfil público (`/users/{id}`, donde están sus seguidores y seguidos), el seguimiento de sus vinos enviados, «Comunidad y seguridad» o, según el rol, el panel de administración o el panel partner.
 
 ## Reglas de negocio
 
 - En la app, Eventos y Rutas aparecen solo para PARTNER o ADMIN; la tarjeta de la cava abre la cava aunque esté vacía.
-- En la app, el menú del perfil incluye «Mis vinos enviados», que abre el seguimiento de las propuestas de vinos ([UC-WIN-09](../../wines/use-cases/uc-win-09-track-submissions.md)).
+- En la app, el perfil propio va de lo más usado a la configuración, de arriba hacia abajo:
+  1. encabezado con foto, nombre, email, roles, «Editar perfil» y puntos;
+  2. «Estadísticas»;
+  3. «Accesos rápidos»: «Mi Bodega», «Mis entradas», «Mi perfil público», «Mis vinos enviados» (seguimiento de las propuestas de vinos, [UC-WIN-09](../../wines/use-cases/uc-win-09-track-submissions.md)) y «Comunidad y seguridad»; ADMIN y MODERATOR suman «Panel de administración», y PARTNER y ADMIN, «Panel partner»;
+  4. «Ajustes»: «Cambiar foto», «Cambiar contraseña» («Crear contraseña» en una cuenta sin contraseña propia, que pide el enlace por email), «Cuenta y seguridad», «Notificaciones» e «Idioma de la aplicación»;
+  5. «Soporte»: «Privacidad» y «Ayuda y soporte»;
+  6. «Cerrar sesión».
+- En la web, el encabezado muestra foto, nombre, `@usuario`, roles, fecha de alta, puntos y tres contadores (reseñas, bodega y eventos); debajo están el acceso a «Comunidad y seguridad» y las pestañas «Perfil» (datos personales y la tarjeta «Perfil público», con «Ver mi perfil público», bio y visibilidad de la cava), «Estadísticas», «Seguridad», «Notificaciones» y «Cuenta».
 - `eventsAttended` cuenta inscripciones, no asistencia real.
 - Los roles se exponen con prefijo `ROLE_`.
 - El encabezado del perfil muestra el sello, los puntos, el nombre del nivel y una barra de progreso al siguiente (`GET /users/me/points`); tocar el sello abre «Tus puntos» con cómo sumar, los últimos movimientos y la escalera completa ([Puntos y sellos](../../gamification/README.md)).
 
 ## Diagrama
+
+Orden del perfil propio en la app:
+
+```mermaid
+flowchart TD
+    HERO["Encabezado: foto, nombre, roles, «Editar perfil» y puntos"] --> STATS["Estadísticas"]
+    STATS --> QUICK["Accesos rápidos"]
+    QUICK --> SET["Ajustes"]
+    SET --> SUP["Soporte"]
+    SUP --> OUT["Cerrar sesión"]
+    QUICK --- Q1["Mi Bodega · Mis entradas · Mi perfil público · Mis vinos enviados · Comunidad y seguridad"]
+    QUICK -.->|"ADMIN o MODERATOR"| ADM["Panel de administración"]
+    QUICK -.->|"PARTNER o ADMIN"| PAR["Panel partner"]
+    SET --- S1["Cambiar foto · Cambiar contraseña · Cuenta y seguridad · Notificaciones · Idioma de la aplicación"]
+    SUP --- P1["Privacidad · Ayuda y soporte"]
+```
+
+[Ver diagrama de «UC-USR-13 · Ver el perfil, los roles y las estadísticas» completo](https://images.vinnot.com/docs/diagrams/v1/es/modules-users-use-cases-uc-usr-13-view-profile-64570f1028e5.svg)
+
+Consulta de las estadísticas:
 
 ```mermaid
 sequenceDiagram

@@ -4,6 +4,11 @@
  * starting pose, 1 the finished gesture, up to 1.25 while a replay erases the
  * page) to CSS properties; `AiProcessSceneArt` samples tracks into CSS
  * keyframes. The composition mirrors the app's `WineProcessSceneArt`.
+ *
+ * The wine scenes tell the AI profile and the comparison; the taste quiz
+ * scenes (`gather`, `fill`, `blend`, `paint`) tell the member's own taste
+ * profile taking shape: the options they picked are drawn into a journal, and
+ * from there the story goes on with wine, color and the taste wheel.
  */
 
 import { toWineType, type WineType } from '@domain/wine/wine.types'
@@ -15,6 +20,7 @@ import bottleClearAmber from '@assets/loading/bottle-clear-amber.webp'
 import bottleClearRose from '@assets/loading/bottle-clear-rose.webp'
 import bottleClearWhite from '@assets/loading/bottle-clear-white.webp'
 import bottleSparkling from '@assets/loading/bottle-sparkling.webp'
+import brushImage from '@assets/loading/brush.webp'
 import cageImage from '@assets/loading/cage.webp'
 import corkImage from '@assets/loading/cork.webp'
 import corkSparklingImage from '@assets/loading/cork-sparkling.webp'
@@ -26,9 +32,19 @@ import glassTulip from '@assets/loading/glass-tulip.webp'
 import grapesRed from '@assets/loading/grapes-red.webp'
 import grapesWhite from '@assets/loading/grapes-white.webp'
 import handwritingImage from '@assets/loading/handwriting.webp'
+import glassTopImage from '@assets/loading/glass-top.webp'
+import glassTopGarnetImage from '@assets/loading/glass-top-garnet.webp'
+import journalFlatImage from '@assets/loading/journal-flat.webp'
 import magnifierImage from '@assets/loading/magnifier.webp'
+import paletteImage from '@assets/loading/palette.webp'
 import paperImage from '@assets/loading/paper.webp'
 import penImage from '@assets/loading/pen.webp'
+import petalAmber from '@assets/loading/petal-amber.webp'
+import petalGold from '@assets/loading/petal-gold.webp'
+import petalRose from '@assets/loading/petal-rose.webp'
+import petalRuby from '@assets/loading/petal-ruby.webp'
+import petalSage from '@assets/loading/petal-sage.webp'
+import petalViolet from '@assets/loading/petal-violet.webp'
 import wineAmber from '@assets/loading/wine-amber.webp'
 import wineRed from '@assets/loading/wine-red.webp'
 import wineRose from '@assets/loading/wine-rose.webp'
@@ -51,6 +67,13 @@ export type AiProcessSceneName =
   | 'structure'
   | 'contrast'
   | 'recommendation'
+  | 'gather'
+  | 'fill'
+  | 'blend'
+  | 'paint'
+
+/** The illustrations of the taste quiz options the member picked, in question order; scenes draw at most five. */
+export type ScenePicks = readonly string[]
 
 type SceneGlass = 'bordeaux' | 'rose' | 'tulip' | 'flute'
 type SceneWine = 'red' | 'ruby' | 'rose' | 'white' | 'amber' | 'sparkling'
@@ -106,10 +129,14 @@ export const SCENE_ACTION_MS: Record<AiProcessSceneName, number> = {
   structure: 2200,
   contrast: 2200,
   recommendation: 3000,
+  gather: 3400,
+  fill: 2500,
+  blend: 2500,
+  paint: 2500,
 }
 
 /** Scenes whose gesture plays again on the last step while the answer is pending. */
-export const REPLAYABLE_SCENES: ReadonlySet<AiProcessSceneName> = new Set(['report', 'recommendation'])
+export const REPLAYABLE_SCENES: ReadonlySet<AiProcessSceneName> = new Set(['report', 'recommendation', 'paint'])
 
 /** Past 1 the page fades so it can be written again. */
 export const REPLAY_FADE_END = 1.25
@@ -147,7 +174,7 @@ const px = (value: number) => `${Math.round(value * 100) / 100}px`
 const num = (value: number) => String(Math.round(value * 1000) / 1000)
 
 /** CSS properties of a layer at one moment, keyed by CSS property name. */
-export type Pose = Partial<Record<'opacity' | 'transform' | 'clip-path' | 'top' | 'height', string>>
+export type Pose = Partial<Record<'opacity' | 'transform' | 'clip-path' | 'top' | 'height' | 'filter', string>>
 export type Track = (progress: number) => Pose
 
 /* ── Art ───────────────────────────────────────────────────────────── */
@@ -191,6 +218,17 @@ const art = {
   grapesRed: { src: grapesRed, w: 132, h: 150 },
   grapesWhite: { src: grapesWhite, w: 143, h: 150 },
   magnifier: { src: magnifierImage, w: 202, h: 220 },
+  journalFlat: { src: journalFlatImage, w: 360, h: 258 },
+  palette: { src: paletteImage, w: 275, h: 280 },
+  brush: { src: brushImage, w: 271, h: 280 },
+  petalRuby: { src: petalRuby, w: 213, h: 280 },
+  petalRose: { src: petalRose, w: 215, h: 280 },
+  petalGold: { src: petalGold, w: 217, h: 280 },
+  petalSage: { src: petalSage, w: 213, h: 280 },
+  petalViolet: { src: petalViolet, w: 216, h: 280 },
+  petalAmber: { src: petalAmber, w: 215, h: 280 },
+  glassTop: { src: glassTopImage, w: 240, h: 243 },
+  glassTopGarnet: { src: glassTopGarnetImage, w: 240, h: 244 },
 } satisfies Record<string, Art>
 
 type Box = readonly [x: number, y: number, width: number, height: number]
@@ -252,8 +290,12 @@ export interface SceneLayer {
   /** Hide what falls outside the layer. */
   clip?: boolean
   /** A painted shape instead of an image. */
-  shape?: 'stream' | 'bubble' | 'foam'
+  shape?: 'stream' | 'bubble' | 'foam' | 'blot'
   color?: string
+  /** Blend into what lies beneath, as ink and watercolor soak into paper. */
+  blend?: 'multiply'
+  /** A fixed opacity for a layer without a track. */
+  opacity?: number
   track?: Track
   /** A looping motion with its own period, independent of the gesture. */
   loop?: { periodMs: number; offset: number; track: Track }
@@ -716,8 +758,435 @@ function structureScene(looks: WineSceneLooks): SceneLayer[] {
   ]
 }
 
-/** The layers of a scene for the given wines. */
-export function sceneLayers(scene: AiProcessSceneName, looks: WineSceneLooks): SceneLayer[] {
+/* ── Taste quiz scenes ─────────────────────────────────────────────── */
+
+const MAX_PICKS = 5
+
+/** The pages of the flat journal art, as fractions of the art: the ribbon runs between them. */
+const JOURNAL_PAGES = {
+  left: [0.081, 0.478],
+  right: [0.525, 0.908],
+  top: 0.05,
+  bottom: 0.825,
+} as const
+const JOURNAL_SCALE = 0.32
+/** Each entry: a small sketch of the pick with one handwritten line beside it, three rows to a page. */
+const SKETCH_SIZE = 16
+const ROW_PITCH = 19.5
+const ROW_PAD = 5
+const NOTE_WIDTH = 20
+const NOTE_HAND_SCALE = 0.13
+const TITLE_HAND_SCALE = 0.16
+/** Where each entry goes: page and row. The title takes the first row of the left page. */
+const ENTRY_SLOTS = [
+  ['left', 1],
+  ['left', 2],
+  ['right', 0],
+  ['right', 1],
+  ['right', 2],
+] as const
+/** A slight tilt, as a hand sketching on the page leaves it. */
+const SKETCH_TILT = [-2, 1.5, -1, 2, -1.5] as const
+/** The handwritten line written beside each entry. */
+const NOTE_LINES = [1, 2, 3, 4, 5] as const
+const ENTRY_START = 0.03
+const ENTRY_STEP = 0.18
+const SKETCH_DRAW = 0.1
+const NOTE_HOP = 0.012
+const NOTE_WRITE = 0.035
+const PEN_LEAVE = [0.925, 1] as const
+/** Pen strokes over one sketch: down, up, down; few and long, easing into each turn. */
+const SKETCH_STROKES = 3
+/** How much the drawing front leans, as a share of the sketch. */
+const FRONT_SLANT = 0.3
+const GATHER_PEN_SCALE = 0.17
+const PEN_NIB = [0.06, 0.99] as const
+
+interface Point {
+  x: number
+  y: number
+}
+
+const lerp = (from: Point, to: Point, t: number): Point => ({ x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t })
+
+/** Gentle ease in and out over 0 to 1: the hand slows down at both ends of a stroke. */
+const easeSine = (t: number) => (1 - Math.cos(Math.PI * t)) / 2
+
+/** Eased progress between `start` and `end`, for a drawing or writing gesture the pen and its reveal share. */
+const stroke = (p: number, start: number, end: number) => easeSine(between(p, start, end))
+
+/** The drawing front at `k` (0 to 1 of the sketch): its top end, as a share of the width; it leans back by twice the slant at the bottom. */
+const frontTop = (k: number) => k * (1 + 2 * FRONT_SLANT)
+
+/** The nib hatching up and down the sketch along the drawing front, as fractions of the sketch. */
+function hatch(k: number): Point {
+  const strokes = Math.min(k * SKETCH_STROKES, SKETCH_STROKES)
+  const index = Math.min(Math.floor(strokes), SKETCH_STROKES - 1)
+  const along = easeSine(strokes - index)
+  const y = index % 2 === 0 ? along : 1 - along
+  return { x: clamp01(frontTop(k) - 2 * FRONT_SLANT * y), y }
+}
+
+/**
+ * The member's picks are drawn into an open tasting journal, entry by entry: the fountain pen sketches
+ * each pick in place, the drawing appearing where the nib passes, in sepia ink that warms into
+ * watercolor, and then writes a line of notes beside it. Everything soaks into the paper.
+ */
+function gatherScene(picks: ScenePicks): SceneLayer[] {
+  const journalWidth = art.journalFlat.w * JOURNAL_SCALE
+  const journalHeight = art.journalFlat.h * JOURNAL_SCALE
+  const journalX = (SCENE_SIZE - journalWidth) / 2
+  const journalY = (SCENE_SIZE - journalHeight) / 2
+  const pageTop = journalY + JOURNAL_PAGES.top * journalHeight
+  const pageLeft = (page: 'left' | 'right') => journalX + JOURNAL_PAGES[page][0] * journalWidth
+  const rowTop = (row: number) => pageTop + ROW_PAD + row * ROW_PITCH
+  const handWidth = art.handwriting.w * NOTE_HAND_SCALE
+  const handHeight = art.handwriting.h * NOTE_HAND_SCALE
+
+  const entries = picks.map((src, index) => {
+    const [page, row] = ENTRY_SLOTS[index]!
+    const [top, bottom] = handwritingLines[NOTE_LINES[index]!]!
+    const sketch = { x: pageLeft(page) + 3.5, y: rowTop(row) }
+    const noteHeight = (bottom - top) * handHeight
+    const note = { x: sketch.x + SKETCH_SIZE + 2, y: sketch.y + (SKETCH_SIZE - noteHeight) / 2 + 0.6, w: NOTE_WIDTH, h: noteHeight, top }
+    const start = ENTRY_START + index * ENTRY_STEP
+    const drawn = start + SKETCH_DRAW
+    const writeStart = drawn + NOTE_HOP
+    return { src, sketch, note, start, drawn, writeStart, written: writeStart + NOTE_WRITE }
+  })
+
+  const penWidth = art.pen.w * GATHER_PEN_SCALE
+  const penHeight = art.pen.h * GATHER_PEN_SCALE
+  const sketchPoint = (entry: (typeof entries)[number], point: Point): Point => ({
+    x: entry.sketch.x + point.x * SKETCH_SIZE,
+    y: entry.sketch.y + point.y * SKETCH_SIZE,
+  })
+  const noteStart = (entry: (typeof entries)[number]): Point => ({ x: entry.note.x, y: entry.note.y + entry.note.h / 2 })
+  const noteEnd = (entry: (typeof entries)[number]): Point => ({ x: entry.note.x + entry.note.w, y: entry.note.y + entry.note.h / 2 })
+  const away = { x: SCENE_SIZE + 6, y: journalY + journalHeight + 4 }
+
+  const nib = (p: number): Point => {
+    const first = entries[0]
+    if (!first) return away
+    const index = entries.findLastIndex((entry) => p >= entry.start)
+    const entry = entries[Math.max(index, 0)]!
+    if (p < entry.drawn) return sketchPoint(entry, hatch(stroke(p, entry.start, entry.drawn)))
+    if (p < entry.writeStart) return lerp(sketchPoint(entry, hatch(1)), noteStart(entry), phase(p, entry.drawn, entry.writeStart))
+    if (p < entry.written) {
+      const k = stroke(p, entry.writeStart, entry.written)
+      return { x: entry.note.x + entry.note.w * k, y: entry.note.y + entry.note.h / 2 + 0.5 * Math.sin(k * Math.PI * 8) }
+    }
+    const next = entries[index + 1]
+    if (next) {
+      const carry = phase(p, entry.written, next.start)
+      const point = lerp(noteEnd(entry), sketchPoint(next, hatch(0)), carry)
+      return { x: point.x, y: point.y - 3 * Math.sin(Math.PI * carry) }
+    }
+    return lerp(noteEnd(entry), away, phase(p, PEN_LEAVE[0], PEN_LEAVE[1]))
+  }
+
+  const titleBand = handwritingLines[0]
+  const titleHeight = (titleBand[1] - titleBand[0]) * art.handwriting.h * TITLE_HAND_SCALE
+  const titleX = pageLeft('left') + 3.5
+  return [
+    sprite('gather-journal', art.journalFlat, JOURNAL_SCALE, journalX, journalY),
+    {
+      id: 'gather-title',
+      x: titleX,
+      y: rowTop(0) + (SKETCH_SIZE - titleHeight) / 2,
+      w: pageLeft('left') + (JOURNAL_PAGES.left[1] - JOURNAL_PAGES.left[0]) * journalWidth - 3 - titleX,
+      h: titleHeight,
+      clip: true,
+      blend: 'multiply',
+      opacity: 0.8,
+      children: [
+        {
+          id: 'gather-title-ink',
+          src: art.handwriting.src,
+          x: 0,
+          y: 0,
+          w: art.handwriting.w * TITLE_HAND_SCALE,
+          h: art.handwriting.h * TITLE_HAND_SCALE,
+        },
+      ],
+    },
+    ...entries.flatMap((entry, index): SceneLayer[] => [
+      {
+        id: `gather-pick-${index}`,
+        src: entry.src,
+        x: entry.sketch.x,
+        y: entry.sketch.y,
+        w: SKETCH_SIZE,
+        h: SKETCH_SIZE,
+        blend: 'multiply',
+        track: (p) => {
+          const top = frontTop(stroke(p, entry.start, entry.drawn)) * 100
+          const bottom = top - 2 * FRONT_SLANT * 100
+          const warm = phase(p, entry.drawn, entry.drawn + 0.2)
+          return {
+            opacity: '0.88',
+            transform: `rotate(${num(SKETCH_TILT[index]!)}deg)`,
+            'clip-path': `polygon(0% 0%, ${num(top)}% 0%, ${num(bottom)}% 100%, 0% 100%)`,
+            filter: `sepia(${num(0.7 * (1 - warm))}) saturate(${num(0.55 + 0.45 * warm)})`,
+          }
+        },
+      },
+      {
+        id: `gather-note-${index}`,
+        ...entry.note,
+        clip: true,
+        blend: 'multiply',
+        track: (p) => ({
+          opacity: '0.9',
+          'clip-path': `inset(0 ${num((1 - stroke(p, entry.writeStart, entry.written)) * 100)}% 0 0)`,
+        }),
+        children: [
+          { id: `gather-note-${index}-ink`, src: art.handwriting.src, x: 0, y: -entry.note.top * handHeight, w: handWidth, h: handHeight },
+        ],
+      },
+    ]),
+    sprite('gather-pen', art.pen, GATHER_PEN_SCALE, 0, 0, {
+      track: (p) => {
+        const point = nib(p)
+        return {
+          opacity: num(1 - phase(p, PEN_LEAVE[0], PEN_LEAVE[1])),
+          transform: `translate(${px(point.x - PEN_NIB[0] * penWidth)}, ${px(point.y - PEN_NIB[1] * penHeight)})`,
+        }
+      },
+    }),
+  ]
+}
+
+const FILL_START = 0.08
+const FILL_END = 0.55
+const FILL_WISP_START = 0.45
+const FILL_WISP_STEP = 0.1
+
+/** An empty glass fills with red wine, then its aromas rise in three wisps. */
+function fillScene(): SceneLayer[] {
+  const scale = 0.27
+  const { glass } = glasses.bordeaux
+  const width = glass.w * scale
+  const height = glass.h * scale
+  const x = (SCENE_SIZE - width) / 2
+  const y = SCENE_SIZE - height - 6
+  const rim = y + 0.12 * height
+  const wispScale = 0.21
+  return [
+    filledGlass({ id: 'fill-glass', look: RED, scale, x, y, from: 0, to: 1, start: FILL_START, end: FILL_END }),
+    ...wisps.map((wisp, index) => {
+      const start = FILL_WISP_START + index * FILL_WISP_STEP
+      return sprite(`fill-wisp-${index}`, wisp, wispScale, CENTER - (wisp.w * wispScale) / 2 + (index - 1) * 15, rim - wisp.h * wispScale, {
+        track: (p) => ({
+          opacity: num(0.8 * phase(p, start, start + 0.2)),
+          transform: `translateY(${px(10 - 16 * settle(p, start, start + 0.35))})`,
+        }),
+      })
+    }),
+  ]
+}
+
+/** Wells of the watercolor palette, as fractions of the palette, and the middle where colors are mixed. */
+const WELLS = {
+  ruby: [0.353, 0.221],
+  violet: [0.335, 0.732],
+  mix: [0.5, 0.49],
+} as const
+/** The centre of the palette disc on its art, measured from the art's opaque pixels. */
+const PALETTE_DISC_CENTER = [0.498, 0.498] as const
+const BRUSH_SCALE = 0.16
+/** The bristles' tip on the brush art, as fractions. */
+const BRUSH_TIP = [0.03, 0.975] as const
+
+interface Waypoint {
+  at: number
+  x: number
+  y: number
+}
+
+/** A point moving from stop to stop, easing in and out of each one. */
+function along(p: number, stops: readonly Waypoint[]): { x: number; y: number } {
+  let from = stops[0]!
+  for (const to of stops.slice(1)) {
+    if (p < to.at) {
+      const t = phase(p, from.at, to.at)
+      return { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t }
+    }
+    from = to
+  }
+  return { x: from.x, y: from.y }
+}
+
+/** A small circle stirred between `start` and `end`, opening and closing so it joins the path smoothly. */
+function swirl(p: number, start: number, end: number, radius: number): { x: number; y: number } {
+  const t = between(p, start, end)
+  const r = radius * Math.sin(Math.PI * t)
+  const angle = 3 * Math.PI * t
+  return { x: r * Math.sin(angle), y: 0.6 * r * (1 - Math.cos(angle)) }
+}
+
+/** The brush art placed so its bristles' tip is at the given point. */
+function brushAt(point: { x: number; y: number }): string {
+  return `translate(${px(point.x - BRUSH_TIP[0] * art.brush.w * BRUSH_SCALE)}, ${px(point.y - BRUSH_TIP[1] * art.brush.h * BRUSH_SCALE)})`
+}
+
+/** The brush dips into the ruby and the violet wells and swirls each color into the middle of the palette. */
+function blendScene(): SceneLayer[] {
+  const scale = 0.36
+  const width = art.palette.w * scale
+  const height = art.palette.h * scale
+  const x = CENTER - PALETTE_DISC_CENTER[0] * width
+  const y = CENTER - PALETTE_DISC_CENTER[1] * height
+  const well = ([fx, fy]: readonly [number, number]) => ({ x: x + fx * width, y: y + fy * height })
+  const ruby = well(WELLS.ruby)
+  const violet = well(WELLS.violet)
+  const mix = well(WELLS.mix)
+  const stops: Waypoint[] = [
+    { at: 0, x: mix.x + 30, y: mix.y - 22 },
+    { at: 0.12, ...ruby },
+    { at: 0.2, ...ruby },
+    { at: 0.28, ...mix },
+    { at: 0.46, ...mix },
+    { at: 0.54, ...violet },
+    { at: 0.62, ...violet },
+    { at: 0.68, ...mix },
+    { at: 0.86, ...mix },
+    { at: 1, x: mix.x + 16, y: mix.y + 18 },
+  ]
+  const dip = (p: number) => 1.6 * (Math.sin(Math.PI * between(p, 0.12, 0.2)) + Math.sin(Math.PI * between(p, 0.54, 0.62)))
+  const blot = (index: number, color: string, size: number, dx: number, dy: number, start: number, end: number): SceneLayer => ({
+    id: `blend-blot-${index}`,
+    shape: 'blot',
+    color,
+    x: mix.x + dx - size / 2,
+    y: mix.y + dy - size / 2,
+    w: size,
+    h: size,
+    track: (p) => {
+      const grow = settle(p, start, end)
+      return { opacity: num(0.8 * grow), transform: `scale(${num(0.2 + 0.8 * grow)})` }
+    },
+  })
+  return [
+    sprite('blend-palette', art.palette, scale, x, y),
+    blot(0, '#9E2A44', 20, -2, -1, 0.3, 0.46),
+    blot(1, '#7D4F93', 16, 4, 3, 0.7, 0.86),
+    sprite('blend-brush', art.brush, BRUSH_SCALE, 0, 0, {
+      track: (p) => {
+        const point = along(p, stops)
+        const first = swirl(p, 0.28, 0.46, 5)
+        const second = swirl(p, 0.68, 0.86, 5)
+        return { transform: brushAt({ x: point.x + first.x + second.x, y: point.y + first.y + second.y + dip(p) }) }
+      },
+    }),
+  ]
+}
+
+const PETALS = [art.petalRuby, art.petalRose, art.petalGold, art.petalSage, art.petalViolet, art.petalAmber]
+const PETAL_SCALE = 0.15
+/** The petal's pointed end on its art, as fractions: the petals are drawn pointing down. */
+const PETAL_TIP = [0.485, 0.975] as const
+const PETAL_START = 0.06
+const PETAL_STEP = 0.135
+const PETAL_PAINT = 0.1
+const WHEEL_DONE = PETAL_START + (PETALS.length - 1) * PETAL_STEP + PETAL_PAINT
+
+/**
+ * Rotation by `degrees` and scaling around a pivot given relative to the layer's centre (where CSS
+ * transforms turn): the pivot stays in place.
+ */
+function turnAround(degrees: number, scale: number, pivotX: number, pivotY: number): string {
+  const angle = (degrees * Math.PI) / 180
+  const dx = pivotX - scale * (pivotX * Math.cos(angle) - pivotY * Math.sin(angle))
+  const dy = pivotY - scale * (pivotX * Math.sin(angle) + pivotY * Math.cos(angle))
+  return `translate(${px(dx)}, ${px(dy)}) rotate(${num(degrees)}deg) scale(${num(scale)})`
+}
+
+/** The glass of red wine at the centre of the wheel, seen from above, and the gap between its rim and the petals. */
+const WHEEL_GLASS_SIZE = 32
+const WHEEL_GLASS_GAP = 3
+const PETAL_RING = WHEEL_GLASS_SIZE / 2 + WHEEL_GLASS_GAP
+
+/** The brush paints the taste wheel petal by petal around a glass of red wine seen from above; then the wine swirls. */
+function paintScene(): SceneLayer[] {
+  const reach = (index: number) => PETALS[index]!.h * PETAL_SCALE
+  /** A point `distance` px out from the petal's pointed end along petal `index`, nudged `side` px across it. */
+  const onPetal = (index: number, distance: number, side = 0) => {
+    const angle = (index * 60 * Math.PI) / 180
+    const out = PETAL_RING + distance
+    return {
+      x: CENTER + out * Math.sin(angle) + side * Math.cos(angle),
+      y: CENTER - out * Math.cos(angle) + side * Math.sin(angle),
+    }
+  }
+  const glassScale = WHEEL_GLASS_SIZE / art.glassTop.w
+  const glassX = CENTER - WHEEL_GLASS_SIZE / 2
+  const glassY = CENTER - (art.glassTop.h * glassScale) / 2
+  const breathe = (p: number) => 1 + 0.06 * Math.sin(Math.PI * between(p, WHEEL_DONE, 1))
+  const rest = { x: CENTER + 30, y: CENTER + 44 }
+  const startPoint = onPetal(0, 0.2 * reach(0))
+
+  const brush: Track = (p) => {
+    if (p > 1) {
+      const back = phase(p, 1, REPLAY_FADE_END)
+      return { transform: brushAt({ x: rest.x + (startPoint.x - rest.x) * back, y: rest.y + (startPoint.y - rest.y) * back }) }
+    }
+    if (p >= WHEEL_DONE) {
+      const end = onPetal(PETALS.length - 1, 0.92 * reach(PETALS.length - 1))
+      const lift = phase(p, WHEEL_DONE, 1)
+      return { transform: brushAt({ x: end.x + (rest.x - end.x) * lift, y: end.y + (rest.y - end.y) * lift }) }
+    }
+    const index = Math.min(Math.floor(Math.max(p - PETAL_START, 0) / PETAL_STEP), PETALS.length - 1)
+    const start = PETAL_START + index * PETAL_STEP
+    const k = phase(p, start, start + PETAL_PAINT)
+    let point = onPetal(index, (0.2 + 0.72 * k) * reach(index), 2 * Math.sin(Math.PI * k))
+    if (p > start + PETAL_PAINT && index < PETALS.length - 1) {
+      const from = onPetal(index, 0.92 * reach(index))
+      const to = onPetal(index + 1, 0.2 * reach(index + 1))
+      const carry = phase(p, start + PETAL_PAINT, start + PETAL_STEP)
+      point = { x: from.x + (to.x - from.x) * carry, y: from.y + (to.y - from.y) * carry }
+    }
+    return { transform: brushAt(point) }
+  }
+
+  return [
+    ...PETALS.map((petal, index): SceneLayer => {
+      const width = petal.w * PETAL_SCALE
+      const height = petal.h * PETAL_SCALE
+      const tipX = PETAL_TIP[0] * width
+      const tipY = PETAL_TIP[1] * height
+      const start = PETAL_START + index * PETAL_STEP
+      const angle = (index * 60 * Math.PI) / 180
+      const ring = `translate(${px(PETAL_RING * Math.sin(angle))}, ${px(-PETAL_RING * Math.cos(angle))})`
+      return sprite(`paint-petal-${index}`, petal, PETAL_SCALE, CENTER - tipX, CENTER - tipY, {
+        track: (p) => {
+          const k = phase(p, start, start + PETAL_PAINT)
+          return {
+            opacity: num(1 - phase(p, 1, REPLAY_FADE_END)),
+            transform: `${ring} ${turnAround(index * 60, 0.92 + 0.08 * k, tipX - width / 2, tipY - height / 2)}`,
+            'clip-path': `inset(${num((1 - k) * 100)}% 0 0 0)`,
+          }
+        },
+      })
+    }),
+    sprite('paint-glass', art.glassTop, glassScale, glassX, glassY, {
+      track: (p) => ({ transform: `scale(${num(breathe(p))})` }),
+    }),
+    sprite('paint-glass-swirl', art.glassTopGarnet, glassScale, glassX, glassY, {
+      track: (p) => {
+        const swirl = phase(p, WHEEL_DONE, 1)
+        return {
+          opacity: num(swirl * (1 - phase(p, 1, REPLAY_FADE_END))),
+          transform: `rotate(${num(-50 * (1 - swirl))}deg) scale(${num(breathe(p))})`,
+        }
+      },
+    }),
+    sprite('paint-brush', art.brush, BRUSH_SCALE, 0, 0, { track: brush }),
+  ]
+}
+
+/** The layers of a scene for the given wines, or for the member's taste quiz picks. */
+export function sceneLayers(scene: AiProcessSceneName, looks: WineSceneLooks, picks: ScenePicks = []): SceneLayer[] {
   switch (scene) {
     case 'uncork':
       return looks.first.bottle === 'sparkling' ? popScene(looks.first) : corkscrewScene(looks.first)
@@ -736,12 +1205,37 @@ export function sceneLayers(scene: AiProcessSceneName, looks: WineSceneLooks): S
       return structureScene(looks)
     case 'contrast':
       return contrastScene(looks)
+    case 'gather':
+      return gatherScene(picks.slice(0, MAX_PICKS))
+    case 'fill':
+      return fillScene()
+    case 'blend':
+      return blendScene()
+    case 'paint':
+      return paintScene()
   }
 }
 
 /* ── Keyframes ─────────────────────────────────────────────────────── */
 
 const SAMPLES = 40
+
+/** Keyframe samples per gesture: the pen strokes over the journal sketches need finer sampling to stay crisp. */
+export const SCENE_SAMPLES: Record<AiProcessSceneName, number> = {
+  uncork: SAMPLES,
+  visual: SAMPLES,
+  bouquet: SAMPLES,
+  taste: SAMPLES,
+  report: SAMPLES,
+  compare: SAMPLES,
+  structure: SAMPLES,
+  contrast: SAMPLES,
+  recommendation: SAMPLES,
+  gather: 240,
+  fill: SAMPLES,
+  blend: SAMPLES,
+  paint: SAMPLES,
+}
 /** On the last step, while the answer is on its way: rest, then erase and write again. */
 export const SCENE_ACTION_PAUSE_MS = 1600
 const SCENE_ERASE_MS = 700
@@ -754,8 +1248,8 @@ export interface SceneTiming {
 }
 
 /** Sample points of a gesture, played once or as the waiting loop (write, rest, erase). */
-export function sceneTiming(actionMs: number, waiting: boolean): SceneTiming {
-  const write = Array.from({ length: SAMPLES + 1 }, (_, index) => index / SAMPLES)
+export function sceneTiming(actionMs: number, waiting: boolean, samples = SAMPLES): SceneTiming {
+  const write = Array.from({ length: samples + 1 }, (_, index) => index / samples)
   if (!waiting) return { durationMs: actionMs, points: write.map((p) => [p, p * 100]) }
   const cycle = actionMs + SCENE_ACTION_PAUSE_MS + SCENE_ERASE_MS
   const at = (ms: number) => (ms / cycle) * 100

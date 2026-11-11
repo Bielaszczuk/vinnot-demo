@@ -9,7 +9,19 @@ import type { WineReview } from '@domain/wine/wine.types'
 import { VintagePill } from '@components/ui/VintagePill'
 import { GlassRating } from '@components/ui/rating/GlassRating'
 import { UserBadge } from '../points/UserBadge'
+import { UserHandle } from '../social/UserHandle'
 import { ImageWithFallback } from '@components/ui/ImageWithFallback'
+import { Link } from 'react-router-dom'
+
+/** The avatar box: a link to the author's public profile, or a plain box without an author. */
+function AuthorLink({ reviewerId, label, className, children }: { reviewerId?: string; label: string; className: string; children: ReactNode }) {
+  if (!reviewerId) return <div className={className}>{children}</div>
+  return (
+    <Link to={`/users/${reviewerId}`} aria-label={label} className={`${className} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-500`}>
+      {children}
+    </Link>
+  )
+}
 
 type ReviewCardText = {
   user: string
@@ -65,7 +77,9 @@ export function ReviewCard({
       <div className="space-y-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div
+            <AuthorLink
+              reviewerId={review.reviewer?.id}
+              label={t('social.openProfile', { name: review.reviewer?.displayName || text.user })}
               className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-full ${
                 highlighted ? 'bg-wine-100' : 'bg-gray-100'
               }`}
@@ -76,11 +90,17 @@ export function ReviewCard({
                 className="h-full w-full object-cover"
                 fallbackElement={<Icon icon={UserRound} size="md" className={highlighted ? 'text-wine-700' : 'text-gray-400'} />}
               />
-            </div>
+            </AuthorLink>
             <div>
               <div className="flex items-center gap-2">
                 <p className="inline-flex items-center gap-1.5 font-medium text-ink">
-                  {review.reviewer?.displayName || text.user}
+                  {review.reviewer?.id ? (
+                    <Link to={`/users/${review.reviewer.id}`} className="rounded hover:text-wine-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-500">
+                      {review.reviewer.displayName || text.user}
+                    </Link>
+                  ) : (
+                    review.reviewer?.displayName || text.user
+                  )}
                   <UserBadge tier={review.reviewer?.badgeTier} size={20} />
                 </p>
                 {showYourReviewBadge && (
@@ -89,6 +109,7 @@ export function ReviewCard({
                   </span>
                 )}
               </div>
+              <UserHandle username={review.reviewer?.username} />
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 <span>{formatDate(review.createdAt)}</span>
                 {review.createdAt.getTime() !== review.updatedAt.getTime() && (

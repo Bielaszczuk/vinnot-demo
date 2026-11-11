@@ -17,6 +17,7 @@ import { Spinner } from '@components/ui/Spinner'
 import { UserBadge } from '@components/features/points/UserBadge'
 import { AdminFormDialog } from '@components/features/admin/AdminFormDialog'
 import { AdminUserAccountDialog } from '@components/features/admin/users/AdminUserAccountDialog'
+import { AdminUserAvatar } from '@components/features/admin/users/AdminUserAvatar'
 import {
   MAX_SUSPENSION_NOTE_LENGTH,
   SUSPENSION_REASONS,
@@ -131,7 +132,7 @@ export function AdminUsersPage() {
                 <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center text-white text-xs font-bold">{u.username?.charAt(0).toUpperCase()}</div>
+                      <AdminUserAvatar userId={u.id} username={u.username} avatarUrl={u.avatarUrl} />
                       <div><div className="inline-flex items-center gap-1.5 font-medium text-gray-900">{u.username}<UserBadge tier={u.badgeTier} size={18} /></div>{u.name && <div className="text-xs text-gray-500">{u.name}</div>}</div>
                     </div>
                   </td>

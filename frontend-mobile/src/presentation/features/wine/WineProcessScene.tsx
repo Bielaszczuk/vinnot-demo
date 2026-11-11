@@ -21,6 +21,7 @@ import {
   SCENE_ART_SIZE,
   WineProcessSceneArt,
 } from "./WineProcessSceneArt";
+import { isTasteProfileScene, TasteProfileSceneArt, type TasteScenePicks } from "./TasteProfileSceneArt";
 import { vinnotColors } from "@/shared/theme/vinnotTheme";
 
 export type { WineProcessScene };
@@ -35,6 +36,8 @@ const SCENE_OUT_MS = 250;
 /**
  * How long each gesture plays. A profile stage stays 1.8 s on screen and a comparison stage 2.5 s,
  * so each gesture ends just before the next stage; the note on the last stage is written slowly.
+ * A taste quiz stage stays 3.2 s and plays at a calm pace: each gesture eases in and out and rests
+ * on its final pose before the next stage, and the wheel is drawn within the quiz's minimum time.
  */
 export const SCENE_ACTION_MS: Record<WineProcessScene, number> = {
   uncork: 1600,
@@ -46,8 +49,19 @@ export const SCENE_ACTION_MS: Record<WineProcessScene, number> = {
   structure: 2200,
   contrast: 2200,
   recommendation: 3000,
+  quizPicks: 2600,
+  quizGlass: 2500,
+  quizBlend: 2500,
+  quizWheel: 2800,
 };
 const SCENE_ACTION_DELAY_MS = 120;
+const QUIZ_SCENES: ReadonlySet<WineProcessScene> = new Set(["quizPicks", "quizGlass", "quizBlend", "quizWheel"]);
+const calmEasing = Easing.inOut(Easing.sin);
+
+/** Taste quiz gestures ease in and out so they read calmly; the wine scenes keep their steady pace. */
+function sceneEasing(scene: WineProcessScene) {
+  return QUIZ_SCENES.has(scene) ? calmEasing : Easing.linear;
+}
 /** On the last step, while the answer is on its way: rest, fade the page and write again. */
 export const SCENE_ACTION_PAUSE_MS = 1600;
 const SCENE_ERASE_MS = 700;
@@ -60,13 +74,17 @@ interface WineProcessSceneProps {
   step: number;
   total: number;
   looks: WineSceneLooks;
+  /** The quiz options the taste profile scenes draw. */
+  picks?: TasteScenePicks;
 }
+
+const NO_PICKS: TasteScenePicks = [];
 
 /**
  * The step drawing inside a ring that fills as steps advance. Each drawing acts out its step once
  * and rests; the last step, a page being written, writes again while the answer is pending.
  */
-export function WineProcessSceneVisual({ scene, step, total, looks }: WineProcessSceneProps) {
+export function WineProcessSceneVisual({ scene, step, total, looks, picks = NO_PICKS }: WineProcessSceneProps) {
   const reduceMotion = useReducedMotion();
   const completed = total <= 0 ? 0 : Math.min(step + 1, total) / total;
   const target = PROCESS_RING_CIRCUMFERENCE * (1 - completed);
@@ -114,6 +132,7 @@ export function WineProcessSceneVisual({ scene, step, total, looks }: WineProces
             key={scene}
             scene={scene}
             looks={looks}
+            picks={picks}
             reduceMotion={reduceMotion}
             waiting={total > 0 && step >= total - 1 && REPLAYABLE_SCENES.has(scene)}
           />
@@ -126,12 +145,13 @@ export function WineProcessSceneVisual({ scene, step, total, looks }: WineProces
 interface SceneDrawingProps {
   scene: WineProcessScene;
   looks: WineSceneLooks;
+  picks: TasteScenePicks;
   reduceMotion: boolean;
   /** The last step: keep writing, with a pause, until the answer arrives. */
   waiting: boolean;
 }
 
-function SceneDrawing({ scene, looks, reduceMotion, waiting }: SceneDrawingProps) {
+function SceneDrawing({ scene, looks, picks, reduceMotion, waiting }: SceneDrawingProps) {
   const progress = useSharedValue(reduceMotion ? 1 : 0);
 
   useEffect(() => {
@@ -139,7 +159,7 @@ function SceneDrawing({ scene, looks, reduceMotion, waiting }: SceneDrawingProps
       progress.value = 1;
       return;
     }
-    const act = withTiming(1, { duration: SCENE_ACTION_MS[scene], easing: Easing.linear });
+    const act = withTiming(1, { duration: SCENE_ACTION_MS[scene], easing: sceneEasing(scene) });
     progress.value = withDelay(
       SCENE_ACTION_DELAY_MS,
       waiting
@@ -166,7 +186,11 @@ function SceneDrawing({ scene, looks, reduceMotion, waiting }: SceneDrawingProps
       exiting={reduceMotion ? undefined : FadeOut.duration(SCENE_OUT_MS)}
       style={styles.drawing}
     >
-      <WineProcessSceneArt scene={scene} progress={progress} looks={looks} />
+      {isTasteProfileScene(scene) ? (
+        <TasteProfileSceneArt scene={scene} progress={progress} picks={picks} />
+      ) : (
+        <WineProcessSceneArt scene={scene} progress={progress} looks={looks} />
+      )}
     </Animated.View>
   );
 }

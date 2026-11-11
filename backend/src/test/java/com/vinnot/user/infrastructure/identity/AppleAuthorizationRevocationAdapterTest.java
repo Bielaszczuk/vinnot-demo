@@ -81,7 +81,7 @@ class AppleAuthorizationRevocationAdapterTest {
         KeyPairGenerator generator = KeyPairGenerator.getInstance("EC");
         generator.initialize(new ECGenParameterSpec("secp256r1"));
         byte[] encoded = generator.generateKeyPair().getPrivate().getEncoded();
-        return "-----BEGIN PRIVATE KEY-----\n"
+        return "-----BEGIN PRIVATE KEY-----\n" // gitleaks:allow (key generated above, at test time)
                 + Base64.getMimeEncoder(64, new byte[]{'\n'}).encodeToString(encoded)
                 + "\n-----END PRIVATE KEY-----";
     }

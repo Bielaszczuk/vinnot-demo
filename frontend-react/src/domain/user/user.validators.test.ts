@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   changePasswordSchema,
+  emailActionSchema,
+  loginUserSchema,
   priceRangeSchema,
   registerUserSchema,
   resetPasswordSchema,
@@ -31,5 +33,37 @@ describe('user validators', () => {
     expect(resetPasswordSchema.safeParse({
       password: 'Password1', confirmPassword: 'Password2',
     }).success).toBe(false)
+  })
+
+  it('reports i18n keys instead of English text so the interface translates them', () => {
+    const messages = (result: { success: boolean; error?: { issues: Array<{ message: string }> } }) =>
+      result.error?.issues.map((issue) => issue.message) ?? []
+    expect(messages(usernameSchema.safeParse('ab'))).toContain('auth.usernameMinLength')
+    expect(messages(usernameSchema.safeParse('a'.repeat(41)))).toContain('auth.usernameMaxLength')
+    expect(messages(usernameSchema.safeParse('_invalid'))).toEqual(['auth.usernameInvalid'])
+    expect(messages(emailActionSchema.safeParse({ email: 'nope' }))).toEqual(['auth.invalidEmail'])
+    expect(messages(loginUserSchema.safeParse({ email: 'wine@example.com', password: '' }))).toEqual(['auth.passwordRequired'])
+    expect(messages(resetPasswordSchema.safeParse({ password: 'short', confirmPassword: 'short' }))).toEqual([
+      'auth.passwordMinLength', 'auth.passwordUppercase', 'auth.passwordNumber',
+    ])
+    expect(messages(resetPasswordSchema.safeParse({ password: 'Password1', confirmPassword: 'Password2' })))
+      .toEqual(['auth.passwordsMismatch'])
+    expect(messages(registerUserSchema.safeParse({
+      username: 'wine.user', email: 'wine@example.com', password: 'Password1', confirmPassword: 'Password1',
+      firstName: '', lastName: 'x'.repeat(101),
+    }))).toEqual(['auth.firstNameRequired', 'auth.lastNameTooLong'])
+    expect(messages(changePasswordSchema.safeParse({
+      currentPassword: '', newPassword: 'password1', confirmNewPassword: 'password1',
+    }))).toEqual(['auth.currentPasswordRequired', 'auth.passwordUppercase'])
+  })
+
+  it('still accepts and rejects the same inputs', () => {
+    expect(usernameSchema.safeParse('abc').success).toBe(true)
+    expect(usernameSchema.safeParse('a'.repeat(40)).success).toBe(true)
+    expect(usernameSchema.safeParse('wine-user_1').success).toBe(true)
+    expect(usernameSchema.safeParse('wine user').success).toBe(false)
+    expect(loginUserSchema.safeParse({ email: 'wine@example.com', password: 'x' }).success).toBe(true)
+    expect(resetPasswordSchema.safeParse({ password: 'Password1', confirmPassword: 'Password1' }).success).toBe(true)
+    expect(resetPasswordSchema.safeParse({ password: 'PASSWORD1', confirmPassword: 'PASSWORD1' }).success).toBe(false)
   })
 })

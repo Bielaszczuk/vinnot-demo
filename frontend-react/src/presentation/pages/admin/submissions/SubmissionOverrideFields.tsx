@@ -1,5 +1,6 @@
 import { useId, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useCountryName } from '@hooks/useCountryName'
 import type { AdminWineSubmission, AdminWinery } from '@domain/admin/admin.types'
 import { buildVintageChoices } from '@domain/wine/wine.vintage'
 import { EntityPicker } from '@components/ui/EntityPicker'
@@ -19,11 +20,13 @@ interface SubmissionOverrideFieldsProps {
   alcoholError?: string
 }
 
-const wineryPlace = (winery: AdminWinery) => [winery.regionName, winery.countryName].filter(Boolean).join(', ')
+const wineryPlace = (winery: AdminWinery, countryName: (name: string | null) => string) =>
+  [winery.regionName, countryName(winery.countryName)].filter(Boolean).join(', ')
 
 /** Corrections applied before publishing a new wine; each empty field keeps what the user submitted. */
 export function SubmissionOverrideFields({ submission, overrides, onChange, alcoholError }: SubmissionOverrideFieldsProps) {
   const { t } = useTranslation()
+  const countryName = useCountryName()
   const id = useId()
   const country = overrides.country || submission.country
   const options = useSubmissionOverrideOptions(country)
@@ -61,7 +64,7 @@ export function SubmissionOverrideFields({ submission, overrides, onChange, alco
         minQueryLength={winerySearch.minQueryLength}
         getOptionKey={(winery) => winery.id}
         getOptionLabel={(winery) => winery.name}
-        getOptionDescription={wineryPlace}
+        getOptionDescription={(option) => wineryPlace(option, countryName)}
         onSelect={(winery) => {
           onChange('wineryName', winery.name)
           winerySearch.setQuery(winery.name)
@@ -103,7 +106,7 @@ export function SubmissionOverrideFields({ submission, overrides, onChange, alco
         id={`${id}-country`}
         label={t('admin.submissions.countryOverride')}
         value={overrides.country}
-        options={[keep(submission.country), ...options.countries]}
+        options={[keep(countryName(submission.country)), ...options.countries]}
         onChange={(event) => {
           onChange('country', event.target.value)
           onChange('region', '')

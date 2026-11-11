@@ -9,6 +9,7 @@ import { draftCoordinates, type AdminWineryDraft } from "@/domain/admin/adminWin
 import type { PickerOption } from "@/presentation/components/forms";
 import { useAdminCountries, useAdminRegions } from "@/presentation/hooks/queries/admin";
 import { useGeocoding } from "@/presentation/hooks/useGeocoding";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 import { useToast } from "@/presentation/providers/ToastProvider";
 
 /** Picker row that removes the optional region. */
@@ -18,6 +19,7 @@ export function useWineryLocation(form: UseFormReturn<AdminWineryDraft>, visible
   const { t } = useTranslation();
   const { showError } = useToast();
   const { geocodeAddress, isGeocoding } = useGeocoding();
+  const displayCountry = useCountryName();
   const [searchAddress, updateSearchAddress] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const revision = useRef(0);
@@ -49,7 +51,8 @@ export function useWineryLocation(form: UseFormReturn<AdminWineryDraft>, visible
   const selectCountry = (option: PickerOption | null) => {
     if ((option?.id ?? "") === countryId) return;
     setValue("countryId", option?.id ?? "", touch);
-    setValue("countryName", option?.label ?? "", { shouldDirty: true });
+    const stored = countries.find((country) => country.id === option?.id)?.name;
+    setValue("countryName", stored ?? option?.label ?? "", { shouldDirty: true });
     setValue("regionId", "", { shouldDirty: true });
     setValue("regionName", "", { shouldDirty: true });
   };
@@ -77,14 +80,14 @@ export function useWineryLocation(form: UseFormReturn<AdminWineryDraft>, visible
     updateSearchAddress("");
   };
 
-  const countryOptions: PickerOption[] = countries.map((country) => ({ id: country.id, label: country.name }));
+  const countryOptions: PickerOption[] = countries.map((country) => ({ id: country.id, label: displayCountry(country.name) }));
   const regionList: PickerOption[] = countryId
     ? regionsQuery.data.map((region) => ({ id: region.id, label: region.name }))
     : [];
   const errors = formState.errors;
   return {
     countryOptions,
-    country: countryId ? (countryOptions.find((option) => option.id === countryId) ?? { id: countryId, label: countryName }) : null,
+    country: countryId ? (countryOptions.find((option) => option.id === countryId) ?? { id: countryId, label: displayCountry(countryName) }) : null,
     regionOptions: regionId
       ? [{ id: NO_REGION_ID, label: t("admin.wineries.noRegion") }, ...regionList]
       : regionList,

@@ -27,7 +27,7 @@ public record PaymentExecutionPolicy(Environment environment, String permittedSe
     public void requireSeller(String sellerId) {
         if (environment == Environment.LIVE && (!numeric(sellerId) || platformOwnerId.equals(sellerId))) {
             throw new BusinessRuleViolationException("PAYMENT_SELLER_IS_PLATFORM",
-                    "Vinculá la cuenta del organizador, distinta de la cuenta de la plataforma Vinnot.");
+                    "Link the organizer's account, not the Vinnot platform account.");
         }
         if (environment == Environment.LIVE_PILOT && !permittedSellerId.equals(sellerId)) {
             throw rejected();
@@ -52,6 +52,6 @@ public record PaymentExecutionPolicy(Environment environment, String permittedSe
     private static boolean numeric(String value) { return Objects.nonNull(value) && value.matches("[1-9][0-9]{0,19}"); }
     private static BusinessRuleViolationException rejected() {
         return new BusinessRuleViolationException("PAYMENT_PILOT_RESTRICTED",
-                "Este piloto sólo permite pagos de hasta $50 al organizador habilitado.");
+                "This pilot only allows payments of up to $50 to the enabled organizer.");
     }
 }

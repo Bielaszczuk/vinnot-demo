@@ -57,6 +57,30 @@ describe("users.service", () => {
     expect(result.name).toBe("Cristhian Bielaszczuk");
   });
 
+  it("sends the bio and the cellar visibility to PATCH /users/me when they are edited", async () => {
+    usersApiClientMock.updateMe.mockResolvedValue({
+      id: "user-1",
+      email: "cris@vinnot.com",
+      bio: "Malbec",
+      cellarVisibility: "PRIVATE",
+    });
+
+    const result = await usersService.updateMe({
+      firstName: "Cristhian",
+      bio: "Malbec",
+      cellarVisibility: "PRIVATE",
+    });
+
+    expect(usersApiClientMock.updateMe).toHaveBeenCalledWith({
+      username: undefined,
+      firstName: "Cristhian",
+      lastName: undefined,
+      bio: "Malbec",
+      cellarVisibility: "PRIVATE",
+    });
+    expect(result).toMatchObject({ bio: "Malbec", cellarVisibility: "PRIVATE" });
+  });
+
   it("delegates account deactivation to the user API port", async () => {
     usersApiClientMock.deactivateAccount.mockResolvedValue();
 

@@ -1,6 +1,7 @@
 import type { MutationRequest } from "@/application/operations";
 import { useExecuteMutationMutation } from "@/presentation/store/api";
 import { useCallback, useRef } from "react";
+import { errorMessageKey } from "@/shared/i18n/localizeMessage";
 
 type MutationCallbacks<TResult, TArg> = {
   onSuccess?: (data: TResult, variables: TArg) => void;
@@ -24,16 +25,12 @@ type TriggerResult<TResult> = {
 
 type Trigger<TResult, TArg> = (arg: TArg) => TriggerResult<TResult>;
 
+/**
+ * The translation key to show for a failed mutation: the key the error carries
+ * (for example `authErrors.offline`) or `fallback`. Server text is never returned.
+ */
 export function getMutationErrorMessage(error: unknown, fallback: string): string {
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "message" in error &&
-    typeof error.message === "string"
-  ) {
-    return error.message;
-  }
-  return error instanceof Error ? error.message : fallback;
+  return errorMessageKey(error, fallback);
 }
 
 export function getMutationErrorCode(error: unknown): string | undefined {

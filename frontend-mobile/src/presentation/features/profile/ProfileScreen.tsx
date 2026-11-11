@@ -1,11 +1,16 @@
-import { CELLAR_ROUTE, POINTS_ROUTE } from "@/presentation/navigation/discoveryNavigation";
+import {
+  CELLAR_ROUTE,
+  POINTS_ROUTE,
+  createUserProfileRoute,
+} from "@/presentation/navigation/discoveryNavigation";
 import { ProfilePoints } from "@/presentation/features/points/ProfilePoints";
 import { useHaptics } from "@/presentation/hooks/ui";
 import { DeleteAccountDialog } from "@/presentation/features/user/DeleteAccountDialog";
 import { usePermanentAccountDeletion } from "@/presentation/features/user/usePermanentAccountDeletion";
 import { useCommunityActivityLabel } from "@/presentation/features/community/CommunityOverview";
 /**
- * Profile Tab Screen.
+ * Profile Tab Screen: the hero with points, stats, quick access to the member's own places,
+ * account settings, support and logout, in that order.
  */
 import { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -24,6 +29,8 @@ import {
   LogOut,
   Shield,
   SlidersHorizontal,
+  UserRound,
+  Wine,
 } from "lucide-react-native";
 import { useAuth } from "@/presentation/hooks/useAuth";
 import { useAccountActions } from "@/presentation/hooks/useAccountActions";
@@ -171,20 +178,88 @@ function ProfileScreenContent() {
         const messageKey = code ? messageKeyByCode[code] : undefined;
         showError(
           (messageKey ? t(messageKey) : null) ??
-            getMutationErrorMessage(error, t("profile.toastEmailChangeError")),
+            t(getMutationErrorMessage(error, "profile.toastEmailChangeError")),
         );
       },
     });
   };
 
-  // Most used first: tickets and account security, then preferences and panels.
-  const settingsActions = [
+  // The member's own places first: cellar, tickets, public profile, then role panels.
+  const quickAccessActions = [
+    {
+      key: "cellar",
+      label: t("cellar.title"),
+      description: t("cellar.subtitle"),
+      icon: <Wine size={18} color={wine[700]} />,
+      onPress: () => {
+        haptics.selection();
+        router.push(CELLAR_ROUTE);
+      },
+    },
     {
       key: "tickets",
       label: t("tickets.title"),
       description: t("tickets.subtitle"),
       icon: <Ticket size={18} color={wine[700]} />,
       onPress: () => router.push("/my-tickets"),
+    },
+    ...(user
+      ? [
+          {
+            key: "publicProfile",
+            label: t("social.viewPublicProfile"),
+            description: t("social.viewPublicProfileDesc"),
+            icon: <UserRound size={18} color={wine[700]} />,
+            onPress: () => router.push(createUserProfileRoute(user.id)),
+          },
+        ]
+      : []),
+    {
+      key: "submissions",
+      label: t("scan.mySubmissions"),
+      description: t("scan.mySubmissionsDescription"),
+      icon: <ClipboardList size={18} color={wine[700]} />,
+      onPress: () => router.push("/my-submissions"),
+    },
+    {
+      key: "community",
+      label: t("community.title"),
+      description: communityActivityLabel,
+      icon: <Shield size={18} color={wine[700]} />,
+      onPress: () => router.push("/(app)/community"),
+    },
+    ...(hasRole([ROLES.ADMIN, ROLES.MODERATOR])
+      ? [
+          {
+            key: "admin",
+            label: t("profile.adminPanel"),
+            description: t("profile.adminPanelDesc"),
+            icon: <Shield size={18} color={wine[700]} />,
+            onPress: () => router.push("/(app)/admin"),
+          },
+        ]
+      : []),
+    ...(hasRole([ROLES.PARTNER, ROLES.ADMIN])
+      ? [
+          {
+            key: "partner",
+            label: t("profile.partnerPanel"),
+            description: t("profile.partnerPanelDesc"),
+            icon: <CalendarDays size={18} color={wine[700]} />,
+            onPress: () => router.push("/(app)/partner/events"),
+          },
+        ]
+      : []),
+  ];
+
+  // Configuring the account sits at the bottom: photo, security, account, notifications, language.
+  const settingsActions = [
+    {
+      key: "avatar",
+      label: t("profile.changeAvatar"),
+      description: t("profile.changeAvatarDesc"),
+      icon: <Camera size={18} color={wine[700]} />,
+      onPress: () => setAvatarOpen(true),
     },
     {
       key: "password",
@@ -218,49 +293,6 @@ function ProfileScreenContent() {
       icon: <Languages size={18} color={wine[700]} />,
       onPress: () => setLanguageOpen(true),
     },
-    {
-      key: "submissions",
-      label: t("scan.mySubmissions"),
-      description: t("scan.mySubmissionsDescription"),
-      icon: <ClipboardList size={18} color={wine[700]} />,
-      onPress: () => router.push("/my-submissions"),
-    },
-    {
-      key: "avatar",
-      label: t("profile.changeAvatar"),
-      description: t("profile.changeAvatarDesc"),
-      icon: <Camera size={18} color={wine[700]} />,
-      onPress: () => setAvatarOpen(true),
-    },
-    {
-      key: "community",
-      label: t("community.title"),
-      description: communityActivityLabel,
-      icon: <Shield size={18} color={wine[700]} />,
-      onPress: () => router.push("/(app)/community"),
-    },
-    ...(hasRole([ROLES.ADMIN, ROLES.MODERATOR])
-      ? [
-          {
-            key: "admin",
-            label: t("profile.adminPanel"),
-            description: t("profile.adminPanelDesc"),
-            icon: <Shield size={18} color={wine[700]} />,
-            onPress: () => router.push("/(app)/admin"),
-          },
-        ]
-      : []),
-    ...(hasRole([ROLES.PARTNER, ROLES.ADMIN])
-      ? [
-          {
-            key: "partner",
-            label: t("profile.partnerPanel"),
-            description: t("profile.partnerPanelDesc"),
-            icon: <CalendarDays size={18} color={wine[700]} />,
-            onPress: () => router.push("/(app)/partner/events"),
-          },
-        ]
-      : []),
   ];
 
   const supportActions = [
@@ -321,7 +353,6 @@ function ProfileScreenContent() {
           />
         </ProfileHero>
 
-        <SettingsSection title={t("profile.account")} actions={settingsActions} />
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t("profile.stats")}</Text>
           <StatsRow
@@ -336,6 +367,8 @@ function ProfileScreenContent() {
           />
         </View>
 
+        <SettingsSection title={t("profile.quickAccess")} actions={quickAccessActions} />
+        <SettingsSection title={t("profile.settings")} actions={settingsActions} />
         <SettingsSection title={t("profile.support")} actions={supportActions} />
 
         <Button

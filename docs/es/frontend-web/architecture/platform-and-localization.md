@@ -57,6 +57,31 @@ que todo texto de cada componente use i18n. El alcance se verifica por claves
 y consumidores; no se traducen automáticamente nombres comerciales o input
 del usuario.
 
+### Nombres de países
+
+El catálogo guarda un solo nombre por país, en español (`countries.name`, con el
+código ISO en minúsculas), y el API devuelve solo ese nombre. `domain/location/countryNames.ts`
+tiene la tabla de los 116 países sembrados (código ISO → `{ es, en }`) y
+`localizeCountryName(nombre, idioma)`, que reconoce el nombre guardado, el nombre en
+inglés o el código sin distinguir mayúsculas ni tildes (también la fila `MG`, que
+muestra Madagascar) y devuelve el nombre en el idioma de la interfaz; un nombre
+desconocido se muestra tal cual. El hook `useCountryName` toma el idioma de i18next
+y se usa solo para el texto mostrado: búsqueda de vinos, bodegas, rutas y su panel
+lateral, tarjetas y detalle de vinos, eventos cercanos, zona de eventos y los selectores
+y tablas del panel administrativo. Los valores que vuelven al API (filtros, valores de
+formulario, ids) conservan el nombre guardado.
+
+### Mensajes de validación de formularios
+
+Los esquemas de `domain/user/user.validators.ts` (inicio de sesión, registro,
+recuperación y cambio de contraseña, nombre de usuario) devuelven claves i18n
+(`auth.*`) en lugar de texto, sin depender de i18next. Las páginas las traducen al
+mostrarlas con `fieldErrorMessage` (`presentation/feedback/fieldErrorMessage.ts`), que
+también traduce el error de campo que llega del servidor (`auth.errors.invalidField`).
+El indicador de fuerza de contraseña usa `auth.passwordWeak`, `auth.passwordMedium` y
+`auth.passwordStrong`. Los mensajes de error del servidor nunca se muestran: los
+helpers de `presentation/feedback` eligen una clave a partir del código y el estado.
+
 ### Idioma del panel administrativo
 
 Fechas de reseñas, propuestas, reportes y publicaciones pendientes, estadísticas

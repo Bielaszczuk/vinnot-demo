@@ -124,7 +124,10 @@ public class SecurityConfig {
                                 "/wineries/**",
                                 "/events/**",
                                 "/wine-routes/**",
-                                "/users/*/profile"
+                                "/users/*/profile",
+                                // Public profile activity (#541): approved reviews and the visible cellar.
+                                "/users/*/reviews",
+                                "/users/*/cellar"
                         ).authenticated()
                         // Admin panel — role enforced; method-level @PreAuthorize provides fine-grained control
                         .requestMatchers("/admin/users", "/admin/users/**", "/admin/notifications/**",

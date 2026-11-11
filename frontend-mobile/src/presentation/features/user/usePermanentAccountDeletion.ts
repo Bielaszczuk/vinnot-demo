@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { errorMessageKey } from "@/shared/i18n/localizeMessage";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/presentation/hooks/useAuth";
 import { useAccountActions } from "@/presentation/hooks/useAccountActions";
@@ -49,7 +50,7 @@ export function usePermanentAccountDeletion(onDeleted: () => void) {
       const code = (error as { code?: unknown } | null)?.code;
       showError(code === "ORGANIZER_HAS_UPCOMING_PAID_EVENTS"
         ? t("profile.toastDeleteBlockedByPaidEvents")
-        : error instanceof Error ? error.message : t("profile.toastAccountDeletionError"));
+        : t(errorMessageKey(error, "profile.toastAccountDeletionError")));
     } finally {
       inFlight.current = false;
       setBusy(false);

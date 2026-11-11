@@ -3,21 +3,21 @@ import type { LayoutChangeEvent, ScrollViewInstance } from 'react-native';
 import { useWineReviewFocus } from './useWineReviewFocus';
 
 const layout = { nativeEvent: { layout: { y: 750 } } } as LayoutChangeEvent;
-it('opens reviews immediately and scrolls once after content is ready, in either layout order', () => {
+it('keeps the reviews at the end of the information tab and scrolls once after content is ready, in either layout order', () => {
   const scroll = jest.fn();
   const { result, rerender } = renderHook(({ id }) => useWineReviewFocus(id, true), { initialProps: { id: 'wine' } });
   result.current.scrollRef.current = { scrollTo: scroll } as unknown as ScrollViewInstance;
-  expect(result.current.tab).toBe('reviews');
+  expect(result.current.tab).toBe('info');
   act(() => result.current.onSectionLayout(layout));
   expect(scroll).not.toHaveBeenCalled();
   act(() => result.current.onOwnReviewLayout());
   expect(scroll).toHaveBeenCalledWith({ y: 750, animated: false });
   act(() => { result.current.onOwnReviewLayout(); result.current.onSectionLayout(layout); });
   expect(scroll).toHaveBeenCalledTimes(1);
-  act(() => result.current.setTab('info'));
-  expect(result.current.tab).toBe('info');
+  act(() => result.current.setTab('ai'));
+  expect(result.current.tab).toBe('ai');
   rerender({ id: 'other' });
-  expect(result.current.tab).toBe('reviews');
+  expect(result.current.tab).toBe('info');
   act(() => result.current.onOwnReviewLayout());
   expect(scroll).toHaveBeenCalledTimes(1);
   act(() => result.current.onSectionLayout(layout));
@@ -32,11 +32,11 @@ it('preserves the information tab and position during an ordinary visit', () => 
   expect(scroll).not.toHaveBeenCalled();
 });
 
-it('opens on the reviews tab and glides once to the section for the reviews link, without pinning the own review', () => {
+it('opens on the information tab and glides once to the reviews for the reviews link, without pinning the own review', () => {
   const scroll = jest.fn();
   const { result } = renderHook(() => useWineReviewFocus('wine', false, true));
   result.current.scrollRef.current = { scrollTo: scroll } as unknown as ScrollViewInstance;
-  expect(result.current.tab).toBe('reviews');
+  expect(result.current.tab).toBe('info');
   expect(result.current.focusOwnReview).toBe(false);
   act(() => result.current.onSectionLayout(layout));
   expect(scroll).toHaveBeenCalledWith({ y: 750, animated: true });
@@ -53,10 +53,10 @@ describe('the write-review shortcut', () => {
     return { ...hook, scroll };
   };
 
-  it('opens the reviews tab and scrolls smoothly to the form once the section has laid out', () => {
+  it('stays on the information tab and scrolls smoothly to the reviews once the section has laid out', () => {
     const { result, scroll } = mount();
     act(() => result.current.focusReviews(false));
-    expect(result.current.tab).toBe('reviews');
+    expect(result.current.tab).toBe('info');
     expect(result.current.focusOwnReview).toBe(false);
     expect(scroll).not.toHaveBeenCalled();
     act(() => result.current.onSectionLayout(section(640)));
@@ -67,19 +67,18 @@ describe('the write-review shortcut', () => {
 
   it('scrolls right away when the reviews section is already on screen', () => {
     const { result, scroll } = mount();
-    act(() => result.current.setTab('reviews'));
     act(() => result.current.onSectionLayout(section(640)));
     expect(scroll).not.toHaveBeenCalled();
     act(() => result.current.focusReviews(false));
     expect(scroll).toHaveBeenCalledWith({ y: 640, animated: true });
   });
 
-  it('waits for a fresh section layout after coming back from another tab', () => {
+  it('waits for a fresh section layout after coming back from the profile tab', () => {
     const { result, scroll } = mount();
-    act(() => result.current.setTab('reviews'));
     act(() => result.current.onSectionLayout(section(640)));
-    act(() => result.current.setTab('info'));
+    act(() => result.current.setTab('ai'));
     act(() => result.current.focusReviews(false));
+    expect(result.current.tab).toBe('info');
     expect(scroll).not.toHaveBeenCalled();
     act(() => result.current.onSectionLayout(section(660)));
     expect(scroll).toHaveBeenCalledWith({ y: 660, animated: true });
@@ -89,7 +88,7 @@ describe('the write-review shortcut', () => {
     const { result, scroll } = mount();
     expect(result.current.focusOwnReview).toBe(false);
     act(() => result.current.focusReviews(true));
-    expect(result.current.tab).toBe('reviews');
+    expect(result.current.tab).toBe('info');
     expect(result.current.focusOwnReview).toBe(true);
     act(() => result.current.onSectionLayout(section(640)));
     expect(scroll).not.toHaveBeenCalled();

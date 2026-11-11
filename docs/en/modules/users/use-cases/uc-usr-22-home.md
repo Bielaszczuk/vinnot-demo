@@ -31,7 +31,8 @@
 
 ## Business rules
 
-- On the web, the home page presents Vinnot and offers to explore types, grapes, wines, events and routes; opening a protected feature leads to sign-in.
+- On the web, the home page presents Vinnot and offers to explore types, grapes, wines, events and routes; the four cards under “Everything you need to discover wines” open Wines, the scanner, Events and Wine routes, and opening a protected feature leads to sign-in.
+- When signed in, on the web and the app the home page closes with “From people you follow” (the latest reviews of the people they follow, with “See all”) and “People to follow” ([Community](../../community/README.md)).
 - The data comes from the wines, events and routes modules.
 - On the app, popular grapes are painted with a gradient of their wine's color ([`grapeColors.ts`](../../../../../frontend-mobile/src/presentation/features/home/grapeColors.ts)), with white text when the pill is dark; a grape with no palette uses the neutral pill. The four cards of “Everything you need for wine discovery” open Wines, the scanner, Events and Routes.
 

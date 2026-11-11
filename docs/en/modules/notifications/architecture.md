@@ -790,6 +790,14 @@ They go to user recipients, so the address and language are resolved at delivery
   time, the gamification module enqueues it on the durable effect queue once per
   person and tier. Dropping a tier and climbing back does not repeat it, and the V70
   backfill never sends it.
+- `NEW_FOLLOWER` (push only; “New follower”, “<name> started following you.”, with
+  Spanish and English templates in `push/community_*.properties`): when someone
+  starts following a member (#541), `PushNewFollowerNotifier` in the community
+  module enqueues it in the follow's transaction with the follower's public name;
+  the push opens `/users/<followerId>`. A follow is never possible across a block.
+  Dedupe key `new-follower:<followerId>:<followeeId>:<UTC date>`, so following,
+  unfollowing and following again pushes at most once a day. There is no in-app
+  inbox: the push is the notice.
 
 ### Administrators' announcements and push controls
 

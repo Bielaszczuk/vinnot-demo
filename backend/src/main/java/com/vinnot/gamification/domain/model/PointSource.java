@@ -22,7 +22,12 @@ public enum PointSource {
     /** A confirmed event registration; revoked when it is cancelled, rejected or expires. */
     EVENT_REGISTRATION(4, PointSource.UNLIMITED, true),
     /** A profile with a photo and a first and last name, once. */
-    PROFILE_COMPLETE(5, PointSource.UNLIMITED, true);
+    PROFILE_COMPLETE(5, PointSource.UNLIMITED, true),
+    /**
+     * A new follower with a verified email and at least one approved review (#541), once per follower; revoked when
+     * they unfollow or a block ends the follow.
+     */
+    FOLLOWER_GAINED(1, 10, true);
 
     private static final int UNLIMITED = -1;
 

@@ -138,6 +138,30 @@ class SocialLoginCommandHandlerTest {
     }
 
     @Test
+    void everyGoogleSignInRefreshesAStoredProviderPhotoAt256PixelsAndKeepsAnUploadedOne() {
+        User googlePhoto = verifiedUser();
+        googlePhoto.updateProfileImage("https://lh3.googleusercontent.com/a/old=s96-c");
+        User uploaded = verifiedUser();
+        uploaded.updateProfileImage("/api/uploads/avatars/avatar_1.webp");
+        when(identityVerifier.verify(any(SocialCredential.class))).thenReturn(new VerifiedSocialIdentity(
+                SocialProvider.GOOGLE, "provider-user-id", "new.user@vinnot.com", true, "New", "User",
+                "https://lh3.googleusercontent.com/a/new=s96-c"));
+        when(socialIdentityRepository.findByProviderAndSubject(SocialProvider.GOOGLE, "provider-user-id"))
+                .thenReturn(Optional.of(linkedIdentity(googlePhoto)), Optional.of(linkedIdentity(uploaded)));
+        when(userRepository.findById(googlePhoto.getId())).thenReturn(Optional.of(googlePhoto));
+        when(userRepository.findById(uploaded.getId())).thenReturn(Optional.of(uploaded));
+        when(authSessionIssuer.issue(any(User.class))).thenReturn(sessionResponse("signed-in"));
+
+        handler().execute(command());
+        handler().execute(command());
+
+        assertThat(googlePhoto.getProfileImageUrl()).isEqualTo("https://lh3.googleusercontent.com/a/new=s256-c");
+        assertThat(uploaded.getProfileImageUrl()).isEqualTo("/api/uploads/avatars/avatar_1.webp");
+        verify(authSessionIssuer).issue(googlePhoto);
+        verify(authSessionIssuer).issue(uploaded);
+    }
+
+    @Test
     void verifiedProviderMarksAnExistingLinkedAccountAsVerified() {
         User linkedUser = User.create(
                 "new.user",

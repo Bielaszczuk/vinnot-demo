@@ -1,5 +1,6 @@
 import { useContext, useMemo, useRef, useState } from "react";
 import { ScrollView, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { Check, ChevronDown, Search, X } from "lucide-react-native";
 import { MotionPressable } from "@/presentation/components/ui/MotionPressable";
 import { SheetFieldFocusContext, type SheetMeasurable } from "@/presentation/components/ui/SheetInputContext";
@@ -76,9 +77,12 @@ export function OptionsPanel({
   value,
   onSelect,
   searchable = false,
-  searchPlaceholder = "Buscar",
-  emptyLabel = "Sin resultados",
+  searchPlaceholder: searchPlaceholderProp,
+  emptyLabel: emptyLabelProp,
 }: OptionsPanelProps) {
+  const { t } = useTranslation();
+  const searchPlaceholder = searchPlaceholderProp ?? t("common.search");
+  const emptyLabel = emptyLabelProp ?? t("common.noResults");
   const [search, setSearch] = useState("");
   const panelRef = useRef<SheetMeasurable | null>(null);
   const focusInSheet = useContext(SheetFieldFocusContext);

@@ -4,7 +4,9 @@
  */
 import {
   CELLAR_ROUTE,
+  FEED_ROUTE,
   WINE_ROUTES_ROUTE,
+  createUserProfileRoute,
   createWineRouteDetailRoute,
 } from "@/presentation/navigation/discoveryNavigation";
 import { useRouter, type Href } from "expo-router";
@@ -15,6 +17,7 @@ import { useNearbyEvents } from "@/presentation/hooks/queries/event";
 import { useWineRoutes } from "@/presentation/hooks/queries/wineRoute";
 import { useGeolocation, useHaptics } from "@/presentation/hooks/ui";
 import { HomeScreenView } from "@/presentation/features/home";
+import { useHomeSocial } from "@/presentation/features/social/useHomeSocial";
 import {
   EVENT_DISCOVERY_RADIUS_KM,
   HOME_EVENT_PREVIEW_LIMIT,
@@ -46,13 +49,17 @@ export default function HomeScreen() {
     hasLocation,
   );
   const routesQuery = useWineRoutes(undefined, 0, 3);
+  const social = useHomeSocial(isAuthenticated);
 
   const homeEvents = hasLocation
     ? (nearbyEventsQuery.data?.events ?? []).slice(0, HOME_EVENT_PREVIEW_LIMIT)
     : [];
   const isEventsLoading = hasLocation && nearbyEventsQuery.isLoading && !nearbyEventsQuery.data;
   const isRefreshing =
-    winesQuery.isFetching || nearbyEventsQuery.isFetching || routesQuery.isFetching;
+    winesQuery.isFetching ||
+    nearbyEventsQuery.isFetching ||
+    routesQuery.isFetching ||
+    !!social?.isFetching;
 
   const refreshHome = () => {
     void Promise.all([
@@ -60,6 +67,7 @@ export default function HomeScreen() {
       routesQuery.refetch(),
       ...(hasLocation ? [nearbyEventsQuery.refetch()] : []),
     ]);
+    social?.refresh();
   };
 
   const tap = (cb: () => void) => {
@@ -117,6 +125,19 @@ export default function HomeScreen() {
       onEventPress={(id) => router.push(`/(app)/(tabs)/events/${id}`)}
       onSeeAllRoutes={() => router.navigate(WINE_ROUTES_ROUTE)}
       onRoutePress={(id) => router.push(createWineRouteDetailRoute(id, "home"))}
+      social={
+        social && {
+          feed: social.feed,
+          feedLoading: social.feedLoading,
+          feedError: social.feedError,
+          onRetryFeed: social.onRetryFeed,
+          suggestions: social.suggestions,
+          suggestionsLoading: social.suggestionsLoading,
+          onSeeAllFeed: () => tap(() => router.push(FEED_ROUTE)),
+          onUserPress: (id) => router.push(createUserProfileRoute(id)),
+          onWinePress: (id) => router.push(createWineDetailRoute(id, "/(app)/(tabs)/home")),
+        }
+      }
     />
   );
 }

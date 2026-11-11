@@ -1,5 +1,6 @@
 import http from '@infrastructure/http/http'
 import { API_ENDPOINTS } from '@config/constants'
+import { resolveApiAssetUrl, withReviewerAvatar } from '@infrastructure/http/resolveApiAssetUrl'
 import type {
   CreateWineReviewRequestDto,
   ReviewCommentDto,
@@ -7,6 +8,20 @@ import type {
   ReviewsPageResponseDto,
   WineReviewDto,
 } from '@api/dto/wines.dto'
+
+/** Author photos are resolved against the API host here, so every screen gets a loadable URL. */
+function resolveReview(review: WineReviewDto): WineReviewDto {
+  const resolved = withReviewerAvatar(review)
+  return 'userAvatarUrl' in review ? { ...resolved, userAvatarUrl: resolveApiAssetUrl(review.userAvatarUrl) } : resolved
+}
+
+function resolveReviewsPage(page: ReviewsPageResponseDto): ReviewsPageResponseDto {
+  return {
+    ...page,
+    ...(page.items ? { items: page.items.map(resolveReview) } : {}),
+    ...(page.content ? { content: page.content.map(resolveReview) } : {}),
+  }
+}
 
 export const winesReviewsClient = {
   async getWineReviews(
@@ -17,12 +32,12 @@ export const winesReviewsClient = {
       `${API_ENDPOINTS.WINES}/${wineId}/reviews`,
       { params: { page: params?.page, size: params?.pageSize, filter: params?.filter } },
     )
-    return response.data
+    return resolveReviewsPage(response.data)
   },
 
   async createWineReview(wineId: string, data: CreateWineReviewRequestDto): Promise<WineReviewDto> {
     const response = await http.post<WineReviewDto>(`${API_ENDPOINTS.WINES}/${wineId}/reviews`, data)
-    return response.data
+    return resolveReview(response.data)
   },
 
   async updateWineReview(
@@ -34,7 +49,7 @@ export const winesReviewsClient = {
       `${API_ENDPOINTS.WINES}/${wineId}/reviews/${reviewId}`,
       data,
     )
-    return response.data
+    return resolveReview(response.data)
   },
 
   async deleteWineReview(wineId: string, reviewId: string): Promise<void> {
@@ -59,7 +74,7 @@ export const winesReviewsClient = {
     const response = await http.get<ReviewCommentDto[]>(
       `${API_ENDPOINTS.WINES}/${wineId}/reviews/${reviewId}/comments`,
     )
-    return response.data
+    return response.data.map(withReviewerAvatar)
   },
 
   async addReviewComment(wineId: string, reviewId: string, content: string): Promise<ReviewCommentDto> {
@@ -67,7 +82,7 @@ export const winesReviewsClient = {
       `${API_ENDPOINTS.WINES}/${wineId}/reviews/${reviewId}/comments`,
       { content },
     )
-    return response.data
+    return withReviewerAvatar(response.data)
   },
 
   async deleteReviewComment(wineId: string, reviewId: string, commentId: string): Promise<void> {

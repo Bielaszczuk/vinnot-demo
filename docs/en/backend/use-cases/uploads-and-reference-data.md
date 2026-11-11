@@ -65,6 +65,9 @@ Avatars include user and random UUIDs; labels include the submission UUID. R2
 uses the `.r2.webp` suffix and `uploads/{environment}/` namespace. Covers use
 `/api/uploads/covers/{UUID}.webp`, with private objects and inventory. Dev/prod
 uploads are isolated; the catalogue has one independent shared copy.
+API responses return the profile photo as an absolute URL: the stored relative
+path is completed with `app.public-api-base-url`
+([details](../../modules/users/architecture.md#stored-value-and-the-url-clients-receive)).
 
 | Resource | Delivery | Cache and access |
 |---|---|---|

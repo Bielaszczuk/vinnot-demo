@@ -188,3 +188,31 @@ describe('admin user account names', () => {
     expect(within(dialog).getByRole('button', { name: /admin\.users\.saveAccount/ })).toBeDisabled()
   })
 })
+
+describe('admin user photos', () => {
+  function renderUsers(users: unknown[]) {
+    viewModel.mockReturnValue({
+      t: (key: string) => key, page: 0, setPage: vi.fn(), search: '', setSearch: vi.fn(),
+      isLoading: false, isError: false, refetch: vi.fn(), users, totalItems: users.length, totalPages: 1,
+      banReason: 'SPAM', banNote: '', showBanNote: false, working: false, confirmAction: null,
+      handleSearch: vi.fn(), resolveUserRole: () => 'ROLE_USER', handleRoleChange: vi.fn(), openConfirmAction: vi.fn(),
+      ...actions,
+    })
+    render(<MemoryRouter><AdminUsersPage /></MemoryRouter>)
+  }
+
+  it('shows the user photo where the initial was, and the initial when the photo fails or is missing', () => {
+    renderUsers([
+      { ...user, avatarUrl: 'https://api.vinnot.com/api/uploads/avatars/ana.webp', lastLoginAt: null },
+      { ...user, id: 'user-2', username: 'bob', avatarUrl: null, lastLoginAt: null },
+    ])
+    const anaAvatar = screen.getByTestId('admin-user-avatar-user-1')
+    const photo = anaAvatar.querySelector('img')
+    expect(photo).toHaveAttribute('src', 'https://api.vinnot.com/api/uploads/avatars/ana.webp')
+    expect(screen.getByTestId('admin-user-avatar-user-2')).toHaveTextContent('B')
+    expect(screen.getByTestId('admin-user-avatar-user-2').querySelector('img')).toBeNull()
+    fireEvent.error(photo!)
+    expect(anaAvatar.querySelector('img')).toBeNull()
+    expect(anaAvatar).toHaveTextContent('A')
+  })
+})

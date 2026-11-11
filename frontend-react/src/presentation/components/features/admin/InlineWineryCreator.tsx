@@ -10,6 +10,7 @@
 
 import { useId, useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useCountryName } from '@hooks/useCountryName'
 import { Input } from '@components/ui/Input'
 import { Select } from '@components/ui/Select'
 import { Button } from '@components/ui/Button'
@@ -35,6 +36,7 @@ export interface InlineWineryCreatorProps {
 
 export function InlineWineryCreator({ initialName, onCreated, onCancel, onBusyChange }: InlineWineryCreatorProps) {
   const { t } = useTranslation()
+  const countryName = useCountryName()
   const titleId = useId()
   const fieldId = useId()
   const [name, setName] = useState(initialName.trim())
@@ -105,7 +107,7 @@ export function InlineWineryCreator({ initialName, onCreated, onCancel, onBusyCh
           onChange={(event) => { setCountryId(event.target.value); setRegionId('') }}
         >
           <option value="">{t('admin.inlineWinery.countryPlaceholder')}</option>
-          {countries.map((country) => <option key={country.id} value={country.id}>{country.name}</option>)}
+          {countries.map((country) => <option key={country.id} value={country.id}>{countryName(country.name)}</option>)}
         </Select>
         <Select
           id={`${fieldId}-region`}

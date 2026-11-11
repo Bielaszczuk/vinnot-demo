@@ -20,8 +20,10 @@ import { ReviewsList, WineTasteProfile } from '@components/features/wine'
 import { wineDefaultImage } from '@utils/wine'
 import { useWineDetailsViewModel } from './useWineDetailsViewModel'
 import { WineCellarModal } from './WineCellarModal'
+import { useCountryName } from '@hooks/useCountryName'
 
 export function WineDetailsPage() {
+  const countryName = useCountryName()
   const {
     t,
     shareWine,
@@ -129,7 +131,7 @@ export function WineDetailsPage() {
 
             {/* Region */}
             <p className="mt-1 text-xs text-gray-500">
-              {wine.region}{wine.country ? `, ${wine.country}` : ''}
+              {wine.region}{wine.country ? `, ${countryName(wine.country)}` : ''}
             </p>
 
             {/* Rating */}
@@ -275,7 +277,7 @@ export function WineDetailsPage() {
               <div className="flex items-center gap-3 py-2.5">
                 <Icon icon={MapPin} className="text-gray-400" />
                 <span className="w-24 text-xs text-gray-500">{t('wines.region')}</span>
-                <span className="text-xs font-medium text-ink">{wine.country} / {wine.region}</span>
+                <span className="text-xs font-medium text-ink">{countryName(wine.country)} / {wine.region}</span>
               </div>
             )}
             {wine.style && (

@@ -1,5 +1,6 @@
 package com.vinnot.review.application.query.handler;
 
+import com.vinnot.shared.application.port.AvatarUrlResolver;
 import com.vinnot.review.application.port.out.ReviewerBadgePort;
 import com.vinnot.review.application.port.out.UserQueryPort;
 import com.vinnot.review.application.query.response.ReviewCommentResponse;
@@ -16,6 +17,7 @@ public class ReviewerInfoResolver {
 
     private final UserQueryPort userQueryPort;
     private final ReviewerBadgePort badges;
+    private final AvatarUrlResolver avatars;
 
     /**
      * Builds reviewer info for a review response.
@@ -31,7 +33,7 @@ public class ReviewerInfoResolver {
                             user.id(),
                             user.username(),
                             displayName,
-                            user.profileImageUrl(),
+                            avatars.resolve(user.profileImageUrl()),
                             0,
                             badgeTier(user.id())
                     );
@@ -53,7 +55,7 @@ public class ReviewerInfoResolver {
                             user.id(),
                             user.username(),
                             displayName,
-                            user.profileImageUrl(),
+                            avatars.resolve(user.profileImageUrl()),
                             badgeTier(user.id())
                     );
                 })

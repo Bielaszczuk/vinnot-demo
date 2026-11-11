@@ -1,4 +1,9 @@
-import { resolveWineAssetUrls, resolveWinePageAssetUrls } from "@/infrastructure/api/resolveApiAssetUrl";
+import {
+  resolveAuthorAssetUrls,
+  resolveUserAssetUrls,
+  resolveWineAssetUrls,
+  resolveWinePageAssetUrls,
+} from "@/infrastructure/api/resolveApiAssetUrl";
 import { fromByteArray } from "base64-js";
 import { toPatchRequest } from "./patchRequest";
 /**
@@ -158,7 +163,8 @@ export const adminApiClient = {
   }): Promise<{ items: AdminUserDto[]; totalItems: number }> => {
     // The admin listing carries points and badgeTier; GET /users does not (#455).
     const res = await http.get("/admin/users", { params });
-    return normalizePaginated<AdminUserDto>(res.data as Record<string, unknown>);
+    const page = normalizePaginated<AdminUserDto>(res.data as Record<string, unknown>);
+    return { ...page, items: page.items.map(resolveUserAssetUrls) };
   },
   /** A plain record PATCH: no clearFields, a field left out keeps its value. */
   updateUser: (userId: string, request: AdminUserUpdateRequestDto): Promise<void> =>
@@ -182,7 +188,8 @@ export const adminApiClient = {
     search?: string;
   }): Promise<{ items: AdminReviewDto[]; totalItems: number }> => {
     const res = await http.get("/admin/reviews", { params });
-    return normalizePaginated<AdminReviewDto>(res.data as Record<string, unknown>);
+    const page = normalizePaginated<AdminReviewDto>(res.data as Record<string, unknown>);
+    return { ...page, items: page.items.map(resolveAuthorAssetUrls) };
   },
   deleteReview: (id: string): Promise<void> =>
     http.delete(`/admin/reviews/${id}`).then(() => undefined),

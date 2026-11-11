@@ -66,6 +66,9 @@ Avatares incluyen usuario y UUID aleatorio; etiquetas incluyen submission UUID.
 R2 usa sufijo `.r2.webp` y namespace `uploads/{environment}/`. Portadas usan
 `/api/uploads/covers/{UUID}.webp`, con objeto e inventario privados. No se mezclan
 uploads dev/prod; el catálogo tiene una copia compartida independiente.
+Las respuestas de la API entregan la foto de perfil como URL absoluta: la ruta
+relativa guardada se completa con `app.public-api-base-url`
+([detalle](../../modules/users/architecture.md#valor-guardado-y-url-que-recibe-el-cliente)).
 
 | Recurso | Entrega | Caché y acceso |
 |---|---|---|

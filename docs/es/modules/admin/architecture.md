@@ -158,7 +158,11 @@ flowchart TB
 
 La lista administrativa admite `search`, `page` y `size`. La respuesta usa
 `PageResult<UserAdminResponse>` y expone datos operativos, roles, estado y
-fechas necesarios para gestión. El detalle valida existencia antes de proyectar.
+fechas necesarios para gestión, más `avatarUrl`: la foto de perfil como URL
+absoluta o `null` sin foto (#541, la misma resolución que el resto de la API,
+ver [Valor guardado y URL que recibe el cliente](../users/architecture.md#valor-guardado-y-url-que-recibe-el-cliente)).
+`GET /admin/reviews` también entrega la foto de quien reseñó como URL absoluta.
+El detalle valida existencia antes de proyectar.
 El listado envía `page` y `size` a su query; no utiliza la política del catálogo público de vinos.
 
 #### Actualización

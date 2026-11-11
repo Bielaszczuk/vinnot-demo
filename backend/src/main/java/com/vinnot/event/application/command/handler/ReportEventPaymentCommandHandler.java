@@ -32,6 +32,6 @@ public class ReportEventPaymentCommandHandler implements ReportEventPaymentUseCa
                     "You can only report payment for your own registration");
         }
         throw new BusinessRuleViolationException("PAYMENT_PROVIDER_VERIFICATION_REQUIRED",
-                "El pago se confirma automáticamente al verificarlo con Mercado Pago.");
+                "The payment is confirmed automatically once Mercado Pago verifies it.");
     }
 }

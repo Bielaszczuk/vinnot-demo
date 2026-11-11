@@ -1,5 +1,6 @@
 package com.vinnot.review.application.query.handler;
 
+import com.vinnot.shared.application.port.AvatarUrlResolver;
 import com.vinnot.review.application.port.in.GetReviewCommentsUseCase;
 import com.vinnot.review.application.port.out.ReviewCommentRepositoryPort;
 import com.vinnot.review.application.port.out.ReviewCommentRepositoryPort.ReviewCommentData;
@@ -27,6 +28,7 @@ public class GetReviewCommentsQueryHandler implements GetReviewCommentsUseCase {
     private final ReviewCommentRepositoryPort commentRepository;
     private final UserQueryPort userQueryPort;
     private final ReviewerBadgePort badges;
+    private final AvatarUrlResolver avatars;
 
     @Override
     @Transactional(readOnly = true)
@@ -52,7 +54,7 @@ public class GetReviewCommentsQueryHandler implements GetReviewCommentsUseCase {
                         user.id(),
                         user.username(),
                         displayName,
-                        user.profileImageUrl(),
+                        avatars.resolve(user.profileImageUrl()),
                         badgeByUser.get(user.id())
                 );
             }

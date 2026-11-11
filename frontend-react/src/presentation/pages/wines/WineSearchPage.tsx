@@ -23,6 +23,7 @@ export function WineSearchPage() {
     selectedType,
     selectedGrape,
     selectedCountry,
+    selectedCountryLabel,
     selectedRegion,
     page,
     wines,
@@ -57,7 +58,7 @@ export function WineSearchPage() {
           <>
             <p>{winesLabel} {t('common.available', 'disponibles')}</p>
             <p className="mt-1" role="status">
-              {t(`discovery.${locationStatus}`, { country: selectedCountry })}
+              {t(`discovery.${locationStatus}`, { country: selectedCountryLabel })}
             </p>
           </>
         }
@@ -94,7 +95,7 @@ export function WineSearchPage() {
             aria-label={t('wines.country')}
             value={selectedCountry}
             onChange={(e) => handleCountryChange(e.target.value)}
-            options={[{ value: '', label: t('wines.country', 'País') }, ...countryOptions.map((c) => ({ value: c, label: c }))]}
+            options={[{ value: '', label: t('wines.country', 'País') }, ...countryOptions]}
           />
           {selectedCountry && regionOptions.length > 0 && (
             <Select

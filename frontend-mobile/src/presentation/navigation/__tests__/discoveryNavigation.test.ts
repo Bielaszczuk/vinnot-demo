@@ -8,6 +8,10 @@ import {
   ADMIN_ROUTE,
   PROFILE_ROUTE,
   WINERIES_ROUTE,
+  FEED_ROUTE,
+  createUserProfileRoute,
+  createUserFollowersRoute,
+  createUserFollowingRoute,
 } from "../discoveryNavigation";
 import { internalReturnPath } from "@/domain/navigation/returnPath";
 
@@ -56,4 +60,11 @@ it("goes back when there is history and to the fallback route otherwise", () => 
   goBackOr(router, WINERIES_ROUTE);
   expect(router.replace).toHaveBeenCalledWith("/(app)/wineries");
   expect(PROFILE_ROUTE).toBe("/(app)/(tabs)/profile");
+});
+
+it("opens public profiles, their follow lists and the following feed", () => {
+  expect(createUserProfileRoute("u-1")).toEqual({ pathname: "/(app)/users/[id]", params: { id: "u-1" } });
+  expect(createUserFollowersRoute("u-1")).toEqual({ pathname: "/(app)/users/[id]/followers", params: { id: "u-1" } });
+  expect(createUserFollowingRoute("u-1")).toEqual({ pathname: "/(app)/users/[id]/following", params: { id: "u-1" } });
+  expect(FEED_ROUTE).toBe("/(app)/feed");
 });

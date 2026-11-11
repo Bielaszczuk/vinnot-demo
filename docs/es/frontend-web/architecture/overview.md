@@ -53,7 +53,7 @@ Las páginas funcionales se cargan con `lazy` + `Suspense`; el shell público se
 mantiene estable. Hay cuatro niveles:
 
 - público: auth, home, información/legal, estados de servicio y retorno de checkout;
-- autenticado: catálogo, eventos, bodegas, rutas del vino, comparación, scan, perfil IA, comunidad, cuenta, cava y entradas;
+- autenticado: catálogo, eventos, bodegas, rutas del vino, comparación, scan, perfil IA, comunidad, perfiles públicos y seguimiento (perfil, seguidores, siguiendo y feed), cuenta, cava y entradas;
 - partner: gestión de eventos propios;
 - admin/moderador: catálogo, perfiles, reseñas y submissions; usuarios quedan bajo admin-only.
 

@@ -9,7 +9,8 @@ export type PointsSource =
   | "SCAN_MATCH"
   | "CELLAR_ADD"
   | "EVENT_REGISTRATION"
-  | "PROFILE_COMPLETE";
+  | "PROFILE_COMPLETE"
+  | "FOLLOWER_GAINED";
 
 export interface PointsMovement {
   id: string;

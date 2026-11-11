@@ -12,6 +12,7 @@ import { UserProfileProfileTab } from './UserProfileProfileTab'
 import { UserProfileSecurityTab } from './UserProfileSecurityTab'
 import { UserProfileStatsTab } from './UserProfileStatsTab'
 import { UserProfileNotificationsTab } from './UserProfileNotificationsTab'
+import { UserProfileSocialCard } from './UserProfileSocialCard'
 import {
   BellIcon,
   ChartIcon,
@@ -91,12 +92,12 @@ export function UserProfileHeroSection({ vm }: UserProfileSectionProps) {
 
           <div className="text-center sm:text-left">
             <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">{user?.name || t('profile.title')}</h1>
-            <p className="mt-1 text-wine-200">@{user?.username || 'usuario'}</p>
+            {user?.username && <p className="mt-1 text-wine-200">@{user.username}</p>}
             <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
               {(user?.roles || []).map((role) => (
                 <span key={role} className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium text-white/90 backdrop-blur-sm">
                   <Icon icon={role === 'ROLE_ADMIN' ? ShieldCheck : User} size="xs" />
-                  {role.replace('ROLE_', '')}
+                  {t(`admin.users.roles.${role.replace('ROLE_', '').toLowerCase()}`)}
                 </span>
               ))}
               <span className="text-xs text-wine-200/70">· {t('profile.memberSince', { date: formatProfileDate(user?.createdAt) })}</span>
@@ -159,7 +160,12 @@ export function UserProfileTabNavigation({ vm }: UserProfileSectionProps) {
 export function UserProfileTabContent({ vm }: UserProfileSectionProps) {
   return (
     <div className="max-w-4xl">
-      {vm.activeTab === 'profile' && <UserProfileProfileTab vm={vm} />}
+      {vm.activeTab === 'profile' && (
+        <>
+          <UserProfileProfileTab vm={vm} />
+          <UserProfileSocialCard />
+        </>
+      )}
       {vm.activeTab === 'stats' && <UserProfileStatsTab vm={vm} />}
       {vm.activeTab === 'security' && <UserProfileSecurityTab vm={vm} />}
       {vm.activeTab === 'notifications' && <UserProfileNotificationsTab />}

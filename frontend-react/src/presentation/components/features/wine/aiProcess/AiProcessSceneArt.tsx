@@ -8,6 +8,7 @@ import { useMemo, type CSSProperties } from 'react'
 import {
   REPLAYABLE_SCENES,
   SCENE_ACTION_MS,
+  SCENE_SAMPLES,
   SCENE_SIZE,
   keyframesCss,
   lookKey,
@@ -17,6 +18,7 @@ import {
   type AiProcessSceneName,
   type Pose,
   type SceneLayer,
+  type ScenePicks,
   type SceneTiming,
   type WineSceneLooks,
 } from './aiProcessScenes'
@@ -27,6 +29,8 @@ const SCENE_ACTION_DELAY_MS = 120
 interface AiProcessSceneArtProps {
   scene: AiProcessSceneName
   looks: WineSceneLooks
+  /** The taste quiz options the member picked, for the quiz scenes. */
+  picks?: ScenePicks
   /** The last step: keep writing, with a pause, until the answer arrives. */
   waiting: boolean
   reducedMotion: boolean
@@ -40,13 +44,18 @@ const shapeStyles: Record<NonNullable<SceneLayer['shape']>, CSSProperties> = {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
   foam: { borderRadius: '50%', border: '0.8px solid #C8AB6A', backgroundColor: '#F6EBCB' },
+  /** A drop of watercolor: soft edges that let overlapping drops blend. */
+  blot: { borderRadius: '50%', filter: 'blur(0.8px)' },
 }
+
+const NO_PICKS: ScenePicks = []
 
 function poseStyle(pose: Pose): CSSProperties {
   return {
     opacity: pose.opacity === undefined ? undefined : Number(pose.opacity),
     transform: pose.transform,
     clipPath: pose['clip-path'],
+    filter: pose.filter,
     top: pose.top,
     height: pose.height,
   }
@@ -69,6 +78,8 @@ function renderLayer(layer: SceneLayer, context: RenderContext) {
     height: layer.h,
     overflow: layer.clip ? 'hidden' : undefined,
     backgroundColor: layer.color,
+    mixBlendMode: layer.blend,
+    opacity: layer.opacity,
     ...(layer.shape ? shapeStyles[layer.shape] : {}),
   }
   const animationName = `${context.name}-${layer.id}`
@@ -95,19 +106,19 @@ function renderLayer(layer: SceneLayer, context: RenderContext) {
   )
 }
 
-export function AiProcessSceneArt({ scene, looks, waiting, reducedMotion }: AiProcessSceneArtProps) {
+export function AiProcessSceneArt({ scene, looks, picks = NO_PICKS, waiting, reducedMotion }: AiProcessSceneArtProps) {
   const replay = waiting && REPLAYABLE_SCENES.has(scene) && !reducedMotion
   const { layers, css } = useMemo(() => {
     const context: RenderContext = {
       name: `vinnot-ai-${scene}-${lookKey(looks.first)}-${lookKey(looks.second)}-${replay ? 'loop' : 'once'}`,
-      timing: sceneTiming(SCENE_ACTION_MS[scene], replay),
+      timing: sceneTiming(SCENE_ACTION_MS[scene], replay, SCENE_SAMPLES[scene]),
       iteration: replay ? 'infinite' : '1',
       reducedMotion,
       css: [],
     }
-    const rendered = sceneLayers(scene, looks).map((layer) => renderLayer(layer, context))
+    const rendered = sceneLayers(scene, looks, picks).map((layer) => renderLayer(layer, context))
     return { layers: rendered, css: context.css.join('\n') }
-  }, [scene, looks, replay, reducedMotion])
+  }, [scene, looks, picks, replay, reducedMotion])
 
   return (
     <div

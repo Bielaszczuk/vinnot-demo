@@ -49,7 +49,7 @@ public class ReviewEventRegistrationCommandHandler
             case WAITLIST -> waitlist(event, registration, command.organizerNote());
             case APPROVE_PAYMENT, CONFIRM_PAY_AT_VENUE -> throw new BusinessRuleViolationException(
                     "PAYMENT_PROVIDER_VERIFICATION_REQUIRED",
-                    "El pago se confirma automáticamente al verificarlo con Mercado Pago.");
+                    "The payment is confirmed automatically once Mercado Pago verifies it.");
         }
 
         eventRepository.save(event);

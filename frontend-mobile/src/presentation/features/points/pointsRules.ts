@@ -20,4 +20,5 @@ export const POINTS_RULES: readonly PointsRule[] = [
   { source: "CELLAR_ADD", label: "cellarAdd", points: 1, limit: { key: "oncePerWinePerDay", count: 3 } },
   { source: "EVENT_REGISTRATION", label: "eventRegistration", points: 4, limit: { key: "oncePerEvent" } },
   { source: "PROFILE_COMPLETE", label: "profileComplete", points: 5, limit: { key: "once" } },
+  { source: "FOLLOWER_GAINED", label: "followerGained", points: 1, limit: { key: "perDay", count: 10 } },
 ];

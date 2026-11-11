@@ -62,4 +62,13 @@ describe("formatRating", () => {
     expect(formatRating(4.25, "es-AR")).toBe("4,3");
     expect(formatRating(4, "en-US")).toBe("4.0");
   });
+
+  it("rounds halves up before formatting, so iOS and the web agree on 4.45", () => {
+    // Stands in for iOS, whose formatter would round 4.45 down: it shows the value it receives.
+    const numberFormat = jest
+      .spyOn(Intl, "NumberFormat")
+      .mockImplementation(() => ({ format: (value: number) => String(value) }) as unknown as Intl.NumberFormat);
+    expect(formatRating(4.45, "en-US")).toBe("4.5");
+    numberFormat.mockRestore();
+  });
 });

@@ -154,7 +154,11 @@ flowchart TB
 #### Queries
 
 The administrative list accepts `search`, `page`, and `size`. It returns
-`PageResult<UserAdminResponse>` with operational data, roles, status, and dates.
+`PageResult<UserAdminResponse>` with operational data, roles, status, and dates,
+plus `avatarUrl`: the profile photo as an absolute URL, or `null` without one
+(#541, the same resolution as the rest of the API, see
+[Stored value and the URL clients receive](../users/architecture.md#stored-value-and-the-url-clients-receive)).
+`GET /admin/reviews` also returns the reviewer's photo as an absolute URL.
 The detail use case validates existence before projection. The list forwards `page` and `size` to its query; it does not use the public wine-catalog policy.
 
 #### Update

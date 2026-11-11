@@ -1,5 +1,6 @@
 package com.vinnot.user.application.service;
 
+import com.vinnot.shared.infrastructure.storage.PublicAvatarUrlResolver;
 import com.vinnot.shared.application.port.TokenService;
 import com.vinnot.user.application.command.response.AuthSessionResponse;
 import com.vinnot.user.application.port.in.LoadUserPermissionsUseCase;
@@ -39,6 +40,7 @@ class AuthSessionResponseFactoryTest {
                 "Session",
                 "User");
         user.verifyEmail();
+        user.updateProfileImage("/api/uploads/avatars/session.webp");
         when(loadPermissions.execute(user.getId())).thenReturn(Set.of("WINE_READ", "EVENT_READ"));
         when(tokenService.generateAccessToken(
                 user.getId(),
@@ -51,7 +53,8 @@ class AuthSessionResponseFactoryTest {
                 SocialIdentity.create(user.getId(), SocialProvider.GOOGLE, "google-subject", "session@vinnot.com")));
 
         AuthSessionResponse response = new AuthSessionResponseFactory(
-                socialIdentityRepository, tokenService, loadPermissions)
+                socialIdentityRepository, tokenService, loadPermissions,
+                new PublicAvatarUrlResolver("https://api.vinnot.test/api"))
                 .create(user, "refresh-token");
 
         assertThat(response.accessToken()).isEqualTo("access-token");
@@ -65,6 +68,7 @@ class AuthSessionResponseFactoryTest {
         assertThat(response.user().hasSocialIdentity()).isTrue();
         assertThat(response.user().hasPassword()).as("a local account linked to Google keeps its password").isTrue();
         assertThat(response.user().socialProviders()).containsExactly("GOOGLE");
+        assertThat(response.user().avatarUrl()).isEqualTo("https://api.vinnot.test/api/uploads/avatars/session.webp");
     }
 
     @Test
@@ -76,10 +80,12 @@ class AuthSessionResponseFactoryTest {
                 SocialIdentity.create(user.getId(), SocialProvider.APPLE, "apple-subject", "social@vinnot.com")));
 
         AuthSessionResponse response = new AuthSessionResponseFactory(
-                socialIdentityRepository, tokenService, loadPermissions)
+                socialIdentityRepository, tokenService, loadPermissions,
+                new PublicAvatarUrlResolver("https://api.vinnot.test/api"))
                 .create(user, "refresh-token");
 
         assertThat(response.user().hasSocialIdentity()).isTrue();
         assertThat(response.user().hasPassword()).isFalse();
+        assertThat(response.user().avatarUrl()).isNull();
     }
 }

@@ -89,6 +89,6 @@ public class RequestPaymentRefundService implements RequestPaymentRefundUseCase 
     }
 
     private BusinessRuleViolationException unavailable() {
-        return new BusinessRuleViolationException("PAYMENT_REFUND_UNAVAILABLE", "No podés solicitar la devolución de este pago.");
+        return new BusinessRuleViolationException("PAYMENT_REFUND_UNAVAILABLE", "You cannot request a refund for this payment.");
     }
 }

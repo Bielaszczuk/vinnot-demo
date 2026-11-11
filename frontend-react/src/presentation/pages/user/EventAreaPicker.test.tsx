@@ -37,7 +37,7 @@ it('offers the catalogue regions and no stop action while there is no area', asy
   const select = await picker()
   await waitFor(() => expect(screen.getByRole('option', { name: 'Valle de Uco, Argentina' })).toBeInTheDocument())
   expect(select).toHaveValue('')
-  expect(screen.getByRole('option', { name: 'Rioja, España' })).toBeInTheDocument()
+  expect(screen.getByRole('option', { name: 'Rioja, Spain' })).toBeInTheDocument()
   expect(screen.getByText('notificationPreferences.eventArea.helper')).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'notificationPreferences.eventArea.clear' })).not.toBeInTheDocument()
 })
@@ -48,7 +48,7 @@ it('picks a region in one tap and shows what the server stored', async () => {
     .mockResolvedValue({ kind: 'REGION', regionId: 'r-2', regionName: 'Rioja' })
   vi.mocked(notificationsService.setEventAreaRegion).mockResolvedValue(undefined)
   setup()
-  await screen.findByRole('option', { name: 'Rioja, España' })
+  await screen.findByRole('option', { name: 'Rioja, Spain' })
 
   fireEvent.change(await picker(), { target: { value: 'r-2' } })
 
@@ -80,7 +80,7 @@ it('reports a failed change and keeps the stored area', async () => {
   vi.mocked(notificationsService.getEventArea).mockResolvedValue({ kind: 'REGION', regionId: 'r-1', regionName: 'Valle de Uco' })
   vi.mocked(notificationsService.setEventAreaRegion).mockRejectedValue(new Error('404'))
   setup()
-  await screen.findByRole('option', { name: 'Rioja, España' })
+  await screen.findByRole('option', { name: 'Rioja, Spain' })
   await waitFor(async () => expect(await picker()).toHaveValue('r-1'))
 
   fireEvent.change(await picker(), { target: { value: 'r-2' } })

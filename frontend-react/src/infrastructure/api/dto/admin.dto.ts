@@ -41,6 +41,8 @@ export interface AdminUserDto {
   points?: number
   /** Wax-seal tier key; null when the user is locked or inactive. */
   badgeTier?: string | null
+  /** Profile photo: an uploaded file path or a provider URL; null without one. */
+  avatarUrl?: string | null
 }
 
 /** PATCH /admin/users/{id} body (UpdateUserAdminRequest); both names travel together. */

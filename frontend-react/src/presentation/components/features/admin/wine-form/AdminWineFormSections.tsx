@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { useCountryName } from '@hooks/useCountryName'
 import { Input } from '@components/ui/Input'
 import { Select, type SelectOption } from '@components/ui/Select'
 import { Textarea } from '@components/ui/Textarea'
@@ -20,10 +21,12 @@ import { toOptionalNumber } from './adminWineFormSchema'
 import type { AdminWineEditor } from './useAdminWineEditor'
 
 const numberField = { setValueAs: toOptionalNumber }
-const wineryPlace = (winery: AdminWinery) => [winery.regionName, winery.countryName].filter(Boolean).join(', ')
+const wineryPlace = (winery: AdminWinery, countryName: (name: string | null) => string) =>
+  [winery.regionName, countryName(winery.countryName)].filter(Boolean).join(', ')
 
 export function AdminWineIdentitySection({ editor, wineTypeOptions }: { editor: AdminWineEditor; wineTypeOptions: SelectOption[] }) {
   const { t } = useTranslation()
+  const countryName = useCountryName()
   const { formId, register, errors, watch, setValue, winery, touch } = editor
   const wineryName = watch('wineryName')
   return (
@@ -48,7 +51,7 @@ export function AdminWineIdentitySection({ editor, wineTypeOptions }: { editor: 
         placeholder={t('admin.wines.winerySearchPlaceholder')}
         getOptionKey={(option) => option.id}
         getOptionLabel={(option) => option.name}
-        getOptionDescription={wineryPlace}
+        getOptionDescription={(option) => wineryPlace(option, countryName)}
         onSelect={editor.selectWinery}
         emptyLabel={(query) => t('admin.wines.form.wineryEmpty', { query })}
         onCreate={editor.startWineryCreation}

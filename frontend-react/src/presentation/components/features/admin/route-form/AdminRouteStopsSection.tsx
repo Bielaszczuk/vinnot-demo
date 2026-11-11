@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { useCountryName } from '@hooks/useCountryName'
 import { ArrowDown, ArrowUp, CircleCheck, Loader2, MapPin, MapPinOff, Plus, Search, X } from 'lucide-react'
 import { Input } from '@components/ui/Input'
 import { Select } from '@components/ui/Select'
@@ -18,12 +19,13 @@ const iconButton = 'rounded-lg p-1.5 text-gray-400 transition-colors focus-visib
 
 export function AdminRouteStopsSection({ editor }: { editor: AdminRouteEditor }) {
   const { t } = useTranslation()
+  const countryName = useCountryName()
   const { formId, stopsEditor, errors } = editor
   const { stops, winery } = stopsEditor
   const mapQuery = resolveGeneratedRouteQuery(stops)
   const wineryCount = stops.filter((stop) => stop.type === 'winery').length
   const describe = (option: AdminWinery) => [
-    [option.regionName, option.countryName].filter(Boolean).join(', '),
+    [option.regionName, countryName(option.countryName)].filter(Boolean).join(', '),
     hasGps(option) ? t('admin.routes.gpsTag') : t('admin.routes.noGpsTag'),
   ].filter(Boolean).join(' · ')
 

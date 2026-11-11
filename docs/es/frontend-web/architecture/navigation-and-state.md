@@ -10,7 +10,7 @@
 | público | home, about, contact, help, legal y legal/:slug, legal/ranking, terms, privacy, cookies, content-policy | ninguno; la información legal no redirige por onboarding incompleto |
 | estados de servicio | 403, 404, 500, 503, 429, offline, timeout, wildcard | ninguno; dentro de AppShell |
 | catálogo | wines, detail, events, wineries, routes | AppShell + ProtectedLayout |
-| autenticado | compare, scan, AI profile, profile, cellar, community, my-tickets, my-tickets/:id | ProtectedLayout |
+| autenticado | compare, scan, AI profile, profile, cellar, community, my-tickets, my-tickets/:id, users/:id, users/:id/followers, users/:id/following, feed | ProtectedLayout |
 | partner | partner/events | PartnerLayout (`PARTNER` o `ADMIN`) |
 | cuenta de cobro | partner/payments, partner/payments/callback | sin guard de ruta, fuera de AppShell; sólo existen con flag de pagos |
 | administrativo | dashboard, wines, wines/:id/ai-profile, wineries, events, routes, reviews, wine-submissions, publications, community | AdminLayout (`ADMIN` o `MODERATOR`) |
@@ -44,6 +44,14 @@ flowchart LR
 La key incluye todos los parámetros capaces de cambiar el resultado. `enabled`
 evita requests con IDs inválidos. `keepPreviousData` puede conservar una página
 durante paginación sin presentar esos datos como respuesta de los filtros nuevos.
+
+Seguir y dejar de seguir (`useFollowUser`) es optimista: el botón, el contador de
+seguidores del perfil y cada lista cacheada bajo `social` cambian al instante; si
+el request falla se restaura la copia previa y se avisa. Al terminar se invalidan
+perfiles, listas y feed, pero no «Personas para seguir», para que la persona recién
+seguida siga mostrando «Siguiendo» hasta que la lista se vuelva a cargar. La cava
+de otra persona sólo se pide cuando el perfil dice `cellarVisible`; un `403
+CELLAR_NOT_VISIBLE` se traduce en el servicio a un estado de cava bloqueada.
 
 ## Refresh y cierre
 

@@ -41,7 +41,7 @@ personas usuarias.
 | Escaneo y propuestas | Escaneo de etiquetas, propuesta de vino y límites de uso | Funcionales, rendimiento, dispositivos físicos |
 | Reseñas y cava | Crear, editar y validar reseñas; promedios; "me gusta"; cava personal | Funcionales, autorización, regresión |
 | Eventos, inscripciones y pagos | Listado, inscripción, cupo, estados, Mercado Pago, webhooks, reembolsos, entradas, gestión del partner | Funcionales, integración, seguridad, concurrencia, extremo a extremo |
-| Legal y comunidad | Aceptación de términos, denuncias, bloqueos, moderación | Funcionales, transición de estados |
+| Legal y comunidad | Aceptación de términos, denuncias, bloqueos, moderación, seguimientos, perfiles públicos y visibilidad de la cava, muro, perfil y rueda de gustos, test de gustos | Funcionales, transición de estados, privacidad, accesibilidad |
 | Administración | Usuarios y roles, reconfirmación de identidad, versión mínima de la app | Funcionales, seguridad |
 | Aspectos no funcionales | Límites de tasa, HTTPS y cabeceras, rendimiento, copias, compatibilidad y accesibilidad | Seguridad, carga, recuperación, compatibilidad, accesibilidad |
 

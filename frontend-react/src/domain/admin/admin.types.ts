@@ -248,6 +248,8 @@ export interface AdminUser {
   points: number
   /** Wax-seal tier; `null` when the user is locked or inactive. */
   badgeTier: BadgeTier | null
+  /** Profile photo URL; `null` shows the initial. Optional for older fixtures. */
+  avatarUrl?: string | null
 }
 
 export interface AdminReview {

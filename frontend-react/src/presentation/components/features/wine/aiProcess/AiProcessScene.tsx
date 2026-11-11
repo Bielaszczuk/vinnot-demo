@@ -1,6 +1,6 @@
 /**
  * AiProcessScene — the watercolor journey shown while the AI writes a wine
- * profile or a comparison. One scene per step, inside a ring that fills as
+ * profile or a comparison, or the taste quiz builds the member's profile. One scene per step, inside a ring that fills as
  * the steps advance, with the step list below. The steps advance on a timer
  * and the last one stays (and replays its gesture) until the answer arrives.
  */
@@ -11,7 +11,7 @@ import { Check } from 'lucide-react'
 import { Icon } from '@components/ui/Icon'
 import { useReducedMotion } from '@hooks/useReducedMotion'
 import { AiProcessSceneArt } from './AiProcessSceneArt'
-import { wineSceneLooks, type AiProcessSceneName, type WineSceneLooks } from './aiProcessScenes'
+import { wineSceneLooks, type AiProcessSceneName, type ScenePicks, type WineSceneLooks } from './aiProcessScenes'
 import './aiProcessScene.css'
 
 export interface AiProcessStep {
@@ -19,6 +19,8 @@ export interface AiProcessStep {
   label: string
   icon: LucideIcon
   scene: AiProcessSceneName
+  /** Time this step stays on screen when its gesture needs longer than `stepIntervalMs`. */
+  holdMs?: number
 }
 
 interface AiProcessSceneProps {
@@ -30,6 +32,8 @@ interface AiProcessSceneProps {
   stepIntervalMs: number
   /** How the scenes draw the wines; a red wine when not given. */
   looks?: WineSceneLooks
+  /** The illustrations of the taste quiz options the member picked, for the quiz scenes. */
+  picks?: ScenePicks
 }
 
 const RING_SIZE = 176
@@ -39,20 +43,27 @@ export const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
 const DEFAULT_LOOKS = wineSceneLooks()
 const pad = (value: number) => String(value).padStart(2, '0')
 
-function useProgressiveStep(stepCount: number, intervalMs: number): number {
+/** The step on screen: each one stays for its own hold, and the last one stays until the scene goes away. */
+function useProgressiveStep(steps: readonly AiProcessStep[], intervalMs: number): number {
   const [step, setStep] = useState(0)
+  const holds = steps.slice(0, -1).map((item) => item.holdMs ?? intervalMs).join(',')
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setStep((current) => (current < stepCount - 1 ? current + 1 : current))
-    }, intervalMs)
-    return () => window.clearInterval(timer)
-  }, [stepCount, intervalMs])
+    let at = 0
+    const timers = holds
+      .split(',')
+      .filter(Boolean)
+      .map((hold, index) => {
+        at += Number(hold)
+        return window.setTimeout(() => setStep(index + 1), at)
+      })
+    return () => timers.forEach((timer) => window.clearTimeout(timer))
+  }, [holds])
   return step
 }
 
-export function AiProcessScene({ eyebrow, title, subtitle, steps, stepIntervalMs, looks = DEFAULT_LOOKS }: AiProcessSceneProps) {
+export function AiProcessScene({ eyebrow, title, subtitle, steps, stepIntervalMs, looks = DEFAULT_LOOKS, picks }: AiProcessSceneProps) {
   const reducedMotion = useReducedMotion()
-  const activeStep = useProgressiveStep(steps.length, stepIntervalMs)
+  const activeStep = useProgressiveStep(steps, stepIntervalMs)
   const current = steps[activeStep]!
   const completed = (activeStep + 1) / steps.length
   const waiting = activeStep >= steps.length - 1
@@ -95,7 +106,7 @@ export function AiProcessScene({ eyebrow, title, subtitle, steps, stepIntervalMs
           </svg>
           <div className="relative flex h-[140px] w-[140px] items-center justify-center overflow-hidden rounded-full border border-border bg-surface-cream shadow-[0_8px_18px_-6px_rgb(68_11_30/0.12)]">
             <div key={current.scene} className="vinnot-ai-scene-in">
-              <AiProcessSceneArt scene={current.scene} looks={looks} waiting={waiting} reducedMotion={reducedMotion} />
+              <AiProcessSceneArt scene={current.scene} looks={looks} picks={picks} waiting={waiting} reducedMotion={reducedMotion} />
             </div>
           </div>
         </div>

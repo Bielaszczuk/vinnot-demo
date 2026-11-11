@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { useCountryName } from '@hooks/useCountryName'
 import type { AdminWineSubmissionStatus } from '@domain/admin/admin.types'
 import { AdminBackLink } from '@components/features/admin/AdminBackLink'
 import { AdminPageHeader } from '@components/features/admin/AdminPageHeader'
@@ -16,6 +17,7 @@ const STATUSES: AdminWineSubmissionStatus[] = [
 
 export function AdminWineSubmissionsPage() {
   const { i18n } = useTranslation()
+  const countryName = useCountryName()
   const vm = useAdminWineSubmissionsViewModel()
   return (
     <div className="space-y-6">
@@ -110,7 +112,7 @@ export function AdminWineSubmissionsPage() {
                     <dt className="text-gray-500">{vm.t('admin.submissions.type')}</dt><dd>{wineTypeLabel(vm.t, vm.submission.wineType) || '—'}</dd>
                     <dt className="text-gray-500">{vm.t('admin.submissions.vintage')}</dt><dd>{vm.submission.vintage ?? '—'}</dd>
                     <dt className="text-gray-500">{vm.t('admin.submissions.grapes')}</dt><dd>{vm.submission.grapes.join(', ') || '—'}</dd>
-                    <dt className="text-gray-500">{vm.t('admin.submissions.origin')}</dt><dd>{[vm.submission.region, vm.submission.country].filter(Boolean).join(', ') || '—'}</dd>
+                    <dt className="text-gray-500">{vm.t('admin.submissions.origin')}</dt><dd>{[vm.submission.region, countryName(vm.submission.country)].filter(Boolean).join(', ') || '—'}</dd>
                     <dt className="text-gray-500">{vm.t('admin.submissions.catalog.title')}</dt>
                     <dd>
                       <ul className="space-y-1">

@@ -40,7 +40,7 @@ without putting people's money, data or experience at risk.
 | Scanning and submissions | Label scanning, wine submission and usage limits | Functional, performance, physical devices |
 | Reviews and cellar | Create, edit and validate reviews; averages; likes; personal cellar | Functional, authorisation, regression |
 | Events, registrations and payments | Listing, registration, capacity, states, Mercado Pago, webhooks, refunds, tickets, partner management | Functional, integration, security, concurrency, end to end |
-| Legal and community | Terms acceptance, reports, blocks, moderation | Functional, state transition |
+| Legal and community | Terms acceptance, reports, blocks, moderation, follows, public profiles and cellar visibility, following feed, taste profile and wheel, taste quiz | Functional, state transition, privacy, accessibility |
 | Administration | Users and roles, identity reconfirmation, minimum app version | Functional, security |
 | Non-functional aspects | Rate limits, HTTPS and headers, performance, backups, compatibility and accessibility | Security, load, recovery, compatibility, accessibility |
 

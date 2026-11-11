@@ -49,7 +49,7 @@ flowchart TB
 ## Routing and loading
 
 Feature pages use `lazy` + `Suspense`; the public shell remains stable. Access
-levels are public (auth, home, information/legal, service states and checkout return), authenticated (catalog, events, wineries, wine routes, compare, scan, AI profile, community, account, cellar and tickets), partner and admin/moderator. Users use the
+levels are public (auth, home, information/legal, service states and checkout return), authenticated (catalog, events, wineries, wine routes, compare, scan, AI profile, community, public profiles and follows (profile, followers, following and feed), account, cellar and tickets), partner and admin/moderator. Users use the
 admin-only gate; submissions allow moderators. Guards improve UX and navigation but never replace backend
 security. Administrative routes mostly consume `/admin/**`, with exceptions: `GET /users`, `PATCH /wines/{id}/ai-profile` and `/regions/*`; catalog/moderation accept
 `ROLE_ADMIN` or `ROLE_MODERATOR`; users and catalog deletion require `ROLE_ADMIN`.

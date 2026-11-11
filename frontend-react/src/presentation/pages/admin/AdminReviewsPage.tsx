@@ -17,6 +17,7 @@ import { AdminDeleteConfirm } from '@components/features/admin/AdminDeleteConfir
 import { Spinner } from '@components/ui/Spinner'
 import { GlassRating } from '@components/ui/rating/GlassRating'
 import { UserBadge } from '@components/features/points/UserBadge'
+import { SocialAvatar } from '@components/features/social/SocialAvatar'
 import { useAdminReviewsViewModel } from './useAdminReviewsViewModel'
 
 function formatDate(dateString: string, locale: string): string {
@@ -73,13 +74,9 @@ export function AdminReviewsPage() {
                 <tr key={review.id} className="hover:bg-sky-50/30 transition-colors">
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2.5">
-                      {review.reviewer?.avatarUrl ? (
-                        <img src={review.reviewer.avatarUrl} alt={review.reviewer.displayName} className="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-sm" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-white text-xs font-bold ring-2 ring-white shadow-sm">
-                          {review.reviewer?.displayName?.charAt(0).toUpperCase() ?? '?'}
-                        </div>
-                      )}
+                      <span data-testid="admin-review-avatar" className="shrink-0">
+                        <SocialAvatar src={review.reviewer?.avatarUrl ?? null} sizeClassName="h-8 w-8" className="ring-2 ring-white shadow-sm" />
+                      </span>
                       <span className="inline-flex items-center gap-1 font-medium text-gray-900 text-xs">
                         {review.reviewer?.displayName ?? t('admin.reviews.unknownUser')}
                         <UserBadge tier={review.reviewer?.badgeTier} size={16} />

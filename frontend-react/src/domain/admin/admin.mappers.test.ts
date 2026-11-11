@@ -20,6 +20,13 @@ describe('admin mappers', () => {
     expect(user.enabled).toBe(true)
   })
 
+  it('reads the user photo and keeps null when there is none', () => {
+    expect(mapAdminUserFromRaw({ id: 'u1', avatarUrl: 'https://api.vinnot.com/api/uploads/avatars/a.webp' }).avatarUrl)
+      .toBe('https://api.vinnot.com/api/uploads/avatars/a.webp')
+    expect(mapAdminUserFromRaw({ id: 'u2', avatarUrl: '' }).avatarUrl).toBeNull()
+    expect(mapAdminUserFromRaw({ id: 'u3' }).avatarUrl).toBeNull()
+  })
+
   it('maps the user points and seal tier, hiding unknown tiers', () => {
     expect(mapAdminUserFromRaw({ id: 'u1', points: 1372, badgeTier: 'RESERVA' })).toMatchObject({ points: 1372, badgeTier: 'RESERVA' })
     // /admin/users sends the roles as one comma-separated `role`.

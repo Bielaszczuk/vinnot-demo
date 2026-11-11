@@ -19,6 +19,7 @@ Event organizers and the Vinnot team have their own manuals; this one covers wha
 - [Write a review](#write-a-review)
 - [Your cellar](#your-cellar)
 - [AI profile and comparison](#ai-profile-and-comparison)
+- [Taste quiz](#taste-quiz)
 - [Events: register, pay and see your tickets](#events-register-pay-and-see-your-tickets)
 - [Wine routes and maps](#wine-routes-and-maps)
 - [Share and open links](#share-and-open-links)
@@ -153,7 +154,7 @@ You can search the catalog with text and filters and, if a wine is missing, prop
 2. Type in “Search by wine name or winery...”. The search starts at 2 characters.
 3. Use “Filter” to pick type, grape, country or region.
 4. Scroll to the end of the list to load more wines.
-5. Each card shows its review count, for example “(5) reviews”. Tap the underlined number to open the wine straight on its “Reviews” tab.
+5. Each card shows its review count, for example “(5) reviews”. Tap the underlined number or the word “reviews” to open the wine straight on its reviews.
 
 ![App screen: wine search](./img/app-user/wines-search.webp)
 
@@ -190,7 +191,7 @@ Use cases: [UC-WIN-01](../modules/wines/use-cases/uc-win-01-search-catalog.md), 
 
 ## The wine and winery pages
 
-The wine page gathers the wine's details, its reviews and its AI profile in three tabs: “Info”, “Reviews” and “Profile”.
+The wine page gathers the wine's details and its AI profile in two tabs: “Info” and “Profile”. The reviews close “Info”: scroll to the end to read them.
 
 ![App screen: wine page](./img/app-user/wine-detail.webp)
 
@@ -210,7 +211,7 @@ Use cases: [UC-WIN-03](../modules/wines/use-cases/uc-win-03-view-wine-detail.md)
 
 A review is your public opinion about a wine: a rating from 0.1 to 5.0 in glasses, the vintage you tasted, a title and a comment.
 
-1. Open the wine and tap “Write review”, at the top or in the “Reviews” tab. The form slides up from the bottom in a panel; swipe it down or tap “Back” to close it, and what you typed is kept for next time. Tapping “Cancel” after changing something asks “Discard your changes?”: “Keep editing” goes back to the form and “Discard” clears it. While the review is being sent, the panel stays open.
+1. Open the wine and tap “Write review”, at the top or at the end of “Info”, where the reviews are. The form slides up from the bottom in a panel; swipe it down or tap “Back” to close it, and what you typed is kept for next time. Tapping “Cancel” after changing something asks “Discard your changes?”: “Keep editing” goes back to the form and “Discard” clears it. While the review is being sent, the panel stays open.
 2. When the form opens, the bottle next to the glasses uncorks itself; underneath there is a bar with a small glass and “Drag the bottle or the bar to rate”. In your first three reviews, after the uncorking, a see-through bottle shows the gesture. Drag the bottle towards the glasses or slide the bar to choose from 0.1 to 5.0, or tap a glass: both move together and each whole number sits under its glass; the bottle is lifted and pours; while you raise the score the glasses fill and the bottle empties, and while you lower it the opposite happens. At 5.0 the bottle goes back to its place, empty. Only the rating is required, marked with (*); you can also add “Vintage”, “Title” and “Comment”.
    - In “Vintage”, type the year or tap one of the suggested years. If the wine has a vintage in the catalog, it comes first, marked “catalog”. To change it, tap the × on the pill.
 3. Tap “Submit review”. The review is published immediately.
@@ -293,6 +294,34 @@ The AI profile is a sommelier analysis generated with artificial intelligence. T
 > - You must pick two different wines to compare.
 
 Use cases: [UC-AI-01](../modules/ai/use-cases/uc-ai-01-view-ai-profile.md), [UC-AI-02](../modules/ai/use-cases/uc-ai-02-compare-wines.md).
+
+## Taste quiz
+
+The taste quiz is five illustrated questions that build a first taste profile while you have not rated wines yet.
+
+1. The app offers it once after you sign in. You can also open it whenever you like from your public profile: “Take the taste quiz”, or “Retake the quiz” if you already took it.
+2. Tap the option you like most in each question: a rainy day, your favorite fruit, a dessert, a special dinner and the scent you like most. The app moves on by itself; the arrow takes you back to the previous one with your answer still selected.
+3. After the fifth answer you see “Defining your taste profile”: a pen draws your picks into a tasting journal, a glass fills with wine, and a brush shapes your taste wheel around a glass of wine. Then you reach your public profile with the result.
+
+> - Tap “Skip” on any question if you would rather not take it: the app does not offer it again, and you can take it later from your profile.
+> - If you leave while retaking the quiz, your previous answers are kept.
+> - Your taste card says “Based on your taste quiz” while the profile relies on the quiz. The taste wheel appears once you rate 5 wines; until then, a locked wheel with a padlock holds its place.
+> - The taste wheel is a flower of watercolor petals, one for each grape, style or region; the better you rated it, the longer the petal. It shows one thing at a time: “Grapes” (when it opens), “Styles” or “Regions”. Tap a petal, or its name below, to highlight it: the centre shows what it is, its average score and how many wines you rated. Tap it again to let go. Red grapes come in garnet and violet shades, white grapes in golds and greens, and rosé grapes in pinks.
+> - If your answers cannot be saved, tap “Try again”: you do not need to answer again.
+
+### Adjust your palate
+
+You can fine-tune the structure of your palate (acidity, body, tannin and sweetness) by hand from your public profile.
+
+1. On the “Your palate” card, tap “Adjust” next to “Structure”.
+2. Drag each bar, or tap a point on the bar, to fill or empty it to your taste. The level word changes while you move it.
+3. Tap “Save” to keep your changes, or “Cancel” to leave everything as it was.
+
+> - Only the bars you changed are saved. A trait without data yet starts in the middle.
+> - The traits you adjusted show an “Adjusted” tag and take priority over what Vinnot calculates from your ratings and your quiz.
+> - “Reset to calculated”, in adjust mode, clears all your adjustments.
+> - With a screen reader, swipe up or down on each bar to raise or lower it in steps of 5.
+> - Only you see “Adjust”; visitors to your profile see the result.
 
 ## Events: register, pay and see your tickets
 
@@ -439,7 +468,7 @@ From “Profile” you see your stats and manage your details, security and sess
 
 ### Profile and details
 
-1. Open “Profile”. Under the header, “Account” starts with “My tickets” and “Change Password”; below it you see your “Stats”, such as your reviews and the wines in your cellar.
+1. Open “Profile”. Under the header you see your “Stats”, such as your reviews and the wines in your cellar. Then “Quick access” takes you to “My cellar”, “My tickets”, “My public profile”, “My submitted wines” and “Community and safety”. Further down, “Settings” gathers your photo, password, account, notifications and language.
    - The header shows your seal, your points and a bar toward the next seal. Tap the seal to open “Your points” ([Points and seals](points-and-seals.mdx)).
 2. Tap “Edit profile” at the top to change your username, first name, last name or phone.
 3. Tap “Change photo” and choose “Take photo” or “Choose from gallery”.

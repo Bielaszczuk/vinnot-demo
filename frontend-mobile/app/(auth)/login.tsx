@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, type Href } from "expo-router";
 import { useTranslation } from "react-i18next";
+import { errorMessageKey } from "@/shared/i18n/localizeMessage";
 import { useAuth } from "@/presentation/hooks/useAuth";
 import { useToast } from "@/presentation/providers/ToastProvider";
 import { useAccountActions } from "@/presentation/hooks/useAccountActions";
@@ -63,7 +64,7 @@ export default function LoginScreen() {
         onPress: () => {
           void onConfirm().then(finishLogin, (error) => {
             interactiveAuthentication.current = false;
-            setServerError(error instanceof Error ? error.message : t("auth.loginError"));
+            setServerError(errorMessageKey(error, t("auth.loginError")));
           });
         },
       },
@@ -105,7 +106,7 @@ export default function LoginScreen() {
         setServerError(error.message);
       } else {
         interactiveAuthentication.current = false;
-        setServerError(error instanceof Error ? error.message : t("auth.loginError"));
+        setServerError(errorMessageKey(error, t("auth.loginError")));
       }
       return;
     }
@@ -133,7 +134,7 @@ export default function LoginScreen() {
         return;
       }
       interactiveAuthentication.current = false;
-      setServerError(error instanceof Error ? error.message : t("auth.socialLoginError"));
+      setServerError(errorMessageKey(error, t("auth.socialLoginError")));
     } finally {
       setBusyProvider(null);
     }

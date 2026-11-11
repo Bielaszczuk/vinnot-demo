@@ -17,6 +17,7 @@ import { EmptyState, Skeleton } from "@/presentation/components/ui/Feedback";
 import { KeyboardAwareScrollView } from "@/presentation/components/ui/KeyboardAwareScrollView";
 import { RouteCoverImage } from "./RouteCoverImage";
 import { useWineRouteDetailViewModel } from "./useWineRouteDetailViewModel";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 import { QueryErrorState } from "@/presentation/components/ui/QueryErrorState";
 import { vinnotColors } from "@/shared/theme/vinnotTheme";
 import { RouteDifficultyGlyph } from "./RouteGlyph";
@@ -33,6 +34,7 @@ export function WineRouteDetailScreen({ id }: { id: string | undefined }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const countryName = useCountryName();
   const {
     query: routeQuery,
     route,
@@ -129,7 +131,7 @@ export function WineRouteDetailScreen({ id }: { id: string | undefined }) {
             <View style={styles.metaWrap}>
               <Meta
                 icon={<MapPin size={16} color={editorial.brandMuted} />}
-                value={[route.region, route.country].filter(Boolean).join(", ")}
+                value={[route.region, countryName(route.country)].filter(Boolean).join(", ")}
               />
               <Meta
                 icon={<Clock size={16} color={editorial.brandMuted} />}

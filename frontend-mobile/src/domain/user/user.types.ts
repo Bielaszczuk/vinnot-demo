@@ -5,6 +5,7 @@
  * Note: backend `id` is a UUID string. `roles` are prefixed (`ROLE_*`).
  */
 import type { Role } from "@/shared/config/roles";
+import type { CellarVisibility } from "@/domain/social/social.types";
 
 export type UserRole = "ROLE_ADMIN" | "ROLE_MODERATOR" | "ROLE_PARTNER" | "ROLE_USER";
 export type SocialProvider = "APPLE" | "FACEBOOK" | "GOOGLE";
@@ -27,14 +28,12 @@ export interface User {
   hasPassword: boolean;
   socialProviders: SocialProvider[];
   onboardingCompleted: boolean;
+  /** Public bio, at most 160 characters; null when empty. */
+  bio?: string | null;
+  /** Who can see the cellar on the public profile. */
+  cellarVisibility?: CellarVisibility;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface UserProfile extends User {
-  bio?: string | null;
-  location?: string | null;
-  stats?: UserStats;
 }
 
 export interface UserStats {

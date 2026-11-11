@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { ArrowUpRight, Clock, MapPin, Navigation, Star } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useFormatters } from "@/presentation/hooks/ui/useFormatters";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 import { Badge, TagPill } from "@/presentation/components/ui/Atoms";
 import { PressableCard } from "@/presentation/components/ui/Card";
 import { radii } from "@/shared/theme/tokens";
@@ -18,7 +19,8 @@ import { COVER_ASPECT } from "@/domain/media/imageAspect";
 export function WineRouteCard({ route, onPress }: { route: WineRoute; onPress: () => void }) {
   const { formatRating } = useFormatters();
   const { t } = useTranslation();
-  const location = [route.region, route.country].filter(Boolean).join(", ");
+  const countryName = useCountryName();
+  const location = [route.region, countryName(route.country)].filter(Boolean).join(", ");
 
   return (
     <PressableCard

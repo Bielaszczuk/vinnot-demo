@@ -40,6 +40,7 @@
 - La lista de comentarios no se pagina.
 - El contador de comentarios solo cuenta los aprobados.
 - Eliminar un comentario ajeno le envía un email `CONTENT_REMOVED` a su autor.
+- Cada comentario muestra la foto del autor (un ícono de persona en la web o las iniciales en la app si falta o no carga), su nombre con el sello y su `@usuario` debajo, más chico y en gris.
 
 ## Diagrama
 

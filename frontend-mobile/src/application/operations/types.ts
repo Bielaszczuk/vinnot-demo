@@ -12,6 +12,14 @@ export const queryOperationKeys = [
   "community.reports",
   "community.blocks",
   "community.moderation",
+  "social.profile",
+  "social.followers",
+  "social.following",
+  "social.suggestions",
+  "social.feed",
+  "social.reviews",
+  "social.cellar",
+  "social.tasteQuiz",
   "wine.list",
   "wine.highlights",
   "wine.detail",
@@ -84,6 +92,12 @@ export const mutationOperationKeys = [
   "community.unblock",
   "community.decide",
   "community.remove",
+  "social.follow",
+  "social.unfollow",
+  "social.tasteQuiz.complete",
+  "social.tasteQuiz.skip",
+  "social.tasteTraits.adjust",
+  "social.tasteTraits.reset",
   "wine.review.create",
   "wine.review.update",
   "wine.review.delete",
@@ -191,7 +205,8 @@ export type TagType =
   | "WineComments"
   | "WineSubmissions"
   | "References"
-  | "Points";
+  | "Points"
+  | "Social";
 
 export type CacheTag = TagType | { type: TagType; id: string };
 
@@ -233,6 +248,7 @@ export function queryTags(
   params: Record<string, unknown> = {},
 ): CacheTag[] {
   if (key.startsWith("community.")) return ["Community"];
+  if (key.startsWith("social.")) return ["Social"];
   // Comparing can generate content: never refetch it as a mutation side effect.
   if (key === "wine.comparison") return [];
   if (key === "wine.aiProfile" || key === "wine.aiProfileStatus")
@@ -282,9 +298,11 @@ export function mutationTags(
 ): CacheTag[] {
   if (key === "community.remove" || key === "community.publication.decide")
     return ["Community", "WineReviews", "WineComments", "Wines", "Admin", "User", "Cellar"];
+  // A block removes follows both ways, so profiles, lists and the feed change too.
   if (key === "community.block" || key === "community.unblock")
-    return ["Community", "WineReviews", "WineComments", "User"];
+    return ["Community", "WineReviews", "WineComments", "User", "Social"];
   if (key.startsWith("community.")) return ["Community"];
+  if (key.startsWith("social.")) return ["Social"];
   // Recognition is read-only; it must not refetch every mounted catalog query.
   if (key === "wine.scan" || key === "partner.event.detail") return [];
   if (key.startsWith("wine.aiProfile."))
@@ -345,6 +363,7 @@ export function mutationTags(
       "Community",
       "Cellar",
       "User",
+      "Social",
       ...adminTags("reviews", "wines"),
     ];
   if (key.startsWith("wine.comment."))
@@ -357,8 +376,10 @@ export function mutationTags(
   }
   if (key.startsWith("event.")) return [...catalogTags("Events", params.eventId), "Partner"];
   if (key.startsWith("winery.")) return ["Wineries", "WineRoutes", ...adminTags("wineries")];
-  if (key.startsWith("cellar.")) return ["Cellar", "User"];
+  if (key.startsWith("cellar.")) return ["Cellar", "User", "Social"];
   if (key.startsWith("user.points.")) return ["Points"];
+  // The own public profile shows the name, avatar, bio and cellar visibility.
+  if (key === "user.profile.update" || key === "user.avatar.upload") return ["User", "Social"];
   if (key.startsWith("user.")) return ["User"];
   return [];
 }

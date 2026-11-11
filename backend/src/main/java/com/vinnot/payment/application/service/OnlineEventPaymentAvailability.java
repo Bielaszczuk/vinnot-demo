@@ -27,7 +27,7 @@ public final class OnlineEventPaymentAvailability implements PaidEventAvailabili
                 .orElseThrow(OnlineEventPaymentAvailability::unavailable);
         if (!"ARS".equals(currency)) {
             throw new BusinessRuleViolationException("PAYMENT_CURRENCY_UNSUPPORTED",
-                    "Los pagos con Mercado Pago están disponibles en pesos argentinos.");
+                    "Mercado Pago payments are available in Argentine pesos.");
         }
         policy.requireAmount(seller.sellerId(), total, currency);
     }

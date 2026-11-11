@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/presentation/components/ui/Button";
 import { Card } from "@/presentation/components/ui/Card";
 import { useExternalLink } from "@/presentation/hooks/useExternalLink";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 import { ImageWithFallback } from "@/presentation/components/ui/ImageWithFallback";
 import { editorial, lightTokens, radii, wine } from "@/shared/theme/tokens";
 import { textStyles } from "@/shared/theme/typography";
@@ -21,7 +22,8 @@ interface WineryHeroProps {
 export function WineryHero({ winery }: WineryHeroProps) {
   const { t, i18n } = useTranslation();
   const openExternalLink = useExternalLink();
-  const location = [winery.subregion, winery.regionName, winery.countryName].filter(Boolean).join(", ");
+  const countryName = useCountryName();
+  const location = [winery.subregion, winery.regionName, countryName(winery.countryName)].filter(Boolean).join(", ");
   const description = localizedText(
     { es: winery.descriptionEs, en: winery.descriptionEn },
     i18n?.resolvedLanguage ?? i18n?.language,

@@ -11,7 +11,7 @@ cuando se alcanza uno nuevo. La guía para personas usuarias es
 - Backend: paquete [`gamification`](../../../../backend/src/main/java/com/vinnot/gamification/), con los puertos de entrada que llaman los demás módulos.
 - [Casos de uso](use-cases/README.md) · [Requisitos](requirements.md) ·
   [Arquitectura](architecture.md) · [Pruebas](testing.md)
-- Fuera de alcance: ranking entre personas, perfiles públicos con puntos e insignia verificada. «Sommelier» queda reservado para esa insignia futura.
+- Fuera de alcance: ranking entre personas, mostrar puntos en perfiles públicos e insignia verificada. «Sommelier» queda reservado para esa insignia futura. Los perfiles públicos ([Comunidad](../community/README.md)) muestran el sello actual (`tier`), nunca los puntos.
 
 ## Niveles
 
@@ -48,6 +48,7 @@ El slug es la clave en minúsculas con `_` cambiado por `-`. El arte vive en
 | `CELLAR_ADD` | Alta manual en la cava | +1 | Una vez por vino para siempre, hasta 3 por día; una entrada creada por una reseña da 0 |
 | `EVENT_REGISTRATION` | Inscripción a un evento confirmada | +4 | Se revoca al cancelarse, rechazarse o vencer |
 | `PROFILE_COMPLETE` | Perfil completo: foto, nombre, apellido y teléfono | +5 | Una vez |
+| `FOLLOWER_GAINED` | Nuevo seguidor con email verificado y al menos una reseña aprobada | +1 | Una vez por seguidor (clave: el ID del seguidor), hasta 10 por día, dentro del tope global |
 
 - **Tope global:** 40 puntos por día en la zona horaria de la persona (`users.timezone`); las propuestas de vino aprobadas quedan fuera.
 - Dar likes no suma.
@@ -63,6 +64,8 @@ El slug es la clave en minúsculas con `_` cambiado por `-`. El arte vive en
 | Cuenta de quien dio un like eliminada | No revoca el punto del like |
 | Reseña rechazada o pendiente | No suma hasta aprobarse, likes incluidos; editarla de vuelta a `PENDING` revoca sus puntos y los de sus likes, y la aprobación vuelve a premiar la reseña, la nota y un punto por cada like actual con las mismas claves, de forma idempotente y dentro de los topes diarios de ese momento |
 | Inscripción cancelada, rechazada o vencida | Revoca los 4 puntos |
+| El seguidor deja de seguir, o un bloqueo termina el seguimiento | Revoca el punto de ese seguidor; volver a seguir el mismo día vuelve a contar para el límite de 10 por día |
+| El seguidor cumple los requisitos después de seguir | No suma de forma retroactiva; solo premia un seguimiento hecho mientras los cumple |
 | Cuenta bloqueada o inactiva | Oculta el sello (`badgeTier` es `null`) |
 | Eliminación definitiva de la cuenta | Borra los puntos de esa persona |
 

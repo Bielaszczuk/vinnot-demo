@@ -15,6 +15,7 @@ describe("mapAxiosError", () => {
 
     expect(mapped).toBeInstanceOf(NetworkError);
     expect((mapped as NetworkError).code).toBe("TIMEOUT");
+    expect(mapped.message).toBe("authErrors.timeout");
     warning.mockRestore();
   });
 
@@ -30,6 +31,16 @@ describe("mapAxiosError", () => {
 
     expect(mapped).toBeInstanceOf(NetworkError);
     expect((mapped as NetworkError).code).toBe("NETWORK_ERROR");
+    expect(mapped.message).toBe("authErrors.offline");
     warning.mockRestore();
+  });
+
+  it("returns translation keys instead of Spanish text for messageless failures", () => {
+    expect(new NetworkError().message).toBe("authErrors.offline");
+    const mapped = mapAxiosError({
+      response: { status: 500, data: {}, headers: {} },
+    } as unknown as AxiosError<BackendError>);
+    expect(mapped.message).toBe("authErrors.unexpected");
+    expect((mapped as { code: string }).code).toBe("HTTP_500");
   });
 });

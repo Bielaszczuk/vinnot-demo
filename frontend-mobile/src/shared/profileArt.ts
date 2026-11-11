@@ -1,8 +1,10 @@
 /**
- * Bundled watercolor art for the AI profile sections. Metro needs one static import per file.
+ * Bundled watercolor art for the AI profile sections, the taste profile and the taste quiz. Metro needs one static import per file.
  * File names are the kebab case of the key (WET_EARTH -> notes/wet-earth.webp).
  */
 import type { DishArt, NoteArt, ServingArt } from "@/domain/wine/wine.profile-art";
+import type { TasteArt, TasteFamily, TasteTrait } from "@/domain/social/social.types";
+import type { TasteQuizOptionKey } from "@/domain/tasteQuiz/tasteQuiz.types";
 import noteDriedFruit from "../../assets/images/profile-art/notes/dried-fruit.webp";
 import noteGreenApple from "../../assets/images/profile-art/notes/green-apple.webp";
 import noteWhiteFlowers from "../../assets/images/profile-art/notes/white-flowers.webp";
@@ -119,6 +121,32 @@ import servingUniversal from "../../assets/images/profile-art/serving/universal.
 import servingDecanter from "../../assets/images/profile-art/serving/decanter.webp";
 import servingOpenBottle from "../../assets/images/profile-art/serving/open-bottle.webp";
 import servingCellar from "../../assets/images/profile-art/serving/cellar.webp";
+import tasteBody from "../../assets/images/profile-art/taste/body.webp";
+import tasteTannin from "../../assets/images/profile-art/taste/tannin.webp";
+import tasteGrapeCluster from "../../assets/images/profile-art/taste/grape-cluster.webp";
+import tasteWineGlasses from "../../assets/images/profile-art/taste/wine-glasses.webp";
+import tasteVineyard from "../../assets/images/profile-art/taste/vineyard.webp";
+import tasteWedgeWash1 from "../../assets/images/profile-art/taste/wedge-wash-1.webp";
+import tasteWedgeWash2 from "../../assets/images/profile-art/taste/wedge-wash-2.webp";
+import tasteWedgeWash3 from "../../assets/images/profile-art/taste/wedge-wash-3.webp";
+import quizDarkChocolateCoffee from "../../assets/images/profile-art/quiz/dark-chocolate-coffee.webp";
+import quizSpicedTeaAppleTart from "../../assets/images/profile-art/quiz/spiced-tea-apple-tart.webp";
+import quizCitrus from "../../assets/images/profile-art/quiz/citrus.webp";
+import quizRedBerries from "../../assets/images/profile-art/quiz/red-berries.webp";
+import quizDarkBerries from "../../assets/images/profile-art/quiz/dark-berries.webp";
+import quizStoneTropical from "../../assets/images/profile-art/quiz/stone-tropical.webp";
+import quizLemonTart from "../../assets/images/profile-art/quiz/lemon-tart.webp";
+import quizCaramelFlan from "../../assets/images/profile-art/quiz/caramel-flan.webp";
+import quizBrownie from "../../assets/images/profile-art/quiz/brownie.webp";
+import quizFreshFruit from "../../assets/images/profile-art/quiz/fresh-fruit.webp";
+import quizGrilledRedMeat from "../../assets/images/profile-art/quiz/grilled-red-meat.webp";
+import quizLemonFish from "../../assets/images/profile-art/quiz/lemon-fish.webp";
+import quizMushroomPasta from "../../assets/images/profile-art/quiz/mushroom-pasta.webp";
+import quizSpicyCurry from "../../assets/images/profile-art/quiz/spicy-curry.webp";
+import quizVanillaToast from "../../assets/images/profile-art/quiz/vanilla-toast.webp";
+import quizPepperCinnamon from "../../assets/images/profile-art/quiz/pepper-cinnamon.webp";
+import quizRosesViolets from "../../assets/images/profile-art/quiz/roses-violets.webp";
+import quizCutGrass from "../../assets/images/profile-art/quiz/cut-grass.webp";
 
 /** Asset file name of an art key. */
 export function profileArtFileName(key: string): string {
@@ -251,4 +279,70 @@ export const SERVING_ART: Record<ServingArt, number> = {
   DECANTER: servingDecanter,
   OPEN_BOTTLE: servingOpenBottle,
   CELLAR: servingCellar,
+};
+
+/** Illustrations drawn for the taste profile. */
+export const TASTE_ART: Record<TasteArt, number> = {
+  BODY: tasteBody,
+  TANNIN: tasteTannin,
+  GRAPE_CLUSTER: tasteGrapeCluster,
+  WINE_GLASSES: tasteWineGlasses,
+  VINEYARD: tasteVineyard,
+  WEDGE_WASH_1: tasteWedgeWash1,
+  WEDGE_WASH_2: tasteWedgeWash2,
+  WEDGE_WASH_3: tasteWedgeWash3,
+};
+
+/**
+ * Watercolor textures for the taste wheel wedges: white pixels whose alpha is the pigment.
+ * The wheel shows a wedge's dark wash through one of them, cycling the three.
+ */
+export const TASTE_WEDGE_WASHES = [tasteWedgeWash1, tasteWedgeWash2, tasteWedgeWash3] as const;
+
+const TRAIT_ART: Record<TasteTrait, number> = {
+  ACIDITY: noteLemon,
+  BODY: tasteBody,
+  TANNIN: tasteTannin,
+  SWEETNESS: noteHoney,
+};
+
+const FAMILY_ART: Record<TasteFamily, number> = {
+  FRUIT: noteMixedFruit,
+  FLORAL: noteViolet,
+  HERBAL: noteFreshHerbs,
+  SPICE: noteBlackPepper,
+  OAK: noteOak,
+  MINERAL: noteMineral,
+};
+
+/** Illustration of a structure trait on the taste profile. */
+export function tasteTraitArt(trait: TasteTrait): number {
+  return TRAIT_ART[trait];
+}
+
+/** Illustration of an aroma family on the taste profile. */
+export function tasteFamilyArt(family: TasteFamily): number {
+  return FAMILY_ART[family];
+}
+
+/** One illustration per taste quiz option (profile-art/quiz). */
+export const TASTE_QUIZ_ART: Record<TasteQuizOptionKey, number> = {
+  DARK_CHOCOLATE_COFFEE: quizDarkChocolateCoffee,
+  SPICED_TEA_APPLE_TART: quizSpicedTeaAppleTart,
+  CITRUS: quizCitrus,
+  RED_BERRIES: quizRedBerries,
+  DARK_BERRIES: quizDarkBerries,
+  STONE_TROPICAL: quizStoneTropical,
+  LEMON_TART: quizLemonTart,
+  CARAMEL_FLAN: quizCaramelFlan,
+  BROWNIE: quizBrownie,
+  FRESH_FRUIT: quizFreshFruit,
+  GRILLED_RED_MEAT: quizGrilledRedMeat,
+  LEMON_FISH: quizLemonFish,
+  MUSHROOM_PASTA: quizMushroomPasta,
+  SPICY_CURRY: quizSpicyCurry,
+  VANILLA_TOAST: quizVanillaToast,
+  PEPPER_CINNAMON: quizPepperCinnamon,
+  ROSES_VIOLETS: quizRosesViolets,
+  CUT_GRASS: quizCutGrass,
 };

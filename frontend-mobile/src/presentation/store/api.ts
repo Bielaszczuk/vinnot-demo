@@ -32,6 +32,7 @@ export const appApi = createApi({
     "WineComments",
     "WineSubmissions",
     "Points",
+    "Social",
   ],
   endpoints: (build) => ({
     executeQuery: build.query<unknown, QueryRequest>({

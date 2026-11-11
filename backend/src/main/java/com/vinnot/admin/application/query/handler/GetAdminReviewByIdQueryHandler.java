@@ -1,5 +1,6 @@
 package com.vinnot.admin.application.query.handler;
 
+import com.vinnot.shared.application.port.AvatarUrlResolver;
 import com.vinnot.admin.application.port.in.GetAdminReviewByIdUseCase;
 import com.vinnot.admin.application.port.out.ReviewQueryPort;
 import com.vinnot.admin.application.port.out.UserPointsPort;
@@ -22,6 +23,7 @@ public class GetAdminReviewByIdQueryHandler implements GetAdminReviewByIdUseCase
     private final UserQueryPort userQueryPort;
     private final WineQueryPort wineQueryPort;
     private final UserPointsPort userPoints;
+    private final AvatarUrlResolver avatars;
 
     @Override
     @Transactional(readOnly = true)
@@ -33,7 +35,7 @@ public class GetAdminReviewByIdQueryHandler implements GetAdminReviewByIdUseCase
                 .map(user -> new ReviewAdminResponse.ReviewerInfo(
                         user.id(), user.username(),
                         user.firstName() + " " + user.lastName(),
-                        user.profileImageUrl(),
+                        avatars.resolve(user.profileImageUrl()),
                         userPoints.standings(List.of(user.id()))
                                 .getOrDefault(user.id(), UserPointsPort.Standing.NONE).badgeTier()))
                 .orElse(null);

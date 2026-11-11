@@ -32,6 +32,7 @@ export const POINTS_SOURCES: readonly PointsSource[] = [
   'CELLAR_ADD',
   'EVENT_REGISTRATION',
   'PROFILE_COMPLETE',
+  'FOLLOWER_GAINED',
 ]
 
 const THRESHOLDS = new Map<BadgeTier, number>(LADDER)

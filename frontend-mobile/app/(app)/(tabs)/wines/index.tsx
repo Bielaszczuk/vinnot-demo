@@ -13,6 +13,7 @@ import { WineResultsList, WinesBrowseHeader } from "@/presentation/features/wine
 import { vinnotColors } from "@/shared/theme/vinnotTheme";
 import type { WineType } from "@/domain/wine/wine.types";
 import { useWinesBrowseViewModel } from "@/presentation/features/wine/useWinesBrowseViewModel";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 import {
   createAddWineRoute,
   createWineDetailRoute,
@@ -22,6 +23,7 @@ import {
 
 export default function WinesScreen() {
   const { t, i18n } = useTranslation();
+  const countryName = useCountryName();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const {
@@ -73,10 +75,10 @@ export default function WinesScreen() {
     : undefined;
   const activeFilterLabels = useMemo(
     () =>
-      [selectedTypeLabel, selectedGrape, selectedCountry, selectedRegion].filter(
+      [selectedTypeLabel, selectedGrape, countryName(selectedCountry), selectedRegion].filter(
         Boolean,
       ) as string[],
-    [selectedCountry, selectedGrape, selectedRegion, selectedTypeLabel],
+    [countryName, selectedCountry, selectedGrape, selectedRegion, selectedTypeLabel],
   );
 
   return (
@@ -115,7 +117,7 @@ export default function WinesScreen() {
             selectedRegion={selectedRegion}
             typeOptions={typeOptions}
             grapeOptions={grapeTypes.map((grape) => ({ value: grape.name, label: grape.name }))}
-            countryOptions={countryOptions.map((country) => ({ value: country, label: country }))}
+            countryOptions={countryOptions.map((country) => ({ value: country, label: countryName(country) }))}
             regionOptions={regionOptions.map((region) => ({ value: region, label: region }))}
             onSelectType={(value) => setSelectedType(value as WineType)}
             onSelectGrape={setSelectedGrape}

@@ -42,7 +42,7 @@ public final class MercadoPagoCheckoutAdapter implements TicketCheckoutGateway {
     @Override
     public Checkout create(Request request, SellerCredentials credentials) {
         if (!request.expiresAt().isAfter(clock.instant()) || !credentials.expiresAt().isAfter(request.expiresAt())) {
-            throw new BusinessRuleViolationException("PAYMENT_CHECKOUT_EXPIRED", "La reserva o la autorización de pago venció.");
+            throw new BusinessRuleViolationException("PAYMENT_CHECKOUT_EXPIRED", "The reservation or the payment authorization expired.");
         }
         policy.requireAmount(credentials.sellerId(), request.quote().total(), request.quote().currency());
         try {
@@ -82,7 +82,7 @@ public final class MercadoPagoCheckoutAdapter implements TicketCheckoutGateway {
         } catch (RestClientException | IllegalArgumentException | JacksonException exception) {
             // A timeout may follow successful creation. Do not automatically retry this POST.
             throw new ExternalServiceUnavailableException("PAYMENT_CHECKOUT_UNCERTAIN",
-                    "No pudimos confirmar el inicio del pago. Revisá el estado de tu reserva antes de volver a intentar.", null);
+                    "The payment start could not be confirmed. Check your reservation status before trying again.", null);
         }
     }
 

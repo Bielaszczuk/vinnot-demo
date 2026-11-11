@@ -23,7 +23,7 @@
 1. The person opens a wine from the catalog, the home screen or another module.
 2. The client calls `GET /wines/{id}`.
 3. The API loads the wine, its winery with the origin and the summary of the saved profile.
-4. The client shows the wine data (description in the interface language, winery and origin, grapes, alcohol and rating) and the sensory summary, kept apart from the reviews and the AI profile.
+4. The client shows the wine data (description in the interface language, winery and origin, grapes, alcohol and rating) and the sensory summary, kept apart from the AI profile. In the app, the reviews close the “Info” tab.
 5. It offers going to the winery, comparing, sharing and adding to the cellar.
 
 ## Alternative flows

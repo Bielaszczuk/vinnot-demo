@@ -11,7 +11,7 @@ new one is reached. The user-facing guide is
 - Backend: package [`gamification`](../../../../backend/src/main/java/com/vinnot/gamification/), with the input ports the other modules call.
 - [Use cases](use-cases/README.md) · [Requirements](requirements.md) ·
   [Architecture](architecture.md) · [Testing](testing.md)
-- Out of scope: ranking between people, public profiles with points and a verified badge. “Sommelier” stays reserved for that future badge.
+- Out of scope: ranking between people, showing points on public profiles and a verified badge. “Sommelier” stays reserved for that future badge. Public profiles ([Community](../community/README.md)) show the current seal (`tier`), never the points.
 
 ## Tiers
 
@@ -48,6 +48,7 @@ The slug is the key in lower case with `_` turned into `-`. The art lives in
 | `CELLAR_ADD` | Manual cellar add | +1 | Once per wine ever, up to 3 per day; a cellar entry created by a review gives 0 |
 | `EVENT_REGISTRATION` | Confirmed event registration | +4 | Revoked on cancel, reject or expire |
 | `PROFILE_COMPLETE` | Profile complete: photo, first and last name and phone number | +5 | Once |
+| `FOLLOWER_GAINED` | New follower with a verified email and at least one approved review | +1 | Once per follower (key: the follower's id), up to 10 per day, inside the global cap |
 
 - **Global cap:** 40 points per day in the person's time zone (`users.timezone`); approved wine submissions are excluded.
 - Giving likes earns nothing.
@@ -63,6 +64,8 @@ The slug is the key in lower case with `_` turned into `-`. The art lives in
 | Account of a liker deleted | Does not revoke the like point |
 | Rejected or pending review | Earns nothing until approved, likes included; editing it back to `PENDING` revokes its points and its likes' points, and approval awards the review, the note and one point per current like again under the same keys, idempotently and within the daily caps of that moment |
 | Registration cancelled, rejected or expired | Revokes the 4 points |
+| Follower unfollows, or a block ends the follow | Revokes that follower's point; following again the same day counts again toward the 10-a-day limit |
+| Follower qualifies after following | Earns nothing retroactively; only a follow made while qualified awards |
 | Locked or inactive account | Hides the seal (`badgeTier` is `null`) |
 | Permanent account deletion | Removes that person's points |
 

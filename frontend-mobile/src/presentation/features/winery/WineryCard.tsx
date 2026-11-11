@@ -10,6 +10,7 @@ import { ImageWithFallback } from "@/presentation/components/ui/ImageWithFallbac
 import { editorial, lightTokens, radii } from "@/shared/theme/tokens";
 import { textStyles } from "@/shared/theme/typography";
 import type { WinerySummary } from "@/domain/winery/winery.types";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 
 interface WineryCardProps {
   winery: WinerySummary;
@@ -18,7 +19,8 @@ interface WineryCardProps {
 
 export function WineryCard({ winery, onPress }: WineryCardProps) {
   const { t } = useTranslation();
-  const location = [winery.regionName, winery.countryName].filter(Boolean).join(", ");
+  const countryName = useCountryName();
+  const location = [winery.regionName, countryName(winery.countryName)].filter(Boolean).join(", ");
 
   return (
     <PressableCard onPress={onPress} padding={0} radius={radii.md} style={styles.card}>

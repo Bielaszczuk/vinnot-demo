@@ -6,7 +6,7 @@ Test cases of the module: one for the main flow of each use case and one for eac
 
 | ID | Use case | Steps | Expected result |
 |---|---|---|---|
-| `CP-REV-01` | [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | 1) The client calls `GET /wines/{wineId}/reviews` in recent order. 2) The API returns the approved reviews and the viewer's own, without those of blocked accounts. 3) The client calls `GET /wines/{wineId}/reviews/mine` to know whether the person already wrote a review. 4) The web shows pages of 20 and lets the person sort by recent or popular; the app shows pages of 10 with “Previous” and “Next” and, with more than one review, lets the person choose “Most recent” or “Most popular”. | The wine's visible reviews are shown with their author, rating, text, date and counts. |
+| `CP-REV-01` | [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | 1) The client calls `GET /wines/{wineId}/reviews` in recent order. 2) The API returns the approved reviews and the viewer's own, without those of blocked accounts. 3) The client calls `GET /wines/{wineId}/reviews/mine` to know whether the person already wrote a review. 4) The web shows pages of 20 and lets the person sort by recent or popular; the app shows pages of 10 with “Previous” and “Next” and, with more than one review, lets the person choose “Most recent” or “Most popular”. | The wine's visible reviews are shown with their author, rating, text, date and counts. Each author shows their photo, their name with the seal and their `@username` below in gray; the photo and the name open their public profile. |
 | `CP-REV-02` | [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | Main flow → 1a. The page opens with `?review=mine` | The client asks for the person's own review with `filter=mine` and shows it first. |
 | `CP-REV-03` | [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | Main flow → 2a. The wine has no visible reviews | The empty state is shown. |
 | `CP-REV-04` | [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | Main flow → 4a. The person changes the order | It goes back to the first page with the chosen order. |
@@ -44,7 +44,7 @@ Test cases of the module: one for the main flow of each use case and one for eac
 
 | Use case | Requirements | Test cases | Backend | Web | App |
 |---|---|---|---|---|---|
-| [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | RF-WEB-REV-01, RF-WEB-REV-02, RF-APK-REV-01, RF-APK-REV-02 | CP-REV-01, CP-REV-02, CP-REV-03, CP-REV-04, CP-REV-33 | 4 | 4 | 3 |
+| [`UC-REV-01`](use-cases/uc-rev-01-read-reviews.md) | RF-WEB-REV-01, RF-WEB-REV-02, RF-APK-REV-01, RF-APK-REV-02, RF-WEB-REV-11, RF-APK-REV-11 | CP-REV-01, CP-REV-02, CP-REV-03, CP-REV-04, CP-REV-33 | 4 | 4 | 3 |
 | [`UC-REV-02`](use-cases/uc-rev-02-publish-review.md) | RF-WEB-REV-03, RF-WEB-REV-04, RF-APK-REV-03, RF-APK-REV-04 | CP-REV-05, CP-REV-06, CP-REV-07, CP-REV-08, CP-REV-32 | 5 | 2 | 3 |
 | [`UC-REV-03`](use-cases/uc-rev-03-edit-review.md) | RF-WEB-REV-05, RF-APK-REV-05 | CP-REV-09, CP-REV-10, CP-REV-11, CP-REV-12, CP-REV-13 | 3 | 1 | 1 |
 | [`UC-REV-04`](use-cases/uc-rev-04-delete-review.md) | RF-WEB-REV-06, RF-APK-REV-06 | CP-REV-14, CP-REV-15, CP-REV-16, CP-REV-17, CP-REV-18 | 2 | 1 | 1 |

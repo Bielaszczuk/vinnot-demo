@@ -16,6 +16,12 @@ import { useTranslation } from "react-i18next";
 import { localizeMessage } from "@/shared/i18n/localizeMessage";
 import { Button } from "@/presentation/components/ui/Button";
 import { TextField } from "@/presentation/components/ui/TextField";
+import { Chip } from "@/presentation/components/ui/Atoms";
+import {
+  BIO_MAX_LENGTH,
+  CELLAR_VISIBILITIES,
+  DEFAULT_CELLAR_VISIBILITY,
+} from "@/domain/social/social.types";
 import { useUpdateProfile } from "@/presentation/hooks/queries/user";
 import { useToast } from "@/presentation/providers/ToastProvider";
 import { lightTokens } from "@/shared/theme/tokens";
@@ -36,8 +42,13 @@ interface EditProfileSheetProps {
 
 type FormValues = Pick<
   UpdateUserProfileInput,
-  "username" | "firstName" | "lastName" | "phoneNumber"
+  "username" | "firstName" | "lastName" | "phoneNumber" | "bio" | "cellarVisibility"
 >;
+
+const ERROR_KEYS: Record<string, string> = {
+  INVALID_PHONE_NUMBER: "contactPhone.invalid",
+  BIO_TOO_LONG: "social.bioTooLong",
+};
 
 export function EditProfileSheet({ visible, user, onClose, onUpdated }: EditProfileSheetProps) {
   const { t } = useTranslation();
@@ -48,7 +59,14 @@ export function EditProfileSheet({ visible, user, onClose, onUpdated }: EditProf
   const { syncUser } = useAuth();
   const { control, handleSubmit, reset } = useForm<FormValues>({
     resolver: zodResolver(updateUserProfileSchema),
-    defaultValues: { username: "", firstName: "", lastName: "", phoneNumber: "" },
+    defaultValues: {
+      username: "",
+      firstName: "",
+      lastName: "",
+      phoneNumber: "",
+      bio: "",
+      cellarVisibility: DEFAULT_CELLAR_VISIBILITY,
+    },
   });
 
   useEffect(() => {
@@ -61,6 +79,8 @@ export function EditProfileSheet({ visible, user, onClose, onUpdated }: EditProf
       firstName: user?.firstName ?? "",
       lastName: user?.lastName ?? "",
       phoneNumber: user?.phoneNumber ?? "",
+      bio: user?.bio ?? "",
+      cellarVisibility: user?.cellarVisibility ?? DEFAULT_CELLAR_VISIBILITY,
     });
     sheetRef.current?.present();
   }, [reset, user, visible]);
@@ -76,6 +96,8 @@ export function EditProfileSheet({ visible, user, onClose, onUpdated }: EditProf
         firstName: values.firstName.trim(),
         lastName: values.lastName?.trim() || undefined,
         phoneNumber: values.phoneNumber?.trim() ?? "",
+        bio: values.bio?.trim() ?? "",
+        cellarVisibility: values.cellarVisibility ?? DEFAULT_CELLAR_VISIBILITY,
       },
       {
         onSuccess: async (updatedUser) => {
@@ -85,13 +107,7 @@ export function EditProfileSheet({ visible, user, onClose, onUpdated }: EditProf
           onClose();
         },
         onError: (error) =>
-          showError(
-            t(
-              getMutationErrorCode(error) === "INVALID_PHONE_NUMBER"
-                ? "contactPhone.invalid"
-                : "profile.updateError",
-            ),
-          ),
+          showError(t(ERROR_KEYS[getMutationErrorCode(error) ?? ""] ?? "profile.updateError")),
       },
     );
   };
@@ -183,6 +199,47 @@ export function EditProfileSheet({ visible, user, onClose, onUpdated }: EditProf
             />
           )}
         />
+        <Controller
+          control={control}
+          name="bio"
+          render={({ field: { onChange, value }, fieldState: { error } }) => (
+            <TextField
+              label={t("social.bio")}
+              placeholder={t("social.bioPlaceholder")}
+              hint={t("social.bioCounter", { count: (value ?? "").length, max: BIO_MAX_LENGTH })}
+              error={localizeMessage(t, error?.message)}
+              value={value ?? ""}
+              onChangeText={onChange}
+              maxLength={BIO_MAX_LENGTH}
+              multiline
+              numberOfLines={3}
+              style={styles.bio}
+            />
+          )}
+        />
+
+        <View style={styles.visibility}>
+          <Text style={styles.visibilityLabel}>{t("social.cellarVisibility")}</Text>
+          <Controller
+            control={control}
+            name="cellarVisibility"
+            render={({ field: { onChange, value } }) => (
+              <View style={styles.visibilityOptions} accessibilityRole="radiogroup">
+                {CELLAR_VISIBILITIES.map((option) => (
+                  <Chip
+                    key={option}
+                    role="radio"
+                    label={t(`social.visibility.${option}`)}
+                    selected={(value ?? DEFAULT_CELLAR_VISIBILITY) === option}
+                    onPress={() => onChange(option)}
+                  />
+                ))}
+              </View>
+            )}
+          />
+          <Text style={styles.subtitle}>{t("social.cellarVisibilityHint")}</Text>
+        </View>
+
         <View style={styles.actions}>
           <Button
             variant="ghost"
@@ -212,6 +269,10 @@ const styles = StyleSheet.create({
   header: { gap: 4 },
   title: { ...textStyles.headingSmall, color: lightTokens.textPrimary },
   subtitle: { ...textStyles.bodySmall, color: lightTokens.textTertiary },
+  bio: { minHeight: 76, textAlignVertical: "top" },
+  visibility: { gap: 8 },
+  visibilityLabel: { ...textStyles.labelLarge, color: lightTokens.textPrimary },
+  visibilityOptions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   actions: { flexDirection: "row", gap: 10, paddingTop: 4 },
   action: { flex: 1 },
 });

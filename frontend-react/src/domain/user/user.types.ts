@@ -1,6 +1,8 @@
 /**
  * User domain types
  */
+import type { BadgeTier } from '@domain/points/points.types'
+import type { CellarVisibility, TasteTraits, TasteWheelEntry } from '@domain/social/social.types'
 
 /**
  * User roles matching the RBAC system
@@ -26,6 +28,10 @@ export interface User {
   hasPassword: boolean
   socialProviders: SocialProvider[]
   onboardingCompleted: boolean
+  /** Public bio (max 160 characters); absent on older APIs. */
+  bio?: string | null
+  /** Who can see the user's cellar; absent on older APIs (public). */
+  cellarVisibility?: CellarVisibility
   createdAt: Date
   updatedAt: Date
 }
@@ -53,15 +59,32 @@ export interface NotificationPreferences {
   newsletter: boolean
 }
 
+/** Public profile of any user as the viewer sees it (GET /users/{id}/profile). */
 export interface UserProfile {
   id: string
-  name: string
+  username: string
+  displayName: string
   avatar: string | null
-  bio: string | null
-  location: string | null
-  favoriteWines: string[]
-  reviewCount: number
   joinedAt: Date
+  bio: string | null
+  /** Current wax-seal tier; `null` hides the seal. */
+  tier: BadgeTier | null
+  followersCount: number
+  followingCount: number
+  reviewsCount: number
+  /** `null` when the cellar is not visible to the viewer. */
+  cellarCount: number | null
+  cellarVisible: boolean
+  /** The viewer follows this user. */
+  following: boolean
+  /** This user follows the viewer. */
+  followsYou: boolean
+  /** Taste match with the viewer (0-100); `null` for self or under 5 rated wines on either side. */
+  affinityPercent: number | null
+  /** `null` while the user has rated fewer than 5 wines. */
+  tasteWheel: TasteWheelEntry[] | null
+  /** Structure scales and preferred aroma families; `null` under the same 5-rated-wines threshold as the wheel. */
+  tasteTraits: TasteTraits | null
 }
 
 export interface UserStats {

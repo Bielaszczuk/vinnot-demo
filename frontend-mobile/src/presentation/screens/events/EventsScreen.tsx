@@ -46,6 +46,7 @@ import {
 import { styles } from "@/presentation/features/event/events.styles";
 import { BrandRefreshControl } from "@/presentation/components/ui/BrandRefreshControl";
 import { useFormatters } from "@/presentation/hooks/ui/useFormatters";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 
 const DEFAULT_REGION = {
   latitude: -34.6037,
@@ -63,6 +64,7 @@ function nearbyRegion(latitude: number, longitude: number): Region {
 
 export default function EventsScreen() {
   const { t } = useTranslation();
+  const countryName = useCountryName();
   const { formatNumber } = useFormatters();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -176,8 +178,8 @@ export default function EventsScreen() {
             ...otherEvents.map((event) => event.location.country),
           ].filter((country): country is string => Boolean(country?.trim())),
         ),
-      ).sort((left, right) => left.localeCompare(right)),
-    [allEvents, countries, nearbyEvents, otherEvents],
+      ).sort((left, right) => countryName(left).localeCompare(countryName(right))),
+    [allEvents, countries, countryName, nearbyEvents, otherEvents],
   );
 
   const filteredEvents = useMemo(
@@ -268,7 +270,7 @@ export default function EventsScreen() {
             {selectedCountry ? (
               <View style={styles.activeChip}>
                 <Text numberOfLines={1} style={styles.activeChipText}>
-                  {selectedCountry}
+                  {countryName(selectedCountry)}
                 </Text>
               </View>
             ) : null}
@@ -466,7 +468,7 @@ export default function EventsScreen() {
         </View>
         <EventFilterSelect
           label={t("wines.country", "País")}
-          value={selectedCountry}
+          value={countryName(selectedCountry)}
           open={openFilter === "country"}
           onPress={() => setOpenFilter((current) => (current === "country" ? null : "country"))}
         />
@@ -474,6 +476,7 @@ export default function EventsScreen() {
           <EventFilterOptions
             options={countryOptions}
             value={selectedCountry}
+            formatOption={countryName}
             searchPlaceholder={t("events.searchCountry", "Buscar país")}
             emptyLabel={t("events.noCountries", "No encontramos países")}
             onChange={(value) => {

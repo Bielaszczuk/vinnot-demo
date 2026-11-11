@@ -64,8 +64,9 @@ export function formatNumber(value: number, language: string | null | undefined)
 
 /** A rating such as 4 shown as "4,0" (es-AR) or "4.0" (en-US). */
 export function formatRating(value: number, language: string | null | undefined): string {
+  // Round halves up first: the iOS formatter rounds 4.45 down, the web shows 4.5.
   return new Intl.NumberFormat(resolveSupportedLocale(language), {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  }).format(value);
+  }).format(Math.round(value * 10) / 10);
 }

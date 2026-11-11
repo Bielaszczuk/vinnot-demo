@@ -63,7 +63,11 @@ type EventFilterOptionsProps = {
   onChange: (value: string) => void;
   searchPlaceholder?: string;
   emptyLabel?: string;
+  /** Display text for an option; the value passed to `onChange` stays unchanged. */
+  formatOption?: (option: string) => string;
 };
+
+const identity = (option: string) => option;
 
 export function EventFilterOptions({
   options,
@@ -71,6 +75,7 @@ export function EventFilterOptions({
   onChange,
   searchPlaceholder,
   emptyLabel,
+  formatOption = identity,
 }: EventFilterOptionsProps) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
@@ -79,8 +84,12 @@ export function EventFilterOptions({
   const filteredOptions = useMemo(() => {
     const normalizedQuery = normalizeSearch(query);
     if (!normalizedQuery) return options;
-    return options.filter((option) => normalizeSearch(option).includes(normalizedQuery));
-  }, [options, query]);
+    return options.filter(
+      (option) =>
+        normalizeSearch(option).includes(normalizedQuery) ||
+        normalizeSearch(formatOption(option)).includes(normalizedQuery),
+    );
+  }, [formatOption, options, query]);
 
   return (
     <View style={styles.filterOptions}>
@@ -121,7 +130,7 @@ export function EventFilterOptions({
             <Text
               style={[styles.filterOptionText, value === option && styles.filterOptionTextActive]}
             >
-              {option}
+              {formatOption(option)}
             </Text>
           </MotionPressable>
         ))}
@@ -218,7 +227,8 @@ export function EventAreaSearch({
           </MotionPressable>
         </View>
       ) : null}
-      {error ? <Text style={styles.areaSearchError}>{error}</Text> : null}
+      {/* The geocoder's own text is not localized: show a translated message instead. */}
+      {error ? <Text style={styles.areaSearchError}>{t("events.areaSearch.error")}</Text> : null}
     </View>
   );
 }

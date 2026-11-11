@@ -1,16 +1,18 @@
 import { z } from 'zod'
 
+/*
+ * Validation messages are i18n keys (plain strings, no i18n dependency here): the
+ * presentation layer translates them where the error is rendered.
+ */
+
 export const USERNAME_PATTERN = /^[a-z0-9](?:[a-z0-9._-]{1,38}[a-z0-9])$/
 
 export const usernameSchema = z.string()
   .trim()
   .toLowerCase()
-  .min(3, 'Username must be at least 3 characters')
-  .max(40, 'Username must be at most 40 characters')
-  .regex(
-    USERNAME_PATTERN,
-    'Use letters, numbers, dots, hyphens or underscores, starting and ending with a letter or number',
-  )
+  .min(3, 'auth.usernameMinLength')
+  .max(40, 'auth.usernameMaxLength')
+  .regex(USERNAME_PATTERN, 'auth.usernameInvalid')
 
 /**
  * User role enum schema matching RBAC system
@@ -61,8 +63,8 @@ export const userPreferencesSchema = z.object({
  */
 export const userSchema = z.object({
   id: z.string().uuid(),
-  email: z.string().email('Invalid email address'),
-  name: z.string().min(1, 'Name is required').max(100),
+  email: z.string().email('auth.invalidEmail'),
+  name: z.string().min(1, 'auth.nameRequired').max(100, 'auth.nameTooLong'),
   avatar: z.string().url().nullable(),
   roles: z.array(userRoleSchema).default(['ROLE_USER']),
   preferences: userPreferencesSchema,
@@ -76,17 +78,17 @@ export const userSchema = z.object({
  */
 export const registerUserSchema = z.object({
   username: usernameSchema,
-  email: z.string().email('Invalid email address'),
+  email: z.string().email('auth.invalidEmail'),
   password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number'),
+    .min(8, 'auth.passwordMinLength')
+    .regex(/[A-Z]/, 'auth.passwordUppercase')
+    .regex(/[a-z]/, 'auth.passwordLowercase')
+    .regex(/[0-9]/, 'auth.passwordNumber'),
   confirmPassword: z.string(),
-  firstName: z.string().min(1, 'First name is required').max(100),
-  lastName: z.string().min(1, 'Last name is required').max(100),
+  firstName: z.string().min(1, 'auth.firstNameRequired').max(100, 'auth.nameTooLong'),
+  lastName: z.string().min(1, 'auth.lastNameRequired').max(100, 'auth.lastNameTooLong'),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: 'Passwords do not match',
+  message: 'auth.passwordsMismatch',
   path: ['confirmPassword'],
 })
 
@@ -94,23 +96,23 @@ export const registerUserSchema = z.object({
  * User login schema
  */
 export const loginUserSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email('auth.invalidEmail'),
+  password: z.string().min(1, 'auth.passwordRequired'),
 })
 
 export const emailActionSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().email('auth.invalidEmail'),
 })
 
 export const resetPasswordSchema = z.object({
   password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number'),
+    .min(8, 'auth.passwordMinLength')
+    .regex(/[A-Z]/, 'auth.passwordUppercase')
+    .regex(/[a-z]/, 'auth.passwordLowercase')
+    .regex(/[0-9]/, 'auth.passwordNumber'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: 'Passwords do not match',
+  message: 'auth.passwordsMismatch',
   path: ['confirmPassword'],
 })
 
@@ -119,7 +121,7 @@ export const resetPasswordSchema = z.object({
  */
 export const updateUserProfileSchema = z.object({
   username: usernameSchema.optional(),
-  name: z.string().min(1, 'Name is required').max(100).optional(),
+  name: z.string().min(1, 'auth.nameRequired').max(100, 'auth.nameTooLong').optional(),
   avatar: z.string().url().nullable().optional(),
   bio: z.string().max(500).nullable().optional(),
   location: z.string().max(100).nullable().optional(),
@@ -129,15 +131,15 @@ export const updateUserProfileSchema = z.object({
  * Change password schema
  */
 export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, 'Current password is required'),
+  currentPassword: z.string().min(1, 'auth.currentPasswordRequired'),
   newPassword: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number'),
+    .min(8, 'auth.passwordMinLength')
+    .regex(/[A-Z]/, 'auth.passwordUppercase')
+    .regex(/[a-z]/, 'auth.passwordLowercase')
+    .regex(/[0-9]/, 'auth.passwordNumber'),
   confirmNewPassword: z.string(),
 }).refine((data) => data.newPassword === data.confirmNewPassword, {
-  message: 'Passwords do not match',
+  message: 'auth.passwordsMismatch',
   path: ['confirmNewPassword'],
 })
 

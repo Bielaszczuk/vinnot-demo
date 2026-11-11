@@ -52,6 +52,7 @@ cancelación no implica que los datos hayan cambiado.
 | Notificaciones de admin | `Admin:notifications.push`, `.metrics`, `.preview`, `.reach` y `.history`; un interruptor refresca `notifications.push` y una prueba o un envío solo `notifications.history` |
 | Bodegas, rutas, cava, usuario, partner y referencias | Familias `Wineries`, `WineRoutes`, `Cellar`, `User`, `Partner`, `References` |
 | Comunidad: comprobantes, bloqueos, resúmenes y colas | Familia `Community` |
+| Social: perfil público, seguidores, siguiendo, feed, sugerencias, reseñas y cava de un perfil | Familia `Social`; la invalidan seguir/dejar de seguir, bloquear, reseñar, la cava y editar el perfil propio |
 | Comparación | Sin tags de invalidación automática |
 
 Crear/editar/eliminar eventos como partner actualiza Partner, eventos públicos,

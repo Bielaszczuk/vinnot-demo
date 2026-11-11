@@ -175,12 +175,12 @@
     "socialComingSoon": "¡Inicio con {{provider}} próximamente!",
     "usernameRequired": "El nombre de usuario es requerido",
     "usernameMinLength": "El nombre de usuario debe tener al menos 3 caracteres",
-    "usernameMaxLength": "El nombre de usuario debe tener máximo 50 caracteres",
-    "usernameInvalid": "El nombre de usuario solo puede contener letras, números y guiones bajos",
+    "usernameMaxLength": "El nombre de usuario debe tener como máximo 40 caracteres",
+    "usernameInvalid": "Usá letras, números, puntos, guiones o guiones bajos, y empezá y terminá con una letra o un número",
     "emailRequired": "El email es requerido",
     "passwordRequired": "La contraseña es requerida",
     "nameRequired": "El nombre es requerido",
-    "nameTooLong": "El nombre debe tener menos de 100 caracteres",
+    "nameTooLong": "El nombre debe tener como máximo 100 caracteres",
     "confirmPasswordRequired": "Por favor, confirmá tu contraseña",
     "invalidEmail": "Por favor, ingresá un email válido",
     "passwordMinLength": "La contraseña debe tener al menos 8 caracteres",
@@ -235,7 +235,11 @@
     "socialLoginError": "No se pudo iniciar sesión con {{provider}}.",
     "reactivateAccountTitle": "¿Querés reactivar tu cuenta?",
     "reactivateAccountMessage": "Tu cuenta está desactivada. Al reactivarla vas a recuperar tu perfil y tus datos.",
-    "reactivateAccountAction": "Reactivar cuenta"
+    "reactivateAccountAction": "Reactivar cuenta",
+    "firstNameRequired": "El nombre es requerido",
+    "lastNameRequired": "El apellido es requerido",
+    "lastNameTooLong": "El apellido debe tener como máximo 100 caracteres",
+    "currentPasswordRequired": "La contraseña actual es requerida"
   },
   "footer": {
     "social": {
@@ -1063,9 +1067,6 @@
   "generate": "Generar",
   "compareWith": "Comparar con",
   "page": "Página",
-  "q": "q",
-  "redirect": "redirect",
-  "returnUrl": "returnUrl",
   "socialOnboarding": {
     "title": "¿Cómo querés que te llamemos?",
     "description": "Elegí el nombre de usuario que se verá en tus reseñas y espacios de la comunidad.",
@@ -2084,7 +2085,13 @@
         "ONBOARDING": "Primeros pasos",
         "WINBACK": "Te extrañamos",
         "MILESTONE": "Logro en la comunidad",
-        "POST_EVENT": "Después del evento"
+        "POST_EVENT": "Después del evento",
+        "NEW_FOLLOWER": "Nuevo seguidor",
+        "TIER_REACHED": "Nuevo nivel alcanzado",
+        "SOCIAL_ACCOUNT_RECONNECT": "Reconectar red social",
+        "SOCIAL_BATCH_READY": "Lote de publicaciones listo",
+        "SOCIAL_POST_FAILED": "Publicación fallida",
+        "SOCIAL_TIKTOK_DRAFT_WAITING": "Borrador de TikTok pendiente"
       },
       "detail": {
         "recipients": "Cuentas destinatarias",
@@ -2946,7 +2953,8 @@
   },
   "externalMaps": {
     "notice": "Este mapa se conecta con Google. Al cargarlo se comparten datos de conexión con ese proveedor. Podés cambiar esta preferencia en Configuración de cookies.",
-    "allow": "Permitir y cargar mapas"
+    "allow": "Permitir y cargar mapas",
+    "unavailable": "No pudimos mostrar el mapa en este momento."
   },
   "publicDocument": {
     "eyebrow": "Información y confianza",
@@ -3057,6 +3065,10 @@
       "PROFILE_COMPLETE": {
         "title": "Perfil completo",
         "rule": "Foto, nombre, apellido y teléfono; una única vez"
+      },
+      "FOLLOWER_GAINED": {
+        "title": "Nuevo seguidor",
+        "rule": "Te sigue alguien con email verificado y una reseña aprobada; hasta 10 por día"
       }
     },
     "sources": {
@@ -3069,6 +3081,7 @@
       "CELLAR_ADD": "Agregado a la bodega",
       "EVENT_REGISTRATION": "Inscripción a evento",
       "PROFILE_COMPLETE": "Perfil completo",
+      "FOLLOWER_GAINED": "Nuevo seguidor",
       "unknown": "Actividad"
     },
     "celebration": {
@@ -3099,6 +3112,200 @@
       "other": "+ Otra: «{{query}}»",
       "remove": "Quitar {{name}}",
       "none": "Todavía no hay cepas."
+    }
+  },
+  "social": {
+    "homeFeedTitle": "De gente que seguís",
+    "homeFeedSubtitle": "Las últimas reseñas de las personas que seguís.",
+    "seeAll": "Ver todo",
+    "suggestionsTitle": "Personas para seguir",
+    "suggestionsSubtitle": "Gente con gustos parecidos a los tuyos.",
+    "suggestionsEmpty": "No hay sugerencias por ahora. Volvé cuando más personas califiquen vinos.",
+    "feedEmpty": "Todavía no hay reseñas de gente que seguís.",
+    "feedEmptyHint": "Seguí a otras personas para ver acá sus reseñas nuevas.",
+    "feedTitle": "De gente que seguís",
+    "feedSubtitle": "Reseñas aprobadas de las personas que seguís, de la más nueva a la más vieja.",
+    "loadError": "No pudimos cargar esta sección.",
+    "follow": "Seguir",
+    "followingState": "Siguiendo",
+    "followLabel": "Seguir a {{name}}",
+    "unfollowLabel": "Dejar de seguir a {{name}}",
+    "followError": "No pudimos actualizar el seguimiento. Probá de nuevo.",
+    "followsYou": "Te sigue",
+    "editProfile": "Editar perfil",
+    "affinity": "Afinidad {{percent}} %",
+    "affinityHint": "Cuánto se parecen sus gustos en vino a los tuyos",
+    "affinityShort": "{{percent}} % afín",
+    "reviewsCount_one": "{{count}} reseña",
+    "reviewsCount_other": "{{count}} reseñas",
+    "counters": {
+      "followers": "Seguidores",
+      "following": "Siguiendo",
+      "reviews": "Reseñas",
+      "cellar": "Vinos en cava"
+    },
+    "cellarCountHidden": "Cava no visible",
+    "tasteWheelLabel": "Rueda de gustos: {{summary}}",
+    "tasteWheelScore": "{{label}} {{score}} de 5",
+    "tasteWheelLocked": "El perfil de gustos aparece cuando la persona califica 5 vinos.",
+    "tasteWheelLockedOwn": "Calificá 5 vinos para descubrir tu perfil de gustos.",
+    "tasteWheelKinds": {
+      "GRAPE": "Uvas",
+      "TYPE": "Estilos",
+      "REGION": "Regiones"
+    },
+    "tasteWheelViewsLabel": "Ver la rueda por",
+    "tasteWheelSliceName_one": "{{label}}, {{score}} de 5, {{count}} vino calificado",
+    "tasteWheelSliceName_other": "{{label}}, {{score}} de 5, {{count}} vinos calificados",
+    "tasteWheelWines_one": "{{count}} vino",
+    "tasteWheelWines_other": "{{count}} vinos",
+    "tasteWheelHint": "Tocá un color para ver qué es.",
+    "tasteProfile": {
+      "title": "Perfil de gustos",
+      "subtitle": "Según los vinos que mejor calificó",
+      "subtitleOwn": "Según los vinos que mejor calificaste",
+      "structureTitle": "Estructura",
+      "aromasTitle": "Aromas que prefiere",
+      "aromasTitleOwn": "Aromas que preferís",
+      "percent": "{{percent}} %",
+      "traits": {
+        "ACIDITY": "Acidez",
+        "BODY": "Cuerpo",
+        "TANNIN": "Taninos",
+        "SWEETNESS": "Dulzor"
+      },
+      "levels": {
+        "ACIDITY": {
+          "LOW": "Baja",
+          "MEDIUM": "Media",
+          "HIGH": "Alta"
+        },
+        "BODY": {
+          "LOW": "Bajo",
+          "MEDIUM": "Medio",
+          "HIGH": "Alto"
+        },
+        "TANNIN": {
+          "LOW": "Bajos",
+          "MEDIUM": "Medios",
+          "HIGH": "Altos"
+        },
+        "SWEETNESS": {
+          "LOW": "Seco",
+          "MEDIUM": "Semiseco",
+          "HIGH": "Dulce"
+        }
+      },
+      "families": {
+        "FRUIT": "Frutado",
+        "FLORAL": "Floral",
+        "HERBAL": "Herbal",
+        "SPICE": "Especiado",
+        "OAK": "Madera",
+        "MINERAL": "Mineral"
+      },
+      "fromQuiz": "Según su test de gustos",
+      "fromQuizOwn": "Según tu test de gustos",
+      "wheelLocked": "La rueda de gustos aparece cuando califica 5 vinos.",
+      "wheelLockedOwn": "Calificá 5 vinos para completar tu rueda de gustos.",
+      "adjust": {
+        "start": "Ajustar",
+        "hint": "Mové las barras para llenarlas o vaciarlas según tus gustos.",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "reset": "Volver a lo calculado",
+        "adjusted": "Ajustado",
+        "empty": "Todavía no conocemos la estructura que te gusta. Ajustala a tu medida.",
+        "error": "No pudimos guardar tus cambios. Probá de nuevo."
+      }
+    },
+    "reviewsTitle": "Reseñas",
+    "reviewsEmpty": "Todavía no publicó reseñas.",
+    "cellarTitle": "Cava",
+    "cellarEmpty": "La cava está vacía.",
+    "cellarLocked": "Esta cava no está visible para vos.",
+    "cellarLockedHint": "Su dueño la comparte solo con sus seguidores o la mantiene privada.",
+    "cellarAdded": "Agregado el {{date}}",
+    "notFound": "Este perfil no está disponible.",
+    "notFoundHint": "Puede que la cuenta ya no exista o que no tengas acceso.",
+    "followersOf": "Seguidores de {{name}}",
+    "followingOf": "Personas que sigue {{name}}",
+    "followersEmpty": "Todavía no tiene seguidores.",
+    "followingEmpty": "Todavía no sigue a nadie.",
+    "backToProfile": "Volver al perfil",
+    "openProfile": "Ver el perfil de {{name}}",
+    "reviewOn": "sobre {{wine}}",
+    "publicProfile": {
+      "title": "Perfil público",
+      "subtitle": "Lo que ven las demás personas en tu perfil.",
+      "bio": "Biografía",
+      "bioPlaceholder": "Contá algo sobre tus gustos en vino",
+      "bioCounter": "{{count}}/{{max}}",
+      "bioTooLong": "La biografía admite hasta {{max}} caracteres.",
+      "cellarVisibility": "Quién ve tu cava",
+      "cellarVisibilityHint": "Tus notas privadas y los precios de compra nunca se muestran.",
+      "visibility": {
+        "PUBLIC": "Pública",
+        "FOLLOWERS": "Solo seguidores",
+        "PRIVATE": "Privada"
+      },
+      "save": "Guardar perfil público",
+      "saved": "Perfil público actualizado.",
+      "saveError": "No pudimos guardar tu perfil público. Probá de nuevo.",
+      "view": "Ver mi perfil público"
+    }
+  },
+  "tasteQuiz": {
+    "eyebrow": "Tu perfil de gustos",
+    "progress": "Pregunta {{current}} de {{total}}",
+    "hint": "Elegí lo que más te tiente. No hay respuestas incorrectas.",
+    "back": "Anterior",
+    "skip": "Saltear",
+    "take": "Hacé tu test de gustos",
+    "retake": "Repetir el test",
+    "questions": {
+      "RAINY_DAY": "Un día de lluvia, ¿qué preferís?",
+      "FRUIT": "Tu fruta favorita",
+      "DESSERT": "¿Qué postre elegís?",
+      "DINNER": "Una cena especial",
+      "AROMA": "El aroma que más te gusta"
+    },
+    "options": {
+      "DARK_CHOCOLATE_COFFEE": "Chocolate amargo con café caliente",
+      "SPICED_TEA_APPLE_TART": "Té de especias con tarta de manzana ácida",
+      "CITRUS": "Limón y pomelo",
+      "RED_BERRIES": "Frutillas y cerezas",
+      "DARK_BERRIES": "Moras y ciruelas",
+      "STONE_TROPICAL": "Durazno y ananá",
+      "LEMON_TART": "Tarta de limón",
+      "CARAMEL_FLAN": "Flan con caramelo",
+      "BROWNIE": "Brownie",
+      "FRESH_FRUIT": "Fruta fresca",
+      "GRILLED_RED_MEAT": "Carne roja a la parrilla",
+      "LEMON_FISH": "Pescado con limón",
+      "MUSHROOM_PASTA": "Pasta con hongos",
+      "SPICY_CURRY": "Curry picante",
+      "VANILLA_TOAST": "Vainilla y pan tostado",
+      "PEPPER_CINNAMON": "Pimienta y canela",
+      "ROSES_VIOLETS": "Rosas y violetas",
+      "CUT_GRASS": "Pasto recién cortado"
+    },
+    "loading": {
+      "eyebrow": "Test de gustos",
+      "title": "Definiendo tu perfil de gustos",
+      "subtitle": "Estamos convirtiendo tus respuestas en un perfil a tu medida.",
+      "steps": {
+        "gather": "Reuniendo tus elecciones",
+        "fill": "Llenando tu copa",
+        "blend": "Mezclando tus sabores",
+        "paint": "Dando forma a tu perfil de gustos"
+      }
+    },
+    "error": {
+      "title": "No pudimos guardar tu test",
+      "description": "Tus respuestas siguen acá. Probá de nuevo en un momento.",
+      "retry": "Reintentar",
+      "later": "Ahora no"
     }
   }
 }

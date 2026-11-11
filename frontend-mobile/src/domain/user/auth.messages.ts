@@ -23,6 +23,8 @@ export const AUTH_ERROR_MESSAGES = {
   resendVerificationFailed: "authErrors.resendVerificationFailed",
   authenticationFailed: "authErrors.authenticationFailed",
   unexpected: "authErrors.unexpected",
+  emailAlreadyExists: "authErrors.emailAlreadyExists",
+  usernameAlreadyExists: "authErrors.usernameAlreadyExists",
 } as const;
 
 /** Translation keys for the confirmations the auth endpoints return, by backend code. */

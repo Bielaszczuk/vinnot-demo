@@ -11,6 +11,7 @@ const SOURCES: readonly PointsSource[] = [
   "CELLAR_ADD",
   "EVENT_REGISTRATION",
   "PROFILE_COMPLETE",
+  "FOLLOWER_GAINED",
 ];
 
 /** Raw points response as the API sends it (see `PointsSummaryDto`). */

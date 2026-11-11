@@ -8,6 +8,7 @@ Este manual explica cómo usar el sitio web de Vinnot ([vinnot.com](https://vinn
 - Crear una cuenta e iniciar sesión
 - Recuperar la contraseña
 - Aceptar los términos
+- Test de gustos
 - Moverte por el sitio
 - Buscar vinos
 - Ver un vino y su bodega
@@ -105,6 +106,37 @@ Notas:
 - El centro legal y «Contacto» siguen disponibles sin aceptar.
 
 [UC-LEG-02](../modules/legal/use-cases/uc-leg-02-accept-at-sign-up.md) · [UC-LEG-03](../modules/legal/use-cases/uc-leg-03-check-acceptance.md) · [UC-LEG-04](../modules/legal/use-cases/uc-leg-04-accept-current-version.md) · [UC-LEG-05](../modules/legal/use-cases/uc-leg-05-decline-and-sign-out.md)
+
+## Test de gustos
+
+El test de gustos son cinco preguntas ilustradas que arman un primer perfil de gustos, aunque todavía no hayas calificado vinos. Después de iniciar sesión, si aún no lo hiciste y tienes menos de 5 vinos calificados, el sitio te lleva al test una sola vez.
+
+1. Elige en cada pregunta la tarjeta que más te tiente. La opción se resalta y el test pasa solo a la siguiente pregunta.
+2. Si quieres cambiar una respuesta, pulsa «Anterior»: tu elección sigue marcada.
+3. Al responder la quinta pregunta, espera unos trece segundos mientras «Definiendo tu perfil de gustos» muestra, con calma, cómo una pluma dibuja tus elecciones en una libreta de cata, una copa se llena de vino, un pincel mezcla los colores en una paleta y da forma a tu rueda de gustos («Dando forma a tu perfil de gustos»).
+4. Se abre tu perfil público con la tarjeta «Perfil de gustos» y la nota «Según tu test de gustos».
+
+Notas:
+
+- «Saltear» está en cada pregunta. Si lo salteas, el sitio no vuelve a ofrecértelo y regresas a la página en la que estabas.
+- Puedes hacerlo o repetirlo cuando quieras desde tu perfil público, con «Hacé tu test de gustos» o «Repetir el test». Al repetirlo, «Saltear» sale sin borrar tus respuestas anteriores.
+- Tus respuestas no se muestran a nadie. A medida que calificas vinos, tus calificaciones reemplazan lo que vino del test; la rueda de gustos aparece al calificar 5 vinos.
+- Si no se puede guardar el test, pulsa «Reintentar»: tus respuestas se conservan.
+
+Para leer la rueda de gustos, elige arriba «Uvas», «Estilos» o «Regiones»: la rueda muestra un solo tipo por vez, como una flor de pétalos en acuarela: cuanto más largo el pétalo, más alto tu puntaje promedio. Toca un pétalo, en la rueda o en la lista, para ver en el centro qué es, su puntaje promedio y cuántos vinos calificaste; vuelve a tocarlo para quitar el resaltado. En «Uvas», el color dice si la uva es de tintos, blancos o rosados.
+
+Para afinar tu paladar a tu manera, ajusta la estructura de tu perfil de gustos:
+
+1. Abre tu perfil público y, en la tarjeta «Perfil de gustos», pulsa «Ajustar» junto a «Estructura».
+2. Arrastra el marcador de cada barra (Acidez, Cuerpo, Taninos y Dulzor), o toca la barra, para llenarla o vaciarla. Con el teclado, las flechas la mueven de a poco e Inicio y Fin la llevan a los extremos. La palabra de nivel cambia mientras la mueves.
+3. Pulsa «Guardar». Solo se guardan las barras que cambiaste, y cada una muestra la etiqueta «Ajustado». «Cancelar» deja todo como estaba.
+
+Notas:
+
+- Lo que ajustas a mano prevalece sobre lo que calculan tus calificaciones y el test.
+- Para volver a los valores calculados, pulsa «Ajustar» y luego «Volver a lo calculado».
+- Una barra sin datos empieza en el medio y solo se guarda si la mueves.
+- Solo tú ves estos controles; quienes visitan tu perfil ven el resultado.
 
 ## Moverte por el sitio
 
@@ -451,6 +483,7 @@ Desde «Mi perfil» gestionas tus datos, tu seguridad y tu cuenta.
 **Idioma**
 
 1. Usa el selector de idioma de la cabecera y elige «Español» o «English».
+2. Los textos de la interfaz, los mensajes de los formularios y los nombres de países cambian al idioma elegido. Los nombres de vinos, bodegas y lo que escriben los usuarios no se traducen.
 
 **Desactivar o eliminar la cuenta**
 

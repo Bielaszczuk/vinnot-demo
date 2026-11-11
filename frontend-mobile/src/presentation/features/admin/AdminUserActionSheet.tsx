@@ -7,6 +7,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { AdminDetailSheet } from "./AdminDetailSheet";
 import { Ban, CheckCircle2, Trash2, UserCog } from "lucide-react-native";
+import { Avatar } from "@/presentation/components/ui/Atoms";
 import { Button } from "@/presentation/components/ui/Button";
 import { TextField } from "@/presentation/components/ui/TextField";
 import { useAdminUserMutations } from "@/presentation/hooks/queries/admin";
@@ -134,9 +135,7 @@ export function AdminUserActionSheet({ visible, user, onClose }: AdminUserAction
     >
       <View style={styles.content}>
         <View style={styles.userRow}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{user.username.charAt(0).toUpperCase()}</Text>
-          </View>
+          <Avatar uri={user.avatarUrl} name={user.username} size={48} style={styles.avatar} />
           <View style={styles.userInfo}>
             <View style={styles.nameRow}>
               <Text style={styles.username}>{user.username}</Text>
@@ -312,17 +311,7 @@ export function AdminUserActionSheet({ visible, user, onClose }: AdminUserAction
 const styles = StyleSheet.create({
   content: { gap: 20 },
   userRow: { flexDirection: "row", alignItems: "center", gap: 14 },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: wine[50],
-    borderWidth: 1,
-    borderColor: wine[200],
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: { ...textStyles.headingSmall, color: editorial.brand },
+  avatar: { backgroundColor: wine[50], borderWidth: 1, borderColor: wine[200] },
   userInfo: { flex: 1 },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   username: { ...textStyles.titleMedium, color: lightTokens.textPrimary },

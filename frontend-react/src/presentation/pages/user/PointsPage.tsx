@@ -26,6 +26,7 @@ const EARNING: ReadonlyArray<readonly [PointsSource, number]> = [
   ['CELLAR_ADD', 1],
   ['EVENT_REGISTRATION', 4],
   ['PROFILE_COMPLETE', 5],
+  ['FOLLOWER_GAINED', 1],
 ]
 
 const section = 'rounded-2xl border border-border bg-surface p-5 sm:p-6'

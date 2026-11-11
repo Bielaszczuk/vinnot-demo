@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@components/ui/Input'
 
 type PasswordWithStrengthProps = {
@@ -13,6 +14,7 @@ type PasswordWithStrengthProps = {
 
 export const PasswordWithStrength = React.forwardRef<HTMLInputElement, PasswordWithStrengthProps>(
   ({ label, placeholder, error, hint, ...rest }, ref) => {
+    const { t } = useTranslation()
     const [value, setValue] = React.useState('')
     const strength = React.useMemo(() => {
       if (!value) return { score: 0, label: '', color: '' }
@@ -23,10 +25,10 @@ export const PasswordWithStrength = React.forwardRef<HTMLInputElement, PasswordW
       if (/[a-z]/.test(value)) score++
       if (/[0-9]/.test(value)) score++
       if (/[^A-Za-z0-9]/.test(value)) score++
-      if (score <= 2) return { score, label: 'Débil', color: 'bg-red-500' }
-      if (score <= 4) return { score, label: 'Media', color: 'bg-yellow-500' }
-      return { score, label: 'Fuerte', color: 'bg-green-500' }
-    }, [value])
+      if (score <= 2) return { score, label: t('auth.passwordWeak'), color: 'bg-red-500' }
+      if (score <= 4) return { score, label: t('auth.passwordMedium'), color: 'bg-yellow-500' }
+      return { score, label: t('auth.passwordStrong'), color: 'bg-green-500' }
+    }, [t, value])
 
     return (
       <div>

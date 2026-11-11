@@ -163,7 +163,7 @@ public class EventCheckoutReservationService implements PrepareEventCheckoutUseC
 
     private BusinessRuleViolationException unavailable() {
         return new BusinessRuleViolationException("PAYMENT_RESERVATION_UNAVAILABLE",
-                "Esta reserva no está disponible para iniciar el pago.");
+                "This reservation is not available to start a payment.");
     }
 
     private record LockedReservation(Event event, EventRegistration registration) { }

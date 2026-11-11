@@ -39,6 +39,8 @@ export interface AdminUserDto {
   createdAt?: string;
   points?: number | null;
   badgeTier?: string | null;
+  /** Absolute photo URL (S12); older servers may send a relative /api/uploads path or omit it. */
+  avatarUrl?: string | null;
 }
 
 /** PATCH /admin/users/{id} (UpdateUserAdminRequest): a field left out keeps its value. */

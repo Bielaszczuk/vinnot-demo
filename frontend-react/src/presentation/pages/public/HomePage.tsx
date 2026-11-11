@@ -6,12 +6,13 @@ import { LinkButton } from '@components/ui/LinkButton'
  * HomePage — public landing page
  *
  * Uses the same illustrated hero and wine-glass artwork as native:
- * explore by type section, popular grapes pills, features grid,
+ * signed-in social sections (people you follow, people to follow), explore by type section, popular grapes pills, features grid,
  * gradient CTA section with decorative circles.
  */
 
 import { Link } from 'react-router-dom'
 import { useHomeViewModel, type HomeFeatureIcon } from './useHomeViewModel'
+import { HomeSocialSections } from './HomeSocialSections'
 
 const featureIcons: Record<HomeFeatureIcon, LucideIcon> = {
   discover: Wine,
@@ -168,9 +169,10 @@ export function HomePage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
           {features.map((feature, idx) => (
-            <div
+            <Link
               key={feature.title}
-              className="group p-4 sm:p-6 bg-white rounded-2xl border border-border shadow-sm hover:shadow-xl hover:border-wine-100 hover:-translate-y-1 active:scale-[0.97] transition-all duration-300 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              to={feature.to}
+              className="group block p-4 sm:p-6 bg-white rounded-2xl border border-border shadow-sm hover:shadow-xl hover:border-wine-100 hover:-translate-y-1 active:scale-[0.97] transition-all duration-300 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-500 focus-visible:ring-offset-2"
               style={{ transitionDelay: sectionsVisible ? `${200 + idx * 80}ms` : '0ms' }}
             >
               <div className="w-10 h-10 sm:w-12 sm:h-12 mb-3 sm:mb-4 bg-wine-50 rounded-lg sm:rounded-xl flex items-center justify-center group-hover:bg-wine-100 group-hover:scale-110 transition-all duration-300 motion-reduce:transition-none motion-reduce:group-hover:scale-100">
@@ -182,7 +184,7 @@ export function HomePage() {
               <p className="text-gray-500 text-xs sm:text-sm leading-relaxed">
                 {feature.description}
               </p>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
@@ -218,6 +220,9 @@ export function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ═══ PEOPLE YOU FOLLOW + PEOPLE TO FOLLOW (signed in), closing the page ═══ */}
+      {isAuthenticated && <HomeSocialSections />}
     </div>
   )
 }

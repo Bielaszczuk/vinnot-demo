@@ -136,6 +136,10 @@ export interface AuthUserDto {
   hasPassword?: boolean
   socialProviders?: SocialProviderDto[]
   onboardingCompleted: boolean
+  /** Public bio; absent on older APIs. */
+  bio?: string | null
+  /** Who can see the cellar; absent on older APIs (public). */
+  cellarVisibility?: 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE'
   createdAt?: string
   updatedAt?: string
 }

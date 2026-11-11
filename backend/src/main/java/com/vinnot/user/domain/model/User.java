@@ -2,6 +2,8 @@ package com.vinnot.user.domain.model;
 
 import com.vinnot.shared.domain.base.AggregateRoot;
 import com.vinnot.shared.domain.exception.DomainException;
+import com.vinnot.user.domain.valueobject.ProviderPhoto;
+import com.vinnot.user.domain.valueobject.CellarVisibility;
 import com.vinnot.user.domain.valueobject.Email;
 import com.vinnot.user.domain.valueobject.Password;
 import com.vinnot.user.domain.valueobject.PreferredLanguage;
@@ -19,6 +21,8 @@ import java.util.UUID;
 public class User extends AggregateRoot<UUID> {
 
     private static final int GENERATED_USERNAME_SUFFIX_LENGTH = 8;
+    /** Longest public bio, in characters (code points), as stored in {@code users.bio}. */
+    public static final int MAX_BIO_LENGTH = 160;
 
     private final UUID id;
     private final long revision;
@@ -31,6 +35,8 @@ public class User extends AggregateRoot<UUID> {
     private String lastName;
     private String phoneNumber;
     private String profileImageUrl;
+    private String bio;
+    private CellarVisibility cellarVisibility;
     private Set<Role> roles;
     private boolean active;
     private boolean locked;
@@ -59,6 +65,8 @@ public class User extends AggregateRoot<UUID> {
         this.lastName = builder.lastName;
         this.phoneNumber = builder.phoneNumber;
         this.profileImageUrl = builder.profileImageUrl;
+        this.bio = builder.bio;
+        this.cellarVisibility = builder.cellarVisibility;
         this.roles = new HashSet<>(builder.roles);
         this.active = builder.active;
         this.locked = builder.locked;
@@ -360,11 +368,12 @@ public class User extends AggregateRoot<UUID> {
     }
 
     /**
-     * Completes empty profile fields with data from a trusted identity provider.
+     * Completes empty profile fields with data from a trusted identity provider. The photo is also refreshed while the
+     * stored one is still a provider link, so a changed Google or Facebook photo shows; an uploaded photo is kept.
      *
      * @param providerFirstName first name supplied by the provider
      * @param providerLastName  last name supplied by the provider
-     * @param providerImageUrl  profile image supplied by the provider
+     * @param providerImageUrl  profile image supplied by the provider; Google pictures are stored at 256 px
      */
     public void enrichFromIdentityProvider(
             String providerFirstName, String providerLastName, String providerImageUrl) {
@@ -376,9 +385,10 @@ public class User extends AggregateRoot<UUID> {
                 && Objects.nonNull(providerLastName) && !providerLastName.isBlank()) {
             this.lastName = providerLastName;
         }
-        if ((Objects.isNull(profileImageUrl) || profileImageUrl.isBlank())
-                && Objects.nonNull(providerImageUrl) && !providerImageUrl.isBlank()) {
-            this.profileImageUrl = providerImageUrl;
+        String providerPhoto = ProviderPhoto.normalize(providerImageUrl);
+        if (Objects.nonNull(providerPhoto) && (Objects.isNull(profileImageUrl) || profileImageUrl.isBlank()
+                || ProviderPhoto.isProviderLink(profileImageUrl))) {
+            this.profileImageUrl = providerPhoto;
         }
         this.updatedAt = Instant.now();
     }
@@ -393,6 +403,36 @@ public class User extends AggregateRoot<UUID> {
                     "INVALID_PHONE_NUMBER", "Phone number must use international format");
         }
         this.phoneNumber = value;
+        this.updatedAt = Instant.now();
+    }
+
+    /** The short public text other members read on the profile (#541), or {@code null} when there is none. */
+    public String getBio() {
+        return bio;
+    }
+
+    /** Who may see the cellar on the public profile (#541). */
+    public CellarVisibility getCellarVisibility() {
+        return cellarVisibility;
+    }
+
+    /**
+     * Replaces the public bio: surrounding spaces are trimmed and a blank text clears it.
+     *
+     * @param value the new bio, at most {@link #MAX_BIO_LENGTH} characters once trimmed
+     */
+    public void updateBio(String value) {
+        String trimmed = Objects.isNull(value) ? "" : value.strip();
+        if (trimmed.codePointCount(0, trimmed.length()) > MAX_BIO_LENGTH) {
+            throw new DomainException("BIO_TOO_LONG", "Bio must be at most " + MAX_BIO_LENGTH + " characters");
+        }
+        this.bio = trimmed.isEmpty() ? null : trimmed;
+        this.updatedAt = Instant.now();
+    }
+
+    /** Chooses who may see the cellar on the public profile. */
+    public void changeCellarVisibility(CellarVisibility visibility) {
+        this.cellarVisibility = Objects.requireNonNull(visibility, "Cellar visibility cannot be null");
         this.updatedAt = Instant.now();
     }
 
@@ -566,6 +606,8 @@ public class User extends AggregateRoot<UUID> {
         private String lastName;
         private String phoneNumber;
         private String profileImageUrl;
+        private String bio;
+        private CellarVisibility cellarVisibility = CellarVisibility.DEFAULT;
         private Set<Role> roles = new HashSet<>();
         private boolean active = true;
         private boolean locked;
@@ -726,6 +768,18 @@ public class User extends AggregateRoot<UUID> {
 
         public Builder onboardingCompleted(boolean onboardingCompleted) {
             this.onboardingCompleted = onboardingCompleted;
+            return this;
+        }
+
+        /** Restores the stored public bio. */
+        public Builder bio(String bio) {
+            this.bio = bio;
+            return this;
+        }
+
+        /** Restores the stored cellar visibility; null keeps the default. */
+        public Builder cellarVisibility(CellarVisibility cellarVisibility) {
+            this.cellarVisibility = Objects.requireNonNullElse(cellarVisibility, CellarVisibility.DEFAULT);
             return this;
         }
 

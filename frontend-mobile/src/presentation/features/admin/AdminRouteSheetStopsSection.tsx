@@ -19,6 +19,7 @@ import { STOP_WINERY_MIN_QUERY } from "./AdminRouteSheet.contracts";
 import { ManualStopFields } from "./AdminRouteSheetFields";
 import { InlineWineryCreator } from "./forms/InlineWineryCreator";
 import { styles } from "./AdminRouteSheet.styles";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 
 /** Room around the stop pins when the map refits to show the whole route. */
 const MAP_FIT_PADDING = { top: 48, right: 48, bottom: 48, left: 48 };
@@ -51,8 +52,12 @@ type Props = {
   disabled?: boolean;
 };
 
-function toOption(winery: AdminWinery, t: (key: string) => string): PickerOption {
-  const place = [winery.regionName, winery.countryName].filter(Boolean).join(", ");
+function toOption(
+  winery: AdminWinery,
+  t: (key: string) => string,
+  countryName: (name: string | null | undefined) => string,
+): PickerOption {
+  const place = [winery.regionName, countryName(winery.countryName)].filter(Boolean).join(", ");
   const gps = hasCoordinates(winery) ? t("admin.routes.gpsTag") : t("admin.routes.noGpsTag");
   return { id: winery.id, label: winery.name, description: [place, gps].filter(Boolean).join(" · ") };
 }
@@ -82,6 +87,7 @@ export function AdminRouteSheetStopsSection({
   disabled = false,
 }: Props) {
   const { t } = useTranslation();
+  const countryName = useCountryName();
   const [mapStop, setMapStop] = useState<number | null>(null);
   const [creating, setCreating] = useState<string | null>(null);
   const mapRef = useRef<MapView>(null);
@@ -106,7 +112,7 @@ export function AdminRouteSheetStopsSection({
         label={t("admin.routes.searchWinery")}
         placeholder={t("admin.routes.addWineryStop")}
         searchPlaceholder={t("admin.routes.searchWineryPlaceholder")}
-        options={suggestions.map((winery) => toOption(winery, t))}
+        options={suggestions.map((winery) => toOption(winery, t, countryName))}
         loading={wineryLoading}
         onQueryChange={updateWinerySearch}
         minQueryLength={STOP_WINERY_MIN_QUERY}

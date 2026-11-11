@@ -16,6 +16,8 @@ import type {
   UserPointsDto,
   PointsAcknowledgementRequestDto,
 } from '@api/dto/users.dto'
+import type { PublicCellarWineDto, SocialPageDto, UserReviewDto } from '@api/dto/social.dto'
+import { normalizeUserReview, toSocialPage, withWineImage } from './socialTransport'
 
 /**
  * Users API client
@@ -47,9 +49,29 @@ export const usersClient = {
    */
   async getUserProfile(id: string): Promise<UserProfileDto> {
     const response = await http.get<ApiResponse<UserProfileDto>>(
-      `${API_ENDPOINTS.USERS}/${id}/profile`
+      `${API_ENDPOINTS.USERS}/${encodeURIComponent(id)}/profile`
     )
     return normalizeUserProfileDto(response.data.data)
+  },
+
+  /**
+   * Approved reviews of a user, newest first
+   */
+  async getUserReviews(id: string, page: number, size: number): Promise<SocialPageDto<UserReviewDto>> {
+    const response = await http.get<unknown>(`${API_ENDPOINTS.USERS}/${encodeURIComponent(id)}/reviews`, {
+      params: { page, size },
+    })
+    return toSocialPage<UserReviewDto>(response.data, normalizeUserReview)
+  },
+
+  /**
+   * Public cellar of a user; 403 CELLAR_NOT_VISIBLE when the owner hides it from the viewer
+   */
+  async getUserCellar(id: string, page: number, size: number): Promise<SocialPageDto<PublicCellarWineDto>> {
+    const response = await http.get<unknown>(`${API_ENDPOINTS.USERS}/${encodeURIComponent(id)}/cellar`, {
+      params: { page, size },
+    })
+    return toSocialPage<PublicCellarWineDto>(response.data, withWineImage)
   },
 
   /**
@@ -182,7 +204,7 @@ function normalizeUserDto(user: UserDto): UserDto {
 function normalizeUserProfileDto(user: UserProfileDto): UserProfileDto {
   return {
     ...user,
-    avatar: resolveApiAssetUrl(user.avatar),
+    avatarUrl: resolveApiAssetUrl(user.avatarUrl),
   }
 }
 

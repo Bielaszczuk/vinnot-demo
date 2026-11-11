@@ -6,7 +6,9 @@ import { CommunityActions } from '../community/CommunityActions';
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { MessageCircle, Pencil, ThumbsUp, Trash2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import { Avatar } from "@/presentation/components/ui/Atoms";
+import { useRouter } from "expo-router";
+import { createUserProfileRoute } from "@/presentation/navigation/discoveryNavigation";
+import { Avatar, UserHandle } from "@/presentation/components/ui/Atoms";
 import { NameBadge } from "@/presentation/features/points/NameBadge";
 import type { WineType } from "@/domain/wine/wine.types";
 import { RatingGlasses } from "./rating/RatingGlasses";
@@ -34,6 +36,7 @@ interface ReviewItemProps {
 
 export function ReviewItem({ wineId, review, expandedComments, onToggleComments, onEdit, wineType }: ReviewItemProps) {
   const { t } = useTranslation();
+  const router = useRouter();
   const { formatDate } = useFormatters();
   const { user, hasAnyRole } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -80,14 +83,25 @@ export function ReviewItem({ wineId, review, expandedComments, onToggleComments,
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Avatar uri={review.userAvatar} name={review.userName} size={38} />
-        <View style={styles.headerText}>
-          <View style={styles.nameRow}>
-            <Text style={styles.userName} numberOfLines={1}>{review.userName}</Text>
-            <NameBadge tier={review.reviewer?.badgeTier} />
+        {/* The author's avatar and name open their public profile. */}
+        <Pressable
+          style={styles.author}
+          disabled={!review.userId}
+          onPress={() => router.push(createUserProfileRoute(review.userId))}
+          accessibilityRole="link"
+          accessibilityLabel={t("social.openProfileA11y", { name: review.userName })}
+          hitSlop={4}
+        >
+          <Avatar uri={review.userAvatar} name={review.userName} size={38} />
+          <View style={styles.headerText}>
+            <View style={styles.nameRow}>
+              <Text style={styles.userName} numberOfLines={1}>{review.userName}</Text>
+              <NameBadge tier={review.reviewer?.badgeTier} />
+            </View>
+            <UserHandle username={review.reviewer?.username} />
+            <Text style={styles.date}>{formatDate(review.createdAt)}</Text>
           </View>
-          <Text style={styles.date}>{formatDate(review.createdAt)}</Text>
-        </View>
+        </Pressable>
         <RatingGlasses rating={review.rating} wineType={wineType} size={26} />
         <CommunityActions variant="menu" targetType="REVIEW" targetId={review.id} authorId={review.userId} />
       </View>
@@ -172,6 +186,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   header: { flexDirection: "row", alignItems: "center", gap: 10 },
+  author: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10 },
   headerText: { flex: 1 },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   userName: { ...textStyles.labelLarge, color: lightTokens.textPrimary, flexShrink: 1 },

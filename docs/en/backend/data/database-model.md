@@ -58,7 +58,11 @@ wines, for the staff listing that includes inactive wines. V85 adds
 GIN indexes over inactive wine and winery names, for the fuzzy tier of the staff
 search; both are additive. V86 adds the trigger-maintained read models
 `wine_catalog_filter_search`, `wine_grape_search` and `wine_grape_keys` for searches
-with filters (see below); existing tables are unchanged. V62 adds
+with filters (see below); existing tables are unchanged. V87 (#541) adds
+`user_follows` and the profile columns `users.bio` and `users.cellar_visibility`
+(see `users` and `user_follows` below); it is additive. V88 (#541) adds
+`user_taste_quiz` (see below); it is additive. V89 (#541) adds
+`user_taste_adjustments` (see below); it is additive. V62 adds
 `users.password_set` (`boolean NOT NULL`, default `true`): whether the stored
 password was chosen by its owner. The backfill sets it to `false` when the first
 social identity was saved together with the account, or was linked to a local
@@ -226,6 +230,26 @@ erDiagram
 
 [View the full “Reviews and cellar” diagram](https://images.vinnot.com/docs/diagrams/v1/en/backend-data-database-model-bdfffd3facfd.svg)
 
+### Social and taste profile
+
+```mermaid
+erDiagram
+    USERS ||--o{ USER_FOLLOWS : "follows"
+    USERS ||--o{ USER_FOLLOWS : "is followed"
+    USERS ||--o{ USER_BLOCKS : "blocks"
+    USERS ||--o{ USER_BLOCKS : "is blocked"
+    USERS ||--o| USER_TASTE_QUIZ : "answers"
+    USERS ||--o{ USER_TASTE_ADJUSTMENTS : "adjusts"
+    USERS ||--o{ USER_TASTE_AFFINITIES : "accumulates"
+```
+
+[View the full “Social and taste profile” diagram](https://images.vinnot.com/docs/diagrams/v1/en/backend-data-database-model-f6366792671d.svg)
+
+`user_follows`, `user_taste_quiz` and `user_taste_adjustments` arrive with V87–V89
+(#541); `user_blocks` (V24) and `user_taste_affinities` (V52) already existed.
+Blocking deletes the pair's follows in both directions. The new tables' columns
+are below; every table's columns are in the [ERD by context](../diagrams/relational-model.md#social-and-taste-profile-v87v89).
+
 ### Events and payments
 
 ```mermaid
@@ -299,7 +323,11 @@ secret nobody knows. V72 adds `failed_login_attempts` (`integer NOT NULL`,
 default 0, `CHECK >= 0`) and `login_locked_until` (`timestamptz`, empty or past
 means no lock): the temporary sign-in lockout, separate from the administrative
 `locked` flag. Only atomic statements of `LoginAttemptPersistenceAdapter` write
-them; JPA maps them read-only and they never change the row version.
+them; JPA maps them read-only and they never change the row version. V87 adds
+the public `bio` (`varchar(160)`, nullable; the domain trims it and stores blank as
+`NULL`) and `cellar_visibility` (`varchar(20) NOT NULL`, default `PUBLIC`, checked
+against `PUBLIC`/`FOLLOWERS`/`PRIVATE`); existing users receive no bio and a public
+cellar.
 
 Email and username have unique constraints and lower-case indexes for normalized
 queries. Primary normalization remains in value objects and handlers; indexes do
@@ -558,7 +586,51 @@ every save (`rating` gets the decimal rounded half up, kept between 1 and 5, or
 null); the sync from a review keeps the decimal. A trigger copies a whole rating
 written alone (by the previous revision) into `rating_decimal`, leaving it untouched
 when the same whole value is written again. A later migration may drop `rating` and
-the trigger once no previous revision can run.
+the trigger once no previous revision can run. Other members read a cellar only
+through the community listing, which never selects `notes` or `purchase_price` and
+honours `users.cellar_visibility`.
+
+### `user_follows` (V87)
+
+Asymmetric follows between members (#541): `follower_id` and `followee_id`, both
+referencing `users` with `ON DELETE CASCADE`, form the primary key, and a CHECK
+forbids following oneself. `created_at` orders the lists. The primary key serves
+“whom I follow” and `idx_user_follows_followee (followee_id, created_at DESC)`
+serves “who follows me”, newest first, and the second foreign key. A block deletes
+the pair's follows in both directions in the same transaction.
+
+### `user_taste_quiz` (V88)
+
+Each member's taste quiz (#541), one row per member; no row means the quiz is
+pending.
+
+| Column | Type and rule |
+|---|---|
+| `user_id` | `uuid`, primary key, references `users` with `ON DELETE CASCADE` |
+| `status` | `varchar(20) NOT NULL`, CHECK `COMPLETED` or `SKIPPED` |
+| `answers` | `jsonb`, an object of question key to option key; present only when `COMPLETED` (CHECK) |
+| `updated_at` | `timestamptz NOT NULL`, default `now()`; rewritten on every retake |
+
+A retake overwrites the row; a skip inserts only when there is no row, so it never
+erases a completed quiz. The public profile reads the seed computed from the
+answers and never the answers themselves.
+
+### `user_taste_adjustments` (V89)
+
+The manual palate values of each member (#541): one row per member and structure
+trait; no row means the trait shows its computed value.
+
+| Column | Type and rule |
+|---|---|
+| `user_id` | `uuid NOT NULL`, references `users` with `ON DELETE CASCADE` |
+| `trait` | `varchar(20) NOT NULL`, CHECK `ACIDITY`, `BODY`, `TANNIN` or `SWEETNESS` |
+| `score` | `smallint NOT NULL`, CHECK 0 to 100 |
+| `updated_at` | `timestamptz NOT NULL`, default `now()`; rewritten on every change |
+
+The primary key is `(user_id, trait)`. A change upserts the traits it sets and
+deletes the ones it clears; a reset deletes every row of the member. The public
+profile shows each manual score in place of the computed or quiz value of its
+trait.
 
 ## Events and registrations
 
@@ -833,6 +905,8 @@ winery; and keeps in `proposed_grapes` the `grapes` entries missing from
 |---|---|---|
 | user → sessions/roles/tokens | cascade | ownerless credentials are useless |
 | user/wine → reviews/cellar | cascade | personal or dependent data |
+| user → follows (either side) | cascade | a follow without one of its members means nothing |
+| user → taste quiz/palate adjustments | cascade | they are the member's personal data |
 | event → registrations | cascade | registrations are part of event |
 | wine → profiles/comparisons/search | cascade | derived content |
 | country/region/winery → wine | set null | retain imported catalog |

@@ -8,6 +8,10 @@ export const PROFILE_ROUTE = "/(app)/(tabs)/profile";
 export const ADMIN_ROUTE = "/(app)/admin";
 export const ADMIN_WINES_ROUTE = "/(app)/admin/wines";
 export const POINTS_ROUTE = "/(app)/points";
+/** Reviews of the people the user follows (Home › «Ver todo»). */
+export const FEED_ROUTE = "/(app)/feed";
+/** The taste quiz: offered once after sign-in and from the own profile. */
+export const TASTE_QUIZ_ROUTE = "/(app)/taste-quiz";
 
 type BackRouter = Pick<ImperativeRouter, "canGoBack" | "back" | "replace">;
 
@@ -37,4 +41,17 @@ export function createWineRouteDetailRoute(id: string, origin: "home" | "routes"
 
 export function exitWineRouteDetail(router: BackRouter): void {
   goBackOr(router, WINE_ROUTES_ROUTE);
+}
+
+/** A public profile: the same screen for one's own profile and for anyone else's. */
+export function createUserProfileRoute(userId: string): Href {
+  return { pathname: "/(app)/users/[id]", params: { id: userId } };
+}
+
+export function createUserFollowersRoute(userId: string): Href {
+  return { pathname: "/(app)/users/[id]/followers", params: { id: userId } };
+}
+
+export function createUserFollowingRoute(userId: string): Href {
+  return { pathname: "/(app)/users/[id]/following", params: { id: userId } };
 }

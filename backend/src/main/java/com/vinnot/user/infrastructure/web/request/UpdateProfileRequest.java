@@ -16,6 +16,12 @@ public record UpdateProfileRequest(
         @Size(max = 100, message = "Name must be at most 100 characters")
         String name,
 
-        @Size(max = 50) String phoneNumber
+        @Size(max = 50) String phoneNumber,
+
+        // Validated by the domain (BIO_TOO_LONG) so the client gets one stable error code.
+        String bio,
+
+        // PUBLIC, FOLLOWERS or PRIVATE; validated by the domain (INVALID_CELLAR_VISIBILITY).
+        String cellarVisibility
 ) {
 }

@@ -23,6 +23,7 @@ import {
 } from "@/presentation/features/cellar";
 import { useCellar, useRemoveCellarEntry } from "@/presentation/hooks/queries/cellar";
 import { useDebounce } from "@/presentation/hooks/ui";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 import { AuthGuard } from "@/presentation/navigation/guards";
 import { AppHeader } from "@/presentation/components/layout";
 import { CELLAR_ROUTE, exitCellar } from "@/presentation/navigation/discoveryNavigation";
@@ -38,6 +39,7 @@ import { fontSizes } from "@/shared/theme/typography";
 
 function CellarScreenContent() {
   const { t } = useTranslation();
+  const countryName = useCountryName();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { showSuccess, showError } = useToast();
@@ -63,6 +65,7 @@ function CellarScreenContent() {
         entry.wine.winery,
         entry.wine.region,
         entry.wine.country,
+        countryName(entry.wine.country),
         entry.notes,
       ]
         .filter(Boolean)
@@ -71,7 +74,7 @@ function CellarScreenContent() {
 
       return matchesSegment && (!debouncedSearch || haystack.includes(debouncedSearch));
     });
-  }, [debouncedSearch, entries, segment]);
+  }, [countryName, debouncedSearch, entries, segment]);
 
   const openAddSheet = () => {
     setEditingEntry(null);

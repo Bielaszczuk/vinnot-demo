@@ -177,7 +177,7 @@ export function WinesBrowseHeader({
           ) : null}
           <FilterSelectButton
             label={t("wines.country", "País")}
-            value={selectedCountry}
+            value={countryOptions.find((option) => option.value === selectedCountry)?.label ?? selectedCountry}
             isOpen={openFilter === "country"}
             onPress={() => onOpenFilter(openFilter === "country" ? null : "country")}
           />

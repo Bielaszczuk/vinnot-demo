@@ -1,12 +1,18 @@
 package com.vinnot.community.infrastructure.web;
 
+import com.vinnot.community.application.command.model.ChangeFollowCommand;
 import com.vinnot.community.application.command.model.ChangeUserBlockCommand;
 import com.vinnot.community.application.command.model.CreateReportCommand;
+import com.vinnot.community.application.port.in.ChangeFollowUseCase;
 import com.vinnot.community.application.port.in.ChangeUserBlockUseCase;
 import com.vinnot.community.application.port.in.CreateReportUseCase;
 import com.vinnot.community.application.port.in.GetCommunityUseCase;
+import com.vinnot.community.application.port.in.GetSocialUseCase;
 import com.vinnot.community.application.query.response.CommunityOverview;
+import com.vinnot.community.application.query.response.FollowUserResponse;
 import com.vinnot.community.application.query.response.ReportReceipt;
+import com.vinnot.community.application.query.response.SuggestedUserResponse;
+import com.vinnot.community.application.query.response.UserReviewResponse;
 import com.vinnot.community.domain.model.CommunityReport;
 import com.vinnot.community.domain.model.ContentTarget;
 import com.vinnot.shared.domain.valueobject.PageResult;
@@ -30,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -40,6 +47,8 @@ public class CommunityController {
     private final CreateReportUseCase createReport;
     private final ChangeUserBlockUseCase changeBlock;
     private final GetCommunityUseCase queries;
+    private final ChangeFollowUseCase changeFollow;
+    private final GetSocialUseCase social;
 
     public record ReportRequest(
             @NotNull ContentTarget.Type targetType,
@@ -91,5 +100,51 @@ public class CommunityController {
             @AuthenticationPrincipal String principal, @PathVariable UUID userId) {
         changeBlock.execute(new ChangeUserBlockCommand(UUID.fromString(principal), userId, false));
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/follows/{userId}")
+    public ResponseEntity<Void> follow(
+            @AuthenticationPrincipal String principal, @PathVariable UUID userId) {
+        changeFollow.execute(new ChangeFollowCommand(UUID.fromString(principal), userId, true));
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/follows/{userId}")
+    public ResponseEntity<Void> unfollow(
+            @AuthenticationPrincipal String principal, @PathVariable UUID userId) {
+        changeFollow.execute(new ChangeFollowCommand(UUID.fromString(principal), userId, false));
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/users/{userId}/followers")
+    public PageResult<FollowUserResponse> followers(
+            @AuthenticationPrincipal String principal,
+            @PathVariable UUID userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return social.followers(UUID.fromString(principal), userId, page, size);
+    }
+
+    @GetMapping("/users/{userId}/following")
+    public PageResult<FollowUserResponse> following(
+            @AuthenticationPrincipal String principal,
+            @PathVariable UUID userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return social.following(UUID.fromString(principal), userId, page, size);
+    }
+
+    @GetMapping("/suggestions")
+    public List<SuggestedUserResponse> suggestions(
+            @AuthenticationPrincipal String principal, @RequestParam(defaultValue = "10") int size) {
+        return social.suggestions(UUID.fromString(principal), size);
+    }
+
+    @GetMapping("/feed")
+    public PageResult<UserReviewResponse> feed(
+            @AuthenticationPrincipal String principal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return social.feed(UUID.fromString(principal), page, size);
     }
 }

@@ -1,6 +1,7 @@
 import { Zap } from 'lucide-react'
 import { useId, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useCountryName } from '@hooks/useCountryName'
 import type { TFunction } from 'i18next'
 import type { AdminWine } from '@domain/admin/admin.types'
 import { Spinner } from '@components/ui/Spinner'
@@ -85,6 +86,7 @@ export function AdminWineAiHero({
   onToggleEditMode,
   onRequestRegenerate,
 }: AdminWineAiHeroProps) {
+  const countryName = useCountryName()
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-800 via-purple-700 to-purple-900 shadow-lg">
       <div className="relative flex flex-col items-center gap-6 p-6 md:flex-row md:p-8">
@@ -104,7 +106,7 @@ export function AdminWineAiHero({
           </div>
           <h1 className="truncate text-xl font-semibold leading-tight text-white md:text-2xl">{wine.name}</h1>
           <p className="mt-1 text-sm text-purple-200">
-            {wine.wineryName} · {wine.vintage || t('admin.aiProfile.nonVintage')} · {wine.region}, {wine.country}
+            {wine.wineryName} · {wine.vintage || t('admin.aiProfile.nonVintage')} · {wine.region}, {countryName(wine.country)}
           </p>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">

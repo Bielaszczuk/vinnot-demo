@@ -41,6 +41,7 @@ import { useCellar } from "@/presentation/hooks/queries/cellar";
 import { useDetailViewTracking } from "@/presentation/hooks/useDetailViewTracking";
 import { useShareLink } from "@/presentation/hooks/useShareLink";
 import { useAuth } from "@/presentation/hooks/useAuth";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 import {
   exitWineDetail,
   isOpenedFromWineScanner,
@@ -65,6 +66,7 @@ export default function WineDetailScreen() {
   const shareLink = useShareLink();
   const insets = useSafeAreaInsets();
   const { t, i18n } = useTranslation();
+  const countryName = useCountryName();
   const { formatRating } = useFormatters();
   const { tab, setTab, focusOwnReview, scrollRef, onSectionLayout, onOwnReviewLayout, focusReviews } =
     useWineReviewFocus(id, review === "mine", opensWineReviewsTab(tabParam));
@@ -177,7 +179,7 @@ export default function WineDetailScreen() {
               <Text style={styles.location}>{wine.winery}</Text>
             )}
             <Text style={styles.location}>
-              {[wine.region, wine.country].filter(Boolean).join(", ")}
+              {[wine.region, countryName(wine.country)].filter(Boolean).join(", ")}
             </Text>
 
             <View style={styles.ratingRow}>
@@ -288,7 +290,7 @@ export default function WineDetailScreen() {
         </Card>
 
         <View style={styles.tabs}>
-          {(["info", "reviews", "ai"] as const).map((item) => (
+          {(["info", "ai"] as const).map((item) => (
             <Pressable
               key={item}
               onPress={() => setTab(item)}
@@ -319,7 +321,7 @@ export default function WineDetailScreen() {
               <InfoLine label={t("wines.grapeVariety")} value={wine.grapeVarieties.join(", ")} />
               <InfoLine
                 label={t("wines.region")}
-                value={[wine.country, wine.region].filter(Boolean).join(" / ")}
+                value={[countryName(wine.country), wine.region].filter(Boolean).join(" / ")}
               />
               <InfoLine
                 label={t("wineDetails.alcohol")}
@@ -341,7 +343,8 @@ export default function WineDetailScreen() {
           </View>
         )}
 
-        {tab === "reviews" && <View testID="wine-reviews-section" onLayout={onSectionLayout}>
+        {/* The reviews close the information tab, so scrolling to its end reaches them. */}
+        {tab === "info" && <View testID="wine-reviews-section" onLayout={onSectionLayout}>
           <ReviewsList wineId={wine.id} focusOwnReview={focusOwnReview} onOwnReviewLayout={onOwnReviewLayout}
             wineType={wine.type} onWriteReview={() => setReviewSheet({ review: null })}
             onEditReview={(ownReview) => setReviewSheet({ review: ownReview })} />

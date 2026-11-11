@@ -15,7 +15,7 @@ vinos vienen del catálogo de [Vinos](../wines/README.md).
 
 | Actor | Qué hace en este módulo |
 |---|---|
-| Usuario autenticado | Ve su cava, agrega, edita y quita vinos y publica notas como reseñas |
+| Usuario autenticado | Ve su cava, agrega, edita y quita vinos y publica notas como reseñas; ve la cava de otros miembros cuando su configuración lo permite |
 | Administrador | Puede consultar la cava y las estadísticas de otra persona desde la API |
 
 ## Reglas de negocio
@@ -23,7 +23,8 @@ vinos vienen del catálogo de [Vinos](../wines/README.md).
 | Regla | Detalle | Dónde |
 |---|---|---|
 | Acceso | La cava requiere sesión y el permiso `CELLAR_MANAGE_OWN` | [`CellarController.java`](../../../../backend/src/main/java/com/vinnot/cellar/infrastructure/web/controller/CellarController.java) |
-| Privacidad | Cada persona ve y cambia solo su cava; las rutas por usuario admiten al titular o a un administrador | [`CellarController.java`](../../../../backend/src/main/java/com/vinnot/cellar/infrastructure/web/controller/CellarController.java) |
+| Privacidad | Cada persona cambia solo su cava; las rutas completas por usuario, con notas y precios, admiten al titular o a un administrador | [`CellarController.java`](../../../../backend/src/main/java/com/vinnot/cellar/infrastructure/web/controller/CellarController.java) |
+| Cava pública | Cada miembro elige quién ve su cava en el perfil público: `PUBLIC` (por defecto), `FOLLOWERS` o `PRIVATE`, desde `PATCH /users/me` (`cellarVisibility`). `GET /users/{id}/cellar` lista vino, añada, puntaje y fecha de alta, de la más reciente a la más antigua y solo de vinos activos; nunca incluye notas ni precio de compra y responde 403 `CELLAR_NOT_VISIBLE` cuando la configuración la oculta. El dueño siempre ve la suya | [Comunidad](../community/architecture.md) |
 | Un vino por persona | Un vino aparece una sola vez en cada cava | [`AddWineToCellarCommandHandler.java`](../../../../backend/src/main/java/com/vinnot/cellar/application/command/handler/AddWineToCellarCommandHandler.java) |
 | Datos personales | Puntaje de 0.1 a 5.0 con un decimal (el mismo de las reseñas), precio no negativo, notas de hasta 10000 caracteres y añada probada (de 1800 al año siguiente, independiente de la añada del catálogo), todos opcionales | [`CellarWine.java`](../../../../backend/src/main/java/com/vinnot/cellar/domain/model/CellarWine.java) |
 | Puntos | Agregar un vino a mano suma 1 punto para el sello, una vez por vino para siempre y hasta 3 por día; la entrada creada al publicar una reseña no suma | [Puntos y sellos](../gamification/README.md) |

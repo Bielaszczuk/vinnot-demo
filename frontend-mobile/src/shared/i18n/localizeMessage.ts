@@ -17,3 +17,18 @@ export function localizeMessage(
     defaultValue: message,
   });
 }
+
+/** Whether a text is one of the message keys `localizeMessage` translates. */
+export function isMessageKey(message: unknown): message is string {
+  return typeof message === "string" && MESSAGE_KEY.test(message);
+}
+
+/**
+ * The message key an error carries, or `fallback` when its message is anything
+ * else (server or platform text), so raw text never reaches the UI.
+ */
+export function errorMessageKey(error: unknown, fallback: string): string {
+  const message =
+    typeof error === "object" && error !== null && "message" in error ? error.message : undefined;
+  return isMessageKey(message) ? message : fallback;
+}

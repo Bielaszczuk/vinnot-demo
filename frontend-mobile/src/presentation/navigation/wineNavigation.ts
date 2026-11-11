@@ -12,7 +12,7 @@ export type WineScanReturnRoute =
 const WINE_REVIEWS_TAB = "reviews";
 
 export interface WineDetailRouteOptions {
-  /** Open the detail on its reviews tab, scrolled to them, instead of the information tab. */
+  /** Open the detail scrolled to its reviews, at the end of the information tab. */
   tab?: typeof WINE_REVIEWS_TAB;
 }
 

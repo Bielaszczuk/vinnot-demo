@@ -11,6 +11,7 @@ import { EntityPicker, FormTextField } from "@/presentation/components/forms";
 import { Button } from "@/presentation/components/ui/Button";
 import { lightTokens, radii, spacing } from "@/shared/theme/tokens";
 import { textStyles } from "@/shared/theme/typography";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 import { useInlineWineryCreator } from "./useInlineWineryCreator";
 
 export interface InlineWineryCreatorProps {
@@ -21,9 +22,10 @@ export interface InlineWineryCreatorProps {
 
 export function InlineWineryCreator({ initialName, onCreated, onCancel }: InlineWineryCreatorProps) {
   const { t } = useTranslation();
+  const countryName = useCountryName();
   const creator = useInlineWineryCreator(initialName, onCreated);
   const { control } = creator.form;
-  const countryOptions = creator.countries.map((country) => ({ id: country.id, label: country.name }));
+  const countryOptions = creator.countries.map((country) => ({ id: country.id, label: countryName(country.name) }));
   const regionOptions = creator.regions.map((region) => ({ id: region.id, label: region.name }));
   return (
     <View style={styles.card} testID="inline-winery-creator">

@@ -5,6 +5,7 @@
 import { usersApiClient } from "@/infrastructure/api/clients/users.client";
 import { mapUserFromDto, mapUserStatsFromDto } from "@/domain/user/user.mappers";
 import type { User, UserStats } from "@/domain/user/user.types";
+import type { CellarVisibility } from "@/domain/social/social.types";
 import type { UpdateUserRequestDto } from "@/infrastructure/api/dto/users.dto";
 import { isApiError } from "@/infrastructure/api/errors";
 import { timezoneGateway } from "@/infrastructure/device/timezone.gateway";
@@ -15,6 +16,9 @@ export interface UpdateProfileInput {
   username?: string;
   firstName: string;
   lastName?: string;
+  /** Public bio; blank clears it. */
+  bio?: string;
+  cellarVisibility?: CellarVisibility;
 }
 
 export interface DeleteAccountInput {
@@ -97,5 +101,7 @@ function toUpdateUserRequest(data: UpdateProfileInput): UpdateUserRequestDto {
     firstName: data.firstName,
     ...(data.phoneNumber !== undefined ? { phoneNumber: data.phoneNumber } : {}),
     lastName: data.lastName,
+    ...(data.bio !== undefined ? { bio: data.bio } : {}),
+    ...(data.cellarVisibility !== undefined ? { cellarVisibility: data.cellarVisibility } : {}),
   };
 }

@@ -63,7 +63,11 @@ inactivos, para el listado del equipo que incluye inactivos. V85 agrega
 parciales sobre los nombres de vinos y bodegas inactivos, para el nivel fuzzy de la
 búsqueda del equipo; son aditivos. V86 agrega los read models mantenidos por
 triggers `wine_catalog_filter_search`, `wine_grape_search` y `wine_grape_keys` para
-las búsquedas con filtros (ver más abajo); las tablas existentes no cambian. V62 agrega
+las búsquedas con filtros (ver más abajo); las tablas existentes no cambian. V87 (#541)
+agrega `user_follows` y las columnas de perfil `users.bio` y `users.cellar_visibility`
+(ver `users` y `user_follows` más abajo); es aditiva. V88 (#541) agrega
+`user_taste_quiz` (ver más abajo); es aditiva. V89 (#541) agrega
+`user_taste_adjustments` (ver más abajo); es aditiva. V62 agrega
 `users.password_set` (`boolean NOT NULL`, default `true`): si la contraseña guardada
 la eligió su titular. El relleno lo deja en `false` cuando la primera identidad social
 se guardó junto con la cuenta, o se vinculó a una cuenta local que todavía no había
@@ -236,6 +240,26 @@ erDiagram
 
 [Ver diagrama de «Reseñas y cava» completo](https://images.vinnot.com/docs/diagrams/v1/es/backend-data-database-model-fd76ca2e709b.svg)
 
+### Social y perfil de gustos
+
+```mermaid
+erDiagram
+    USERS ||--o{ USER_FOLLOWS : "sigue"
+    USERS ||--o{ USER_FOLLOWS : "es seguido"
+    USERS ||--o{ USER_BLOCKS : "bloquea"
+    USERS ||--o{ USER_BLOCKS : "es bloqueado"
+    USERS ||--o| USER_TASTE_QUIZ : "responde"
+    USERS ||--o{ USER_TASTE_ADJUSTMENTS : "ajusta"
+    USERS ||--o{ USER_TASTE_AFFINITIES : "acumula"
+```
+
+[Ver diagrama de «Social y perfil de gustos» completo](https://images.vinnot.com/docs/diagrams/v1/es/backend-data-database-model-c36598a1eda2.svg)
+
+`user_follows`, `user_taste_quiz` y `user_taste_adjustments` llegan con V87–V89
+(#541); `user_blocks` (V24) y `user_taste_affinities` (V52) ya existían. Bloquear
+borra los seguimientos del par en ambos sentidos. Las columnas de las tablas nuevas
+están más abajo; las de todas, en el [DER por contexto](../diagrams/relational-model.md#social-y-perfil-de-gustos-v87v89).
+
 ### Eventos y pagos
 
 ```mermaid
@@ -313,6 +337,10 @@ guardada es un secreto aleatorio que nadie conoce. V72 agrega
 bloqueo temporal del inicio de sesión, independiente del flag administrativo
 `locked`. Sólo las sentencias atómicas de `LoginAttemptPersistenceAdapter` las
 escriben; JPA las mapea como solo lectura y nunca cambian la versión de la fila.
+V87 agrega la `bio` pública (`varchar(160)`, opcional; el dominio la recorta y guarda
+el texto en blanco como `NULL`) y `cellar_visibility` (`varchar(20) NOT NULL`, por
+defecto `PUBLIC`, con CHECK sobre `PUBLIC`/`FOLLOWERS`/`PRIVATE`); los usuarios
+existentes quedan sin bio y con la cava pública.
 
 Existen restricciones únicas de email y username, además de índices lower-case
 para las consultas normalizadas. La normalización principal se realiza en value
@@ -579,7 +607,51 @@ sincronización desde la reseña conserva el decimal. Un trigger copia en
 `rating_decimal` un puntaje entero escrito solo (por la revisión anterior) y no la
 toca cuando se vuelve a escribir el mismo entero. Una migración posterior puede
 eliminar `rating` y el trigger cuando ya no pueda ejecutarse ninguna revisión
-anterior.
+anterior. Otros miembros leen una cava solo a través del listado de comunidad, que
+nunca selecciona `notes` ni `purchase_price` y respeta `users.cellar_visibility`.
+
+### `user_follows` (V87)
+
+Seguimientos asimétricos entre miembros (#541): `follower_id` y `followee_id`,
+ambos con referencia a `users` y `ON DELETE CASCADE`, forman la clave primaria, y un
+CHECK impide seguirse a uno mismo. `created_at` ordena las listas. La clave primaria
+sirve para «a quién sigo» e `idx_user_follows_followee (followee_id, created_at
+DESC)` sirve para «quién me sigue», del más reciente al más antiguo, y para la
+segunda clave foránea. Un bloqueo borra los seguimientos del par en ambas
+direcciones en la misma transacción.
+
+### `user_taste_quiz` (V88)
+
+El test de gustos de cada miembro (#541), una fila por miembro; sin fila, el test
+está pendiente.
+
+| Columna | Tipo y regla |
+|---|---|
+| `user_id` | `uuid`, clave primaria, referencia `users` con `ON DELETE CASCADE` |
+| `status` | `varchar(20) NOT NULL`, CHECK `COMPLETED` o `SKIPPED` |
+| `answers` | `jsonb`, un objeto de clave de pregunta a clave de opción; presente solo cuando es `COMPLETED` (CHECK) |
+| `updated_at` | `timestamptz NOT NULL`, por defecto `now()`; se reescribe en cada repetición |
+
+Repetir el test sobrescribe la fila; saltearlo inserta solo cuando no hay fila, así
+nunca borra un test completado. El perfil público lee la semilla calculada a partir
+de las respuestas y nunca las respuestas mismas.
+
+### `user_taste_adjustments` (V89)
+
+Los valores manuales del paladar de cada miembro (#541): una fila por miembro y
+rasgo de estructura; sin fila, el rasgo muestra su valor calculado.
+
+| Columna | Tipo y regla |
+|---|---|
+| `user_id` | `uuid NOT NULL`, referencia `users` con `ON DELETE CASCADE` |
+| `trait` | `varchar(20) NOT NULL`, CHECK `ACIDITY`, `BODY`, `TANNIN` o `SWEETNESS` |
+| `score` | `smallint NOT NULL`, CHECK de 0 a 100 |
+| `updated_at` | `timestamptz NOT NULL`, por defecto `now()`; se reescribe en cada cambio |
+
+La clave primaria es `(user_id, trait)`. Un cambio inserta o actualiza los rasgos
+que fija y borra los que limpia; restablecer borra todas las filas del miembro. El
+perfil público muestra cada puntaje manual en lugar del valor calculado o del test
+de su rasgo.
 
 ## Eventos e inscripciones
 
@@ -861,6 +933,8 @@ no existen en `grape_types`.
 |---|---|---|
 | usuario → sesiones/roles/tokens | cascade | credenciales sin dueño no sirven |
 | usuario/vino → reseñas/cava | cascade | datos personales o dependientes |
+| usuario → seguimientos (cualquiera de los dos lados) | cascade | un seguimiento sin uno de sus miembros no significa nada |
+| usuario → test de gustos/ajustes del paladar | cascade | son datos personales del miembro |
 | evento → registros | cascade | registros son parte del evento |
 | vino → perfiles/comparaciones/search | cascade | contenido derivado |
 | país/región/bodega → vino | set null | preservar catálogo importado |

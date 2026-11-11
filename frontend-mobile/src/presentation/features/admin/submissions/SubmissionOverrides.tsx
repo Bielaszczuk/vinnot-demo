@@ -20,6 +20,7 @@ import {
   useAdminWinerySearch,
 } from "@/presentation/hooks/queries/admin";
 import { useDebounce } from "@/presentation/hooks/ui";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 import { wineTypeLabel } from "@/presentation/features/wine/wineTypeLabel";
 import { spacing } from "@/shared/theme/tokens";
 
@@ -35,6 +36,7 @@ export interface SubmissionOverridesProps {
 
 export function SubmissionOverrides({ control, setValue, submission, disabled }: SubmissionOverridesProps) {
   const { t } = useTranslation();
+  const countryName = useCountryName();
   const keep = t("admin.submissions.keepSubmitted");
   const country = useWatch({ control, name: "country" });
   const countries = useAdminCountries();
@@ -129,11 +131,12 @@ export function SubmissionOverrides({ control, setValue, submission, disabled }:
           <EntityPicker
             label={t("admin.submissions.fields.country")}
             placeholder={submission.country || keep}
-            options={countries.data.map((item) => ({ id: item.id, label: item.name }))}
+            options={countries.data.map((item) => ({ id: item.id, label: countryName(item.name) }))}
             loading={countries.isLoading}
-            value={field.value ? asOption(field.value) : null}
+            value={field.value ? { ...asOption(field.value), label: countryName(field.value.name) } : null}
             onChange={(option) => {
-              field.onChange(option ? { id: option.id, name: option.label } : null);
+              const stored = option && countries.data.find((item) => item.id === option.id)?.name;
+              field.onChange(option ? { id: option.id, name: stored ?? option.label } : null);
               setValue("region", null);
             }}
             disabled={disabled}

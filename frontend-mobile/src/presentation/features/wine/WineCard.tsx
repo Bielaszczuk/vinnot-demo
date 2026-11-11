@@ -12,6 +12,7 @@ import { vinnotColors, vinnotFonts } from "@/shared/theme/vinnotTheme";
 import type { WineSummary } from "@/domain/wine/wine.types";
 import { fontSizes } from "@/shared/theme/typography";
 import { useFormatters } from "@/presentation/hooks/ui/useFormatters";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 
 interface WineCardProps {
   wine: WineSummary;
@@ -23,13 +24,16 @@ interface WineCardProps {
 
 const OPEN_REVIEWS_ACTION = "openReviews";
 
-/** "(5) reviews": the number sits in its own Text so a link can underline just it. */
+/**
+ * "(5) reviews": the number and the word sit in their own Text, so a link underlines just the
+ * number and colours the word without an underline; both open the reviews.
+ */
 function ReviewCount({ count, onPress }: { count: number; onPress?: () => void }) {
   const { t } = useTranslation();
   const text = (
     <Text style={styles.reviewCount}>
       (<Text style={onPress ? styles.reviewCountLink : undefined}>{count}</Text>){" "}
-      {t("wines.reviewCountNoun", { count })}
+      <Text style={onPress ? styles.reviewCountWord : undefined}>{t("wines.reviewCountNoun", { count })}</Text>
     </Text>
   );
   if (!onPress) return text;
@@ -48,7 +52,8 @@ function ReviewCount({ count, onPress }: { count: number; onPress?: () => void }
 export function WineCard({ wine, onPress, onReviewsPress, isInCellar = false }: WineCardProps) {
   const { t } = useTranslation();
   const { formatRating } = useFormatters();
-  const locationLine = [wine.winery, [wine.country, wine.region].filter(Boolean).join(", ")]
+  const countryName = useCountryName();
+  const locationLine = [wine.winery, [countryName(wine.country), wine.region].filter(Boolean).join(", ")]
     .filter(Boolean)
     .join(" · ");
   const typeLabel = t(`wines.types.${wine.type?.toLowerCase()}`, wine.type).toUpperCase();
@@ -297,6 +302,9 @@ const styles = StyleSheet.create({
   reviewCountLink: {
     color: vinnotColors.brand,
     textDecorationLine: "underline",
+  },
+  reviewCountWord: {
+    color: vinnotColors.brand,
   },
   // A 44 pt touch target whose negative margin keeps the footer at its current height.
   reviewCountAction: {

@@ -289,6 +289,51 @@ describe("auth.service", () => {
     });
   });
 
+  it("keeps translating every known backend code exactly as before", async () => {
+    const known: [string, string][] = [
+      ["EMAIL_NOT_VERIFIED", "authErrors.emailNotVerified"],
+      ["TERMS_VERSION_CHANGED", "authErrors.termsVersionChanged"],
+      ["ACCOUNT_TEMPORARILY_LOCKED", "authErrors.temporarilyLocked"],
+      ["EMAIL_ALREADY_EXISTS", "authErrors.emailAlreadyExists"],
+      ["USERNAME_ALREADY_EXISTS", "authErrors.usernameAlreadyExists"],
+    ];
+    for (const [code, message] of known) {
+      authClientMock.register.mockRejectedValueOnce(new ApiError(409, code, "Server text"));
+      await expect(
+        authService.register("ana", "ana@vinnot.com", "Password1!", "Ana", "Pérez"),
+      ).rejects.toMatchObject({ message, code, statusCode: 409 });
+    }
+  });
+
+  it("never shows the server message for an unknown code or a validation failure", async () => {
+    authClientMock.login.mockRejectedValueOnce(new ApiError(500, "PROVIDER_FAILURE", "Provider exploded"));
+    await expect(authService.login("ana@vinnot.com", "Password1!")).rejects.toMatchObject({
+      message: "authErrors.loginFailed",
+      code: "PROVIDER_FAILURE",
+      statusCode: 500,
+    });
+
+    authClientMock.register.mockRejectedValueOnce(
+      new ApiError(400, "VALIDATION_ERROR", "Validation failed", { email: ["taken"] }),
+    );
+    await expect(
+      authService.register("ana", "ana@vinnot.com", "Password1!", "Ana", "Pérez"),
+    ).rejects.toMatchObject({ message: "authErrors.registerFailed" });
+
+    authClientMock.refreshToken.mockRejectedValueOnce(new ApiError(500, "PROVIDER_FAILURE", "provider failed"));
+    await expect(authService.refreshToken("refresh")).rejects.toMatchObject({
+      message: "authErrors.refreshFailed",
+      statusCode: 500,
+    });
+
+    authClientMock.getCurrentUser.mockRejectedValueOnce(new ApiError(500, "PROVIDER_FAILURE", "provider failed"));
+    await expect(authService.getCurrentUser()).rejects.toMatchObject({
+      message: "authErrors.unexpected",
+      statusCode: 500,
+      isSessionExpired: false,
+    });
+  });
+
   it("translates a terms version change during sign-up instead of the server text", async () => {
     authClientMock.register.mockRejectedValueOnce(
       new ApiError(409, "TERMS_VERSION_CHANGED", "Terms version changed, please review"),

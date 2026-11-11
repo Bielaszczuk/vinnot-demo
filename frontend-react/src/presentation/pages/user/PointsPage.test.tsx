@@ -52,12 +52,13 @@ describe('PointsPage', () => {
 
     const how = screen.getByRole('heading', { name: 'How to earn points' }).closest('section')!
     const rules = within(how).getAllByRole('listitem')
-    expect(rules).toHaveLength(9)
+    expect(rules).toHaveLength(10)
     expect(rules[0]).toHaveTextContent('Published reviewOnce per wine+3')
     expect(rules[4]).toHaveTextContent('Wine you proposed, approved for the catalogDoes not count toward the daily limit+8')
     expect(rules[7]).toHaveTextContent('Confirmed event registration')
     expect(rules[7]).toHaveTextContent('+4')
     expect(rules[8]).toHaveTextContent('Complete profilePhoto, first name, last name and phone; once only+5')
+    expect(rules[9]).toHaveTextContent('New followerSomeone with a verified email and an approved review follows you; up to 10 per day+1')
     expect(how).toHaveTextContent('You can earn up to 40 points per day')
 
     const recent = screen.getByRole('heading', { name: 'Recent movements' }).closest('section')!

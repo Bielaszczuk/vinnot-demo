@@ -8,7 +8,8 @@ import { regionsService } from '@services/regions.service'
 
 const addToast = vi.fn()
 vi.mock('@hooks/useToast', () => ({ useToast: () => ({ addToast }) }))
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }))
+const lang = vi.hoisted(() => ({ value: 'es-AR' }))
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key, i18n: { language: lang.value } }) }))
 vi.mock('@services/notifications.service', () => ({
   notificationsService: { getEventArea: vi.fn(), setEventAreaRegion: vi.fn(), clearEventArea: vi.fn() },
 }))
@@ -21,6 +22,7 @@ function wrapper({ children }: { children: ReactNode }) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  lang.value = 'es-AR'
   vi.mocked(regionsService.getRegions).mockResolvedValue([
     { id: 'r-1', name: 'Valle de Uco', countryId: 'c-1', countryCode: 'AR', countryName: 'Argentina' },
   ])
@@ -35,6 +37,17 @@ it('exposes the stored region as the selection and the regions as one-tap option
   expect(result.current.options[0]).toEqual({ value: 'r-1', label: 'Valle de Uco, Argentina' })
   expect(result.current.hasArea).toBe(true)
   expect(result.current.isApproximate).toBe(false)
+})
+
+it('shows the country of each region in the interface language', async () => {
+  lang.value = 'en-US'
+  vi.mocked(regionsService.getRegions).mockResolvedValue([
+    { id: 'r-2', name: 'Rioja', countryId: 'c-2', countryCode: 'ES', countryName: 'España' },
+  ])
+  vi.mocked(notificationsService.getEventArea).mockResolvedValue({ kind: 'NONE' } as never)
+  const { result } = renderHook(() => useEventAreaViewModel(), { wrapper })
+
+  await waitFor(() => expect(result.current.options).toEqual([{ value: 'r-2', label: 'Rioja, Spain' }]))
 })
 
 it('does not send a change for the current region, an empty pick or a clear without an area', async () => {

@@ -122,6 +122,8 @@ public enum NotificationType {
     REVIEW_LIKES_WEEKLY(NotificationCategory.COMMUNITY, Set.of(), null),
     /** Push only, once per tier (#455): the member's points reached a new wax-seal tier; tier (the tier key). */
     TIER_REACHED(NotificationCategory.COMMUNITY, Set.of(), null, false),
+    /** Push only (#541): someone started following the member; followerId and follower (their public name). */
+    NEW_FOLLOWER(NotificationCategory.COMMUNITY, Set.of(), null, false),
     /**
      * Promotional news written by an administrator (#310), by email and push: {@link #SUBJECT}, {@link #BODY} in the
      * {@link AnnouncementBody} format and, for the push, an optional in-app {@link #ROUTE}.

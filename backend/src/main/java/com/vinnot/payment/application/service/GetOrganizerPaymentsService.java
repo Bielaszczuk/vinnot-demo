@@ -39,6 +39,6 @@ public class GetOrganizerPaymentsService implements GetOrganizerPaymentsUseCase 
         return reader.find(eventId, registrationIds.stream().distinct().toList());
     }
     private BusinessRuleViolationException unavailable() {
-        return new BusinessRuleViolationException("PAYMENT_MANAGEMENT_UNAVAILABLE", "No podés consultar los pagos de este evento.");
+        return new BusinessRuleViolationException("PAYMENT_MANAGEMENT_UNAVAILABLE", "You cannot view the payments for this event.");
     }
 }

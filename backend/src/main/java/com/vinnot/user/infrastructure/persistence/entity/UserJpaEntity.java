@@ -59,6 +59,12 @@ public class UserJpaEntity {
     @Column(name = "profile_image_url")
     private String profileImageUrl;
 
+    @Column(length = 160)
+    private String bio;
+
+    @Column(name = "cellar_visibility", nullable = false, length = 20)
+    private String cellarVisibility = "PUBLIC";
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",

@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useCountryName } from '@hooks/useCountryName'
 import { useToast } from '@hooks/useToast'
 import { useRegions } from '@hooks/queries/wine/useRegions'
 import { useEventArea, useUpdateEventArea, type EventAreaChange } from '@hooks/queries/notification/useEventArea'
@@ -8,6 +9,7 @@ import type { SelectOption } from '@components/ui/Select'
 
 export function useEventAreaViewModel() {
   const { t } = useTranslation()
+  const countryName = useCountryName()
   const { addToast } = useToast()
   const area = useEventArea()
   const regions = useRegions()
@@ -32,8 +34,8 @@ export function useEventAreaViewModel() {
   }, [current, apply])
 
   const options: SelectOption[] = useMemo(() => (regions.data ?? []).map((region) => ({
-    value: region.id, label: `${region.name}, ${region.countryName}`,
-  })), [regions.data])
+    value: region.id, label: `${region.name}, ${countryName(region.countryName)}`,
+  })), [countryName, regions.data])
 
   return {
     t,

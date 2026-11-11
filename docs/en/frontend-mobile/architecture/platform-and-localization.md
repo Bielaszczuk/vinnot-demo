@@ -28,6 +28,13 @@ Application services isolate these adapters.
 RTK cache is in-memory; declaring `QUERY_CACHE` does not implement persistence.
 Scanner URI/OCR is workflow state: clearing references does not delete files.
 Avatar/image selection services are separate from multipart transport.
+API clients turn backend asset paths (`/api/uploads/...`) into absolute URLs with
+`resolveApiAssetUrl`, because React Native cannot load relative URIs: users, auth,
+social, wine reviews and comments (`resolveAuthorAssetUrls`), admin users and admin
+reviews. Absolute URLs pass through unchanged, so it is idempotent. The `Avatar`
+atom shows the initials when the photo fails to load and tries again when the URI
+changes. The admin users row and action sheet show the photo through `Avatar`, with
+the username's initial as fallback.
 
 ## Language resolution
 
@@ -65,6 +72,33 @@ app language too, never a fixed locale.
 There is no global HTTP language header. Available dictionaries do not certify
 that every component string uses i18n. Scope is verified through keys and
 consumers; commercial names and user input are not automatically translated.
+
+### Country names
+
+The catalogue stores each country with its ISO code and a Spanish name, and the
+API returns only that name (`countryName`, `country.name`, regions). Hermes has
+no `Intl.DisplayNames`, so
+[`countryNames.ts`](../../../../frontend-mobile/src/domain/location/countryNames.ts)
+keeps a table of the 116 seeded countries (ISO code to Spanish and English).
+`localizeCountryName` matches the stored name ignoring case and accents, also
+accepts the ISO code (the `MG` row resolves to Madagascar) and returns the
+stored name unchanged when it does not know it. Components read it bound to the
+current language through `useCountryName`. It only changes what is shown: wine,
+cellar, winery, route, event and event-area screens and the admin pickers keep
+sending the stored name or id to the API.
+
+### Error messages
+
+Users never see server or platform text. The transport layer
+([`errors.ts`](../../../../frontend-mobile/src/infrastructure/api/errors.ts))
+and the social sign-in gateway return translation keys (`authErrors.offline`,
+`authErrors.timeout`, `authErrors.unexpected`, `authErrors.googleCancelled` and
+so on) and stay free of i18next. `auth.service` maps known backend codes to
+their own key and any other code to the operation's translated fallback.
+`errorMessageKey` (in `localizeMessage.ts`) and `getMutationErrorMessage` keep
+only a message that is a translation key and otherwise return the screen's
+fallback; presentation translates the result. The event area search shows a
+translated message instead of the geocoder's text.
 
 ### Administrative panel language
 
@@ -187,6 +221,10 @@ version or source, so an upgrade is reviewed instead of shipping unpatched.
 - [eas.json](../../../../frontend-mobile/eas.json)
 - [src/shared/config/constants.ts](../../../../frontend-mobile/src/shared/config/constants.ts)
 - [src/shared/i18n/language.ts](../../../../frontend-mobile/src/shared/i18n/language.ts)
+- [src/shared/i18n/localizeMessage.ts](../../../../frontend-mobile/src/shared/i18n/localizeMessage.ts)
+- [src/domain/location/countryNames.ts](../../../../frontend-mobile/src/domain/location/countryNames.ts)
+- [src/presentation/hooks/useCountryName.ts](../../../../frontend-mobile/src/presentation/hooks/useCountryName.ts)
+- [src/infrastructure/api/errors.ts](../../../../frontend-mobile/src/infrastructure/api/errors.ts)
 - [src/infrastructure/storage/authSession.storage.ts](../../../../frontend-mobile/src/infrastructure/storage/authSession.storage.ts)
 - [src/infrastructure/storage/uiPreferences.storage.ts](../../../../frontend-mobile/src/infrastructure/storage/uiPreferences.storage.ts)
 

@@ -16,6 +16,7 @@ import { AdminDeleteConfirm } from '@components/features/admin/AdminDeleteConfir
 import { AdminRouteFormDialog, AdminRouteFormLoading } from '@components/features/admin/route-form/AdminRouteFormDialog'
 import { Spinner } from '@components/ui/Spinner'
 import { useAdminRoutesViewModel } from './useAdminRoutesViewModel'
+import { useCountryName } from '@hooks/useCountryName'
 
 const statusStyles: Record<string, string> = {
   active: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20',
@@ -26,6 +27,7 @@ const statusLabelKey: Record<string, string> = { active: 'admin.routes.statusLab
 const difficultyLabelKey: Record<string, string> = { short: 'admin.routes.difficulty.short', medium: 'admin.routes.difficulty.medium', long: 'admin.routes.difficulty.long' }
 
 export function AdminRoutesPage() {
+  const countryName = useCountryName()
   const {
     t,
     isAdmin,
@@ -80,7 +82,7 @@ export function AdminRoutesPage() {
               {routes.map((r) => (
                 <tr key={r.id} className="hover:bg-emerald-50/30 transition-colors">
                   <td className="px-5 py-3.5"><Link to={`/wine-routes/${r.id}`} className="font-medium text-gray-900 hover:text-emerald-600">{r.name}</Link></td>
-                  <td className="px-5 py-3.5 text-gray-600 text-xs">{r.country}{r.region ? ` / ${r.region}` : ''}</td>
+                  <td className="px-5 py-3.5 text-gray-600 text-xs">{countryName(r.country)}{r.region ? ` / ${r.region}` : ''}</td>
                   <td className="px-5 py-3.5"><span className={`inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold ${statusStyles[r.status] || ''}`}>{t(statusLabelKey[r.status] || 'admin.common.emptyValue')}</span></td>
                   <td className="px-5 py-3.5"><span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium">{difficultyLabelKey[r.difficulty ?? ''] ? t(difficultyLabelKey[r.difficulty ?? ''] ?? '') : t('admin.common.emptyValue')}</span></td>
                   <td className="px-5 py-3.5 text-gray-600 text-xs">{r.estimatedDays ?? t('admin.common.emptyValue')} {t('admin.routes.days')} / {r.totalDistance ? `${r.totalDistance}km` : t('admin.common.emptyValue')}</td>

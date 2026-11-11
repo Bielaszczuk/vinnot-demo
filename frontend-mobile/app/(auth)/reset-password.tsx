@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
+import { errorMessageKey } from "@/shared/i18n/localizeMessage";
 import { useAccountActions, usePasswordResetLink } from "@/presentation/hooks/useAccountActions";
 import { resetPasswordSchema, type ResetPasswordInput } from "@/domain/user/user.validators";
 import { ResetPasswordScreenView } from "@/presentation/features/auth";
@@ -28,7 +29,7 @@ export default function ResetPasswordScreen() {
     try {
       setMessage(await resetPassword(token, password));
     } catch (error) {
-      setServerError(error instanceof Error ? error.message : t("auth.accountActionError"));
+      setServerError(errorMessageKey(error, t("auth.accountActionError")));
     }
   });
 

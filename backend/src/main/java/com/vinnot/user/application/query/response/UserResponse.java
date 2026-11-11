@@ -18,6 +18,8 @@ public record UserResponse(
         String name,
         String profileImageUrl,
         String avatarUrl,
+        String bio,
+        String cellarVisibility,
         Set<String> roles,
         boolean active,
         boolean locked,
@@ -34,11 +36,17 @@ public record UserResponse(
         Instant updatedAt
 ) {
 
-    public static UserResponse fromDomain(User user) {
-        return fromDomain(user, Set.of());
+    /**
+     * @param avatarUrl the profile photo URL clients load, or {@code null} without one; both photo fields carry it
+     */
+    public static UserResponse fromDomain(User user, String avatarUrl) {
+        return fromDomain(user, Set.of(), avatarUrl);
     }
 
-    public static UserResponse fromDomain(User user, Set<String> socialProviders) {
+    /**
+     * @param avatarUrl the profile photo URL clients load, or {@code null} without one; both photo fields carry it
+     */
+    public static UserResponse fromDomain(User user, Set<String> socialProviders, String avatarUrl) {
         Set<String> roleNames = user.getRoles().stream()
                 .map(role -> "ROLE_" + role.name())
                 .collect(Collectors.toSet());
@@ -52,8 +60,10 @@ public record UserResponse(
                 user.getPhoneNumber(),
                 computedName,
                 computedName,
-                user.getProfileImageUrl(),
-                user.getProfileImageUrl(),
+                avatarUrl,
+                avatarUrl,
+                user.getBio(),
+                user.getCellarVisibility().name(),
                 roleNames,
                 user.isActive(),
                 user.isLocked(),

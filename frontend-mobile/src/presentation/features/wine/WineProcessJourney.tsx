@@ -3,11 +3,13 @@ import type { LucideIcon } from "lucide-react-native";
 import { Check } from "lucide-react-native";
 import { WineProcessSceneVisual } from "./WineProcessScene";
 import { wineSceneLooks, type WineSceneLooks } from "./wineSceneLook";
+import type { TasteScenePicks } from "./TasteProfileSceneArt";
 import { radii, iconStrokes } from "@/shared/theme/tokens";
 import { vinnotColors, vinnotFonts } from "@/shared/theme/vinnotTheme";
 import { fontSizes } from "@/shared/theme/typography";
 
-export type WineProcessScene =
+/** Scenes of the AI wine profile and the comparison. */
+export type WineScene =
   | "uncork"
   | "visual"
   | "bouquet"
@@ -17,6 +19,11 @@ export type WineProcessScene =
   | "structure"
   | "contrast"
   | "recommendation";
+
+/** Scenes of the taste quiz finish: the member's own picks become a taste profile. */
+export type TasteProfileScene = "quizPicks" | "quizGlass" | "quizBlend" | "quizWheel";
+
+export type WineProcessScene = WineScene | TasteProfileScene;
 
 export interface WineProcessStep {
   key: string;
@@ -33,9 +40,12 @@ interface WineProcessJourneyProps {
   activeStep: number;
   /** How the scenes draw the wines; a red wine when not given. */
   looks?: WineSceneLooks;
+  /** The quiz options the taste profile scenes draw; none when not given. */
+  picks?: TasteScenePicks;
 }
 
 const DEFAULT_LOOKS = wineSceneLooks();
+const NO_PICKS: TasteScenePicks = [];
 
 export function WineProcessJourney({
   eyebrow,
@@ -44,6 +54,7 @@ export function WineProcessJourney({
   steps,
   activeStep,
   looks = DEFAULT_LOOKS,
+  picks = NO_PICKS,
 }: WineProcessJourneyProps) {
   const safeActiveStep = Math.min(activeStep, Math.max(steps.length - 1, 0));
   const currentStep = steps[safeActiveStep];
@@ -74,6 +85,7 @@ export function WineProcessJourney({
           step={safeActiveStep}
           total={steps.length}
           looks={looks}
+          picks={picks}
         />
       ) : null}
 

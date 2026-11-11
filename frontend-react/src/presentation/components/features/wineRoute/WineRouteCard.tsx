@@ -8,6 +8,7 @@
 
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useCountryName } from '@hooks/useCountryName'
 import { Clock, MapPin, MessageCircle, TrendingUp } from 'lucide-react'
 import { CoverImage } from '@components/features/media/CoverImage'
 import { Icon } from '@components/ui/Icon'
@@ -37,6 +38,7 @@ interface WineRouteCardProps {
 
 export function WineRouteCard({ route }: WineRouteCardProps) {
   const { t } = useTranslation()
+  const countryName = useCountryName()
   const fallback = illustrations.route
   const badgeClass = (route.difficulty && DIFFICULTY_BADGE_CLASSES[route.difficulty]) || 'bg-gray-50 text-gray-700 ring-gray-200/60'
 
@@ -103,7 +105,7 @@ export function WineRouteCard({ route }: WineRouteCardProps) {
           <div className="flex items-center gap-1.5 text-xs text-gray-500">
             <Icon icon={MapPin} size="xs" className="text-gray-400" />
             <span className="truncate">
-              {route.region}, {route.country}
+              {route.region}, {countryName(route.country)}
             </span>
           </div>
 

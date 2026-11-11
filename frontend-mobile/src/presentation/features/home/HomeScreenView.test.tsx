@@ -1,4 +1,5 @@
 import { fireEvent, render } from "@testing-library/react-native";
+import { Text } from "react-native";
 import { HomeScreenView } from "./HomeScreenView";
 import { Image } from "expo-image";
 import { useReduceMotionEnabled } from "@/presentation/hooks/useReduceMotionEnabled";
@@ -17,9 +18,20 @@ jest.mock("@/presentation/features/wine", () => {
       onReviewsPress ? <Text onPress={onReviewsPress}>{`count ${wine.id}`}</Text> : null,
   };
 });
-jest.mock("@/presentation/features/wineRoute", () => ({ WineRouteCard: () => null }));
+jest.mock("@/presentation/features/wineRoute", () => {
+  const { Text } = jest.requireActual("react-native");
+  return { WineRouteCard: () => <Text>route card</Text> };
+});
+jest.mock("@/presentation/features/social/HomeSocialSections", () => {
+  const { Text } = jest.requireActual("react-native");
+  return { HomeSocialSections: ({ feed }: { feed: unknown[] }) => <Text>{`social sections ${feed.length}`}</Text> };
+});
 
-function renderHome(featuredWines: { id: string }[] = []) {
+function renderHome(
+  featuredWines: { id: string }[] = [],
+  social?: Record<string, unknown>,
+  routes: { id: string }[] = [],
+) {
   const handlers = {
     onRefresh: jest.fn(),
     onExploreWines: jest.fn(),
@@ -46,8 +58,9 @@ function renderHome(featuredWines: { id: string }[] = []) {
       eventsLoading={false}
       homeEvents={[]}
       routesLoading={false}
-      routes={[]}
+      routes={routes as never}
       refreshing={false}
+      social={social as never}
       {...handlers}
     />,
   );
@@ -100,5 +113,22 @@ describe("HomeScreenView wine type images", () => {
     const images = fadingImages(renderHome().screen);
     expect(images.length).toBeGreaterThan(0);
     images.forEach((image) => expect(image.props.transition).toBe(0));
+  });
+});
+
+describe("HomeScreenView social sections", () => {
+  it("shows the social sections at the very end of Home, after the routes", () => {
+    const { screen } = renderHome([], { feed: [{ id: "r-1" }], suggestions: [] }, [{ id: "route-1" }]);
+    const texts = screen
+      .UNSAFE_getAllByType(Text)
+      .map((node) => node.props.children)
+      .filter((child): child is string => typeof child === "string");
+    expect(texts.indexOf("route card")).toBeGreaterThan(-1);
+    expect(texts.indexOf("social sections 1")).toBeGreaterThan(texts.indexOf("route card"));
+  });
+
+  it("leaves them out without social data, as for a signed-out visitor", () => {
+    const { screen } = renderHome();
+    expect(screen.queryByText(/social sections/)).toBeNull();
   });
 });

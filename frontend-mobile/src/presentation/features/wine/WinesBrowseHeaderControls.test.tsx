@@ -1,5 +1,6 @@
 import { ScrollView } from "react-native";
-import { fireEvent, render } from "@testing-library/react-native";
+import { act, fireEvent, render } from "@testing-library/react-native";
+import i18n from "@/shared/i18n";
 import { SheetFieldFocusContext } from "@/presentation/components/ui/SheetInputContext";
 import { OptionsPanel } from "./WinesBrowseHeaderControls";
 
@@ -42,5 +43,28 @@ describe("OptionsPanel search", () => {
     expect(focusInSheet).toHaveBeenLastCalledWith(expect.objectContaining({ measureInWindow: expect.any(Function) }));
     fireEvent(input, "blur");
     expect(focusInSheet).toHaveBeenLastCalledWith(null);
+  });
+});
+
+describe("OptionsPanel default copy", () => {
+  const previous = i18n.language;
+
+  afterEach(async () => {
+    await act(async () => {
+      await i18n.changeLanguage(previous);
+    });
+  });
+
+  it.each([
+    ["es-AR", "Buscar", "Sin resultados"],
+    ["en-US", "Search", "No results"],
+  ])("uses the %s search and empty labels when none are given", async (lng, search, empty) => {
+    await act(async () => {
+      await i18n.changeLanguage(lng);
+    });
+    const screen = render(<OptionsPanel options={grapes} value="" onSelect={jest.fn()} searchable />);
+
+    fireEvent.changeText(screen.getByPlaceholderText(search), "zzz");
+    expect(screen.getByText(empty)).toBeTruthy();
   });
 });

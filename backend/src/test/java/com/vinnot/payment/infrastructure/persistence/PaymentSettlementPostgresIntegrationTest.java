@@ -773,7 +773,7 @@ class PaymentSettlementPostgresIntegrationTest {
                 .isEqualTo(s.organizerId().toString());
         // A refund request needs the buyer's registration, which no longer exists.
         assertThatThrownBy(() -> requestRefund.request(s.id(), s.organizerId()))
-                .isInstanceOf(BusinessRuleViolationException.class).hasMessageContaining("devolución");
+                .isInstanceOf(BusinessRuleViolationException.class).hasMessageContaining("refund");
     }
 
     @Test

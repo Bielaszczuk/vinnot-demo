@@ -30,9 +30,9 @@ describe("operation cache tags", () => {
   });
 
   it.each(["cellar.add", "cellar.update", "cellar.remove"] as const)(
-    "%s refreshes cellar data and user statistics",
+    "%s refreshes cellar data, user statistics and the public cellar",
     (operation) => {
-      expect(mutationTags(operation)).toEqual(["Cellar", "User"]);
+      expect(mutationTags(operation)).toEqual(["Cellar", "User", "Social"]);
     },
   );
 

@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Trash2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import { Avatar } from "@/presentation/components/ui/Atoms";
+import { Avatar, UserHandle } from "@/presentation/components/ui/Atoms";
 import { NameBadge } from "@/presentation/features/points/NameBadge";
 import { Button } from "@/presentation/components/ui/Button";
 import { Skeleton } from "@/presentation/components/ui/Feedback";
@@ -114,6 +114,7 @@ export function ReviewComments({ wineId, reviewId }: ReviewCommentsProps) {
                   <CommunityActions variant="menu" targetType="COMMENT" targetId={comment.id} authorId={comment.reviewer?.id} />
                 </View>
               </View>
+              <UserHandle username={comment.reviewer?.username} style={styles.commentHandle} />
               <Text style={styles.commentText}>{comment.content}</Text>
               <PublicationStatus status={comment.publicationStatus} />
             </View>
@@ -181,6 +182,8 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xs,
     lineHeight: 16,
   },
+  // Smaller than the author name (xs) so the handle stays secondary inside the bubble.
+  commentHandle: { fontSize: fontSizes["2xs"], lineHeight: 14 },
   commentText: {
     color: vinnotColors.muted,
     fontFamily: vinnotFonts.regular,

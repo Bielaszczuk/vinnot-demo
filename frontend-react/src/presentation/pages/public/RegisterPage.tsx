@@ -12,6 +12,7 @@ import { AlertBanner } from '@components/feedback/AlertBanner'
 import { useRegisterViewModel } from './useRegisterViewModel'
 import { PasswordWithStrength } from './RegisterPasswordWithStrength'
 import { AuthSocialButtons } from '@components/auth/AuthSocialButtons'
+import { fieldErrorMessage } from '@presentation/feedback/fieldErrorMessage'
 
 export function RegisterPage() {
   const {
@@ -92,7 +93,7 @@ export function RegisterPage() {
                 label={t('auth.username')}
                 autoComplete="username"
                 placeholder={t('auth.usernamePlaceholder')}
-                error={errors.username?.message}
+                error={fieldErrorMessage(t, errors.username)}
                 {...register('username')}
               />
               <Input
@@ -100,7 +101,7 @@ export function RegisterPage() {
                 type="email"
                 autoComplete="email"
                 placeholder="your@email.com"
-                error={errors.email?.message}
+                error={fieldErrorMessage(t, errors.email)}
                 {...register('email')}
               />
             </div>
@@ -110,14 +111,14 @@ export function RegisterPage() {
                 label={t('auth.firstName')}
                 autoComplete="given-name"
                 placeholder={t('auth.firstNamePlaceholder')}
-                error={errors.firstName?.message}
+                error={fieldErrorMessage(t, errors.firstName)}
                 {...register('firstName')}
               />
               <Input
                 label={t('auth.lastName')}
                 autoComplete="family-name"
                 placeholder={t('auth.lastNamePlaceholder')}
-                error={errors.lastName?.message}
+                error={fieldErrorMessage(t, errors.lastName)}
                 {...register('lastName')}
               />
             </div>
@@ -125,7 +126,7 @@ export function RegisterPage() {
             <PasswordWithStrength
               label={t('auth.password')}
               placeholder="••••••••"
-              error={errors.password?.message}
+              error={fieldErrorMessage(t, errors.password)}
               hint={t('auth.passwordHint')}
               {...register('password')}
             />
@@ -135,7 +136,7 @@ export function RegisterPage() {
               type="password"
               autoComplete="new-password"
               placeholder="••••••••"
-              error={errors.confirmPassword?.message}
+              error={fieldErrorMessage(t, errors.confirmPassword)}
               {...register('confirmPassword')}
             />
 

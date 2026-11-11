@@ -1,5 +1,6 @@
 package com.vinnot.user.application.command.handler;
 
+import com.vinnot.shared.application.port.AvatarUrlResolver;
 import com.vinnot.shared.application.port.FileStoragePort;
 import com.vinnot.shared.domain.exception.EntityNotFoundException;
 import com.vinnot.user.application.command.model.UploadUserAvatarCommand;
@@ -25,6 +26,7 @@ public class UploadUserAvatarCommandHandler implements UploadUserAvatarUseCase {
     private final UserRepositoryPort userRepository;
     private final FileStoragePort fileStorage;
     private final ProfilePointsPort points;
+    private final AvatarUrlResolver avatars;
 
     @Override
     public String execute(UploadUserAvatarCommand command) {
@@ -48,7 +50,7 @@ public class UploadUserAvatarCommandHandler implements UploadUserAvatarUseCase {
         if (Objects.nonNull(previousAvatarUrl) && !previousAvatarUrl.isBlank()) {
             deleteQuietly(previousAvatarUrl, command.userId());
         }
-        return avatarUrl;
+        return avatars.resolve(avatarUrl);
     }
 
     /**

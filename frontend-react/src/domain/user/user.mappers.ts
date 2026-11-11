@@ -1,3 +1,5 @@
+import { parseBadgeTier } from '@domain/points/points.tiers'
+import { mapTasteTraits, mapTasteWheel, parseCellarVisibility } from '@domain/social/social.mappers'
 import type { User, UserPreferences, UserProfile, UserStats, NotificationPreferences, PriceRange, SocialProvider, UserRole } from './user.types'
 
 type NotificationPreferencesInput = {
@@ -36,6 +38,8 @@ type UserInput = {
   hasPassword?: boolean
   socialProviders?: string[]
   onboardingCompleted?: boolean
+  bio?: string | null
+  cellarVisibility?: string | null
   is_verified?: boolean
   createdAt?: string
   created_at?: string
@@ -44,14 +48,24 @@ type UserInput = {
 }
 
 type UserProfileInput = {
-  id: string | number
-  name: string
-  avatar?: string | null
+  id: string
+  username: string
+  roles?: string[]
+  fullName?: string | null
+  avatarUrl?: string | null
+  createdAt: string
   bio?: string | null
-  location?: string | null
-  favorite_wines?: string[]
-  review_count?: number
-  joined_at: string
+  tier?: string | null
+  followersCount?: number | null
+  followingCount?: number | null
+  reviewsCount?: number | null
+  cellarCount?: number | null
+  cellarVisible?: boolean | null
+  following?: boolean | null
+  followsYou?: boolean | null
+  affinityPercent?: number | null
+  tasteWheel?: { kind: string; value: string; label: string; score: number; tone?: string | null; ratedWines?: number | null }[] | null
+  tasteTraits?: Parameters<typeof mapTasteTraits>[0]
 }
 
 type UserStatsInput = {
@@ -112,6 +126,8 @@ export function mapUserFromDto(dto: UserInput): User {
     hasPassword: dto.hasPassword ?? !(dto.hasSocialIdentity ?? false),
     socialProviders: (dto.socialProviders ?? []) as SocialProvider[],
     onboardingCompleted: dto.onboardingCompleted ?? true,
+    bio: dto.bio ?? null,
+    cellarVisibility: parseCellarVisibility(dto.cellarVisibility),
     createdAt: new Date(dto.createdAt ?? dto.created_at ?? new Date().toISOString()),
     updatedAt: new Date(dto.updatedAt ?? dto.updated_at ?? new Date().toISOString()),
   }
@@ -179,14 +195,23 @@ function getDefaultPreferences(): UserPreferences {
  */
 export function mapUserProfileFromDto(dto: UserProfileInput): UserProfile {
   return {
-    id: String(dto.id),
-    name: dto.name,
-    avatar: dto.avatar ?? null,
+    id: dto.id,
+    username: dto.username,
+    displayName: dto.fullName?.trim() || dto.username,
+    avatar: dto.avatarUrl ?? null,
+    joinedAt: new Date(dto.createdAt),
     bio: dto.bio ?? null,
-    location: dto.location ?? null,
-    favoriteWines: dto.favorite_wines ?? [],
-    reviewCount: dto.review_count ?? 0,
-    joinedAt: new Date(dto.joined_at),
+    tier: parseBadgeTier(dto.tier),
+    followersCount: dto.followersCount ?? 0,
+    followingCount: dto.followingCount ?? 0,
+    reviewsCount: dto.reviewsCount ?? 0,
+    cellarCount: dto.cellarCount ?? null,
+    cellarVisible: dto.cellarVisible ?? false,
+    following: dto.following ?? false,
+    followsYou: dto.followsYou ?? false,
+    affinityPercent: dto.affinityPercent ?? null,
+    tasteWheel: mapTasteWheel(dto.tasteWheel),
+    tasteTraits: mapTasteTraits(dto.tasteTraits),
   }
 }
 

@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { ReviewsList } from './ReviewsList'
@@ -46,7 +47,7 @@ beforeEach(() => {
 })
 
 it('creates a review with the chosen vintage, offering the catalog vintage first', async () => {
-  render(<ReviewsList wineId="wine" catalogVintage={2018} />)
+  render(<MemoryRouter><ReviewsList wineId="wine" catalogVintage={2018} /></MemoryRouter>)
   fireEvent.click(screen.getAllByRole('button', { name: 'reviews.writeReview' })[0]!)
   fireEvent.keyDown(screen.getByRole('slider'), { key: 'End' })
   expect(screen.getByRole('option', { name: 'vintage.catalogOption:2018' })).toBeInTheDocument()
@@ -59,7 +60,7 @@ it('creates a review with the chosen vintage, offering the catalog vintage first
 
 it('keeps sending the stored vintage when an edit leaves it untouched', async () => {
   state.reviews = [ownReview(2016)]
-  render(<ReviewsList wineId="wine" />)
+  render(<MemoryRouter><ReviewsList wineId="wine" /></MemoryRouter>)
   expect(await screen.findByText('vintage.pill:2016')).toBeInTheDocument()
   fireEvent.click(await screen.findByRole('button', { name: 'common.edit' }))
   expect(screen.getByLabelText('vintage.label')).toHaveValue('2016')
@@ -71,7 +72,7 @@ it('keeps sending the stored vintage when an edit leaves it untouched', async ()
 
 it('asks to clear the vintage when the user removes it', async () => {
   state.reviews = [ownReview(2016)]
-  render(<ReviewsList wineId="wine" />)
+  render(<MemoryRouter><ReviewsList wineId="wine" /></MemoryRouter>)
   fireEvent.click(await screen.findByRole('button', { name: 'common.edit' }))
   fireEvent.change(screen.getByLabelText('vintage.label'), { target: { value: '' } })
   fireEvent.click(screen.getByRole('button', { name: 'reviews.form.submitEdit' }))
@@ -81,7 +82,7 @@ it('asks to clear the vintage when the user removes it', async () => {
 
 it('sends no vintage change when a review without vintage is edited as before', async () => {
   state.reviews = [ownReview(null)]
-  render(<ReviewsList wineId="wine" />)
+  render(<MemoryRouter><ReviewsList wineId="wine" /></MemoryRouter>)
   fireEvent.click(await screen.findByRole('button', { name: 'common.edit' }))
   fireEvent.click(screen.getByRole('button', { name: 'reviews.form.submitEdit' }))
   await waitFor(() => expect(state.update).toHaveBeenCalledTimes(1))
@@ -91,7 +92,7 @@ it('sends no vintage change when a review without vintage is edited as before', 
 
 it('draws the pour control and the review glasses with the wine type art', async () => {
   state.reviews = [ownReview(2016)]
-  render(<ReviewsList wineId="wine" wineType="rose" />)
+  render(<MemoryRouter><ReviewsList wineId="wine" wineType="rose" /></MemoryRouter>)
   expect(await screen.findByText('vintage.pill:2016')).toBeInTheDocument()
   const rated = screen.getByRole('img', { name: 'common.rating.glassesSummary' })
   expect(rated.querySelector('img')).toHaveAttribute('src', '/images/rating/glass-rose.webp')

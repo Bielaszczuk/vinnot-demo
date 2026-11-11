@@ -1,5 +1,6 @@
 package com.vinnot.admin.application.query.handler;
 
+import com.vinnot.shared.application.port.AvatarUrlResolver;
 import com.vinnot.admin.application.port.in.SearchAdminReviewsUseCase;
 import com.vinnot.admin.application.port.out.ReviewQueryPort;
 import com.vinnot.admin.application.port.out.UserPointsPort;
@@ -28,6 +29,7 @@ public class SearchAdminReviewsQueryHandler implements SearchAdminReviewsUseCase
     private final UserQueryPort userQueryPort;
     private final WineQueryPort wineQueryPort;
     private final UserPointsPort userPoints;
+    private final AvatarUrlResolver avatars;
 
     @Override
     @Transactional(readOnly = true)
@@ -66,7 +68,7 @@ public class SearchAdminReviewsQueryHandler implements SearchAdminReviewsUseCase
                 ? new ReviewAdminResponse.ReviewerInfo(
                         user.id(), user.username(),
                         user.firstName() + " " + user.lastName(),
-                        user.profileImageUrl(),
+                        avatars.resolve(user.profileImageUrl()),
                         standings.getOrDefault(user.id(), UserPointsPort.Standing.NONE).badgeTier())
                 : null;
 

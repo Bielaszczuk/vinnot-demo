@@ -6,6 +6,7 @@ import { useRegions } from '@hooks/queries/wine/useRegions'
 import { useDebounce } from '@hooks/useDebounce'
 import { useUrlFilters } from '@hooks/useUrlFilters'
 import { useReducedMotion } from '@hooks/useReducedMotion'
+import { useCountryName } from '@hooks/useCountryName'
 import type { RouteDifficulty, WineRoute, WineRouteFilter } from '@domain/route/route.types'
 
 const DIFFICULTIES: readonly RouteDifficulty[] = ['short', 'medium', 'long']
@@ -20,6 +21,7 @@ export function useWineRoutesViewModel() {
   const { t } = useTranslation()
   const { values, page: currentPage, update } = useUrlFilters(FILTER_KEYS)
   const reducedMotion = useReducedMotion()
+  const countryName = useCountryName()
   const search = values.search
   const selectedDifficulty = parseDifficulty(values.difficulty)
   const selectedCountry = values.country || null
@@ -47,9 +49,10 @@ export function useWineRoutesViewModel() {
   const isFirstPage = currentPage === 0
   const isLastPage = currentPage >= totalPages - 1
 
+  // The value stays the stored name the API filters by; only the label follows the interface language.
   const countryOptions = useMemo(() => {
-    return countries.map((country) => ({ value: country.name, label: country.name }))
-  }, [countries])
+    return countries.map((country) => ({ value: country.name, label: countryName(country.name) }))
+  }, [countries, countryName])
 
   const regionOptions = useMemo(() => {
     if (!selectedCountry) return []

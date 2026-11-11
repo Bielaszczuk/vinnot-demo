@@ -125,7 +125,7 @@ RETURNING verifier_ciphertext
                     """, Boolean.class, ownerId, environment.name(), existing.getFirst()))) {
             // Retain the authorization needed for historical reconciliation and refunds.
             throw new BusinessRuleViolationException(
-                    "PAYMENT_ACCOUNT_HAS_OPERATIONS", "Esta cuenta tiene operaciones asociadas. Reconectá la misma cuenta o contactá a soporte para cambiarla.");
+                    "PAYMENT_ACCOUNT_HAS_OPERATIONS", "This account has linked operations. Reconnect the same account or contact support to change it.");
         }
         return jdbc.update(
                         """

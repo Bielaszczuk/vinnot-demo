@@ -15,13 +15,13 @@ describe("Facebook production isolation", () => {
 
   it("rejects a direct call before initializing the SDK even with inherited credentials", async () => {
     process.env.EXPO_PUBLIC_FACEBOOK_APP_ID = "development-id";
-    await expect(socialIdentityGateway.acquire("FACEBOOK")).rejects.toThrow("no está configurado");
+    await expect(socialIdentityGateway.acquire("FACEBOOK")).rejects.toThrow("authErrors.facebookNotConfigured");
     expect(Settings.initializeSDK).not.toHaveBeenCalled();
   });
 
   it("requires a configured app ID in an enabled environment", async () => {
     env.facebookLoginEnabled = true;
     delete process.env.EXPO_PUBLIC_FACEBOOK_APP_ID;
-    await expect(socialIdentityGateway.acquire("FACEBOOK")).rejects.toThrow("no está configurado");
+    await expect(socialIdentityGateway.acquire("FACEBOOK")).rejects.toThrow("authErrors.facebookNotConfigured");
   });
 });

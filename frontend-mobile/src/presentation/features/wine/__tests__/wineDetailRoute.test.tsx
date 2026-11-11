@@ -217,9 +217,8 @@ describe("wine detail route", () => {
     expect(mockPush).toHaveBeenLastCalledWith("/(auth)/login");
   });
 
-  it("opens the reviews tab and the review sheet straight from the hero", () => {
+  it("glides to the reviews and opens the review sheet straight from the hero", () => {
     const screen = render(<WineDetailRoute />);
-    expect(screen.queryByText("Reviews list")).toBeNull();
     expect(screen.queryByText(/^Review sheet/)).toBeNull();
 
     fireEvent.press(screen.getByRole("button", { name: "reviews.writeReview" }));
@@ -243,10 +242,26 @@ describe("wine detail route", () => {
     expect(screen.getByText("wineDetails.tasteProfile")).toBeTruthy();
   });
 
-  it("opens on the information tab without a tab parameter", () => {
+  it("shows the reviews at the end of the information tab, without a reviews tab or a jump", () => {
     const screen = render(<WineDetailRoute />);
+    expect(screen.getByText("wines.tabs.info")).toBeTruthy();
+    expect(screen.getByText("wines.tabs.ai")).toBeTruthy();
+    expect(screen.queryByText("wines.tabs.reviews")).toBeNull();
+    expect(screen.getByText("Reviews list")).toBeTruthy();
+    const scrollTo = jest.spyOn(screen.UNSAFE_getByType(ScrollView).instance, "scrollTo");
+    fireEvent(screen.getByTestId("wine-reviews-section"), "layout", { nativeEvent: { layout: { y: 640 } } });
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  it("leaves the reviews out of the profile tab and brings them back with the hero shortcut", () => {
+    const screen = render(<WineDetailRoute />);
+    fireEvent.press(screen.getByText("wines.tabs.ai"));
     expect(screen.queryByTestId("wine-reviews-section")).toBeNull();
-    expect(screen.queryByText("Reviews list")).toBeNull();
+
+    fireEvent.press(screen.getByRole("button", { name: "reviews.writeReview" }));
+
+    expect(screen.getByText("Reviews list")).toBeTruthy();
+    expect(screen.getByText("Review sheet new")).toBeTruthy();
   });
 
   it("opens straight on the reviews and glides to them from the card's review count", () => {
@@ -282,13 +297,11 @@ describe("wine detail route", () => {
     fireEvent.press(screen.getByRole("button", { name: "reviews.writeReview" }));
 
     expect(mockPush).toHaveBeenCalledWith("/(auth)/login");
-    expect(screen.queryByText("Reviews list")).toBeNull();
     expect(screen.queryByText(/^Review sheet/)).toBeNull();
   });
 
-  it("writes and edits a review in the sheet from the reviews tab, and closes it", () => {
+  it("writes and edits a review in the sheet from the reviews at the end of the information tab, and closes it", () => {
     const screen = render(<WineDetailRoute />);
-    fireEvent.press(screen.getByText("wines.tabs.reviews"));
 
     fireEvent.press(screen.getByText("List write button"));
     fireEvent.press(screen.getByText("Review sheet new"));

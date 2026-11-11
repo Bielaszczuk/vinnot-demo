@@ -59,11 +59,16 @@ export { AuthApiError, AuthValidationError } from "./auth.errors";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Backend codes whose server text is replaced by a translated message. */
+/**
+ * Backend codes with their own translated message. The server text is never
+ * shown: any other code gets the operation's translated fallback.
+ */
 const FRIENDLY_MESSAGES: Record<string, string> = {
   EMAIL_NOT_VERIFIED: authErrors.emailNotVerified,
   TERMS_VERSION_CHANGED: authErrors.termsVersionChanged,
   ACCOUNT_TEMPORARILY_LOCKED: authErrors.temporarilyLocked,
+  EMAIL_ALREADY_EXISTS: authErrors.emailAlreadyExists,
+  USERNAME_ALREADY_EXISTS: authErrors.usernameAlreadyExists,
 };
 
 /**
@@ -72,15 +77,13 @@ const FRIENDLY_MESSAGES: Record<string, string> = {
  */
 function mapAuthHttpError(error: unknown, fallbackMessage: string): never {
   if (isApiError(error)) {
-    const message = error.message || fallbackMessage;
-
     if (error.status === 401) {
       throw new AuthApiError(authErrors.invalidCredentials, 401, false);
     }
     if (error.isValidation && error.details && typeof error.details === "object") {
-      throw new AuthValidationError(message, error.details as Record<string, string[]>);
+      throw new AuthValidationError(fallbackMessage, error.details as Record<string, string[]>);
     }
-    const friendlyMessage = (error.code && FRIENDLY_MESSAGES[error.code]) || message;
+    const friendlyMessage = (error.code && FRIENDLY_MESSAGES[error.code]) || fallbackMessage;
     throw new AuthApiError(friendlyMessage, error.status, false, error.code);
   }
 
@@ -111,7 +114,7 @@ function mapRefreshError(error: unknown): never {
   if (isApiError(error)) {
     const sessionRejected = isSessionRejected(error.status, error.code);
     throw new AuthApiError(
-      sessionRejected ? authErrors.sessionExpired : error.message,
+      sessionRejected ? authErrors.sessionExpired : authErrors.refreshFailed,
       error.status,
       sessionRejected,
       error.code,
@@ -286,7 +289,7 @@ export const authService = {
     } catch (error) {
       if (isApiError(error)) {
         throw new AuthApiError(
-          error.status === 401 ? authErrors.sessionExpired : error.message,
+          error.status === 401 ? authErrors.sessionExpired : authErrors.unexpected,
           error.status,
           error.status === 401,
           error.code,

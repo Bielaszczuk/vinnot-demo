@@ -98,8 +98,8 @@ public final class MercadoPagoAuthorizationAdapter
             // Provider response bodies can contain secrets; do not chain or log the raw exception.
             throw new ExternalServiceUnavailableException(
                     "PAYMENT_PROVIDER_UNAVAILABLE",
-                    "No pudimos vincular Mercado Pago. Volvé a iniciar la conexión en unos"
-                        + " minutos.",
+                    "Mercado Pago could not be linked. Start the connection again in a few"
+                        + " minutes.",
                     null);
         }
     }
@@ -158,7 +158,7 @@ public final class MercadoPagoAuthorizationAdapter
     private ExternalServiceUnavailableException renewalUnavailable() {
         return new ExternalServiceUnavailableException(
                 "PAYMENT_RENEWAL_UNAVAILABLE",
-                "No pudimos renovar la conexión de Mercado Pago.",
+                "The Mercado Pago connection could not be renewed.",
                 null);
     }
 

@@ -35,6 +35,7 @@ const user: AdminUser = {
   lastLoginAt: null,
   points: 1372,
   badgeTier: "RESERVA",
+  avatarUrl: null,
 };
 const close = jest.fn();
 beforeEach(() => {
@@ -146,6 +147,14 @@ it("shows the user's tier and points so admins can spot abuse", () => {
   render(<AdminUserActionSheet visible user={user} onClose={close} />);
   expect(screen.getByRole("button", { name: "points.badgeLabel" })).toBeTruthy();
   expect(screen.getByText("points.tierAndPoints")).toBeTruthy();
+});
+
+it("shows the user's photo, or their initial when they have none", () => {
+  const { rerender } = render(<AdminUserActionSheet visible user={{ ...user, avatarUrl: "https://cdn.vinnot.com/example.jpg" }} onClose={close} />);
+  expect(screen.getByLabelText("common.avatarOf").props.source).toEqual({ uri: "https://cdn.vinnot.com/example.jpg" });
+  rerender(<AdminUserActionSheet visible user={user} onClose={close} />);
+  expect(screen.queryByLabelText("common.avatarOf")).toBeNull();
+  expect(screen.getByText("E")).toBeTruthy();
 });
 
 it("edits the account names and sends both together, keeping the sheet open on failure", () => {

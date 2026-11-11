@@ -31,6 +31,7 @@ export type PointsSource =
   | 'CELLAR_ADD'
   | 'EVENT_REGISTRATION'
   | 'PROFILE_COMPLETE'
+  | 'FOLLOWER_GAINED'
 
 /** One movement in the points history; revocations have negative points. */
 export interface PointsEntry {

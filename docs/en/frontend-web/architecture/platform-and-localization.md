@@ -54,6 +54,30 @@ There is no global HTTP language header. Available dictionaries do not certify
 that every component string uses i18n. Scope is verified through keys and
 consumers; commercial names and user input are not automatically translated.
 
+### Country names
+
+The catalog stores one Spanish name per country (`countries.name`, keyed by the
+lowercase ISO code), and the API returns only that name. `domain/location/countryNames.ts`
+holds the table of the 116 seeded countries (ISO code → `{ es, en }`) and
+`localizeCountryName(name, language)`, which matches the stored name, the English name
+or the code ignoring case and accents (including the `MG` row, shown as Madagascar)
+and returns the name in the interface language; an unknown name is shown as stored.
+The `useCountryName` hook reads the language from i18next and is used only for
+displayed text: wine search, wineries, routes and their sidebar, wine cards and
+details, events nearby, the event area, and the admin pickers and tables. Values sent
+back to the API (filters, form values, ids) keep the stored name.
+
+### Form validation messages
+
+The schemas in `domain/user/user.validators.ts` (sign-in, registration, password
+recovery and change, username) report i18n keys (`auth.*`) instead of text, with no
+i18next dependency. Pages translate them where they are shown with `fieldErrorMessage`
+(`presentation/feedback/fieldErrorMessage.ts`), which also translates the field error
+set from a server response (`auth.errors.invalidField`). The password strength meter
+uses `auth.passwordWeak`, `auth.passwordMedium` and `auth.passwordStrong`. Server error
+messages are never shown: the `presentation/feedback` helpers pick a key from the code
+and status.
+
 ### Administrative panel language
 
 Review, submission, report and pending-publication dates, statistics and admin

@@ -1,4 +1,7 @@
 import { usersClient } from '@api/clients/users.client'
+import { mapPublicCellarWine, mapSocialPage, mapSocialReview } from '@domain/social/social.mappers'
+import { normalizeBio } from '@domain/social/social.validators'
+import type { CellarVisibility, PublicCellar, SocialPage, SocialReview } from '@domain/social/social.types'
 import { mapUserFromDto, mapUserProfileFromDto, mapUserStatsFromDto } from '@domain/user/user.mappers'
 import { toPreferredLanguage } from '@domain/user/accountLocale'
 import type { User, UserProfile, UserStats } from '@domain/user/user.types'
@@ -19,6 +22,14 @@ export interface UpdateUserInput {
   lastName?: string
   name?: string
 }
+
+export interface SocialProfileInput {
+  bio: string
+  cellarVisibility: CellarVisibility
+}
+
+const PROFILE_REVIEWS_PAGE_SIZE = 10
+const PROFILE_CELLAR_PAGE_SIZE = 12
 
 export interface DeleteAccountInput {
   appleAuthorizationCode?: string
@@ -56,6 +67,37 @@ export const usersService = {
   async getUserProfile(id: string): Promise<UserProfile> {
     const response = await usersClient.getUserProfile(id)
     return mapUserProfileFromDto(response)
+  },
+
+  /**
+   * Approved reviews of a user's public profile, newest first
+   */
+  async getUserReviews(id: string, page: number): Promise<SocialPage<SocialReview>> {
+    return mapSocialPage(await usersClient.getUserReviews(id, page, PROFILE_REVIEWS_PAGE_SIZE), mapSocialReview)
+  },
+
+  /**
+   * Public cellar of a user, or the locked state when its owner hides it from the viewer
+   */
+  async getUserCellar(id: string, page: number): Promise<PublicCellar> {
+    try {
+      const cellar = await usersClient.getUserCellar(id, page, PROFILE_CELLAR_PAGE_SIZE)
+      return { visible: true, page: mapSocialPage(cellar, mapPublicCellarWine) }
+    } catch (error: unknown) {
+      if (isHttpError(error) && error.status === 403 && error.code === 'CELLAR_NOT_VISIBLE') return { visible: false }
+      throw error
+    }
+  },
+
+  /**
+   * Saves the public bio and who can see the cellar (PATCH /users/me)
+   */
+  async updateSocialProfile(input: SocialProfileInput): Promise<User> {
+    const response = await usersClient.updateUser({
+      bio: normalizeBio(input.bio),
+      cellarVisibility: input.cellarVisibility,
+    })
+    return mapUserFromDto(response)
   },
 
   /**

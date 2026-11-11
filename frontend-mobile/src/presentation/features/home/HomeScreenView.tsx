@@ -28,6 +28,10 @@ import {
   type WineTypeKey,
 } from "./HomeScreenView.parts";
 import { BrandRefreshControl } from "@/presentation/components/ui/BrandRefreshControl";
+import {
+  HomeSocialSections,
+  type HomeSocialSectionsProps,
+} from "@/presentation/features/social/HomeSocialSections";
 import { FocusAwareStatusBar } from "@/presentation/components/layout/FocusAwareStatusBar";
 import { iconStrokes } from "@/shared/theme/tokens";
 
@@ -63,6 +67,8 @@ type HomeScreenViewProps = {
   onEventPress: (id: string) => void;
   onSeeAllRoutes: () => void;
   onRoutePress: (id: string) => void;
+  /** «De gente que seguís» and «Personas para seguir»; only for a signed-in user. */
+  social?: HomeSocialSectionsProps;
 };
 
 export function HomeScreenView({
@@ -96,6 +102,7 @@ export function HomeScreenView({
   onEventPress,
   onSeeAllRoutes,
   onRoutePress,
+  social,
 }: HomeScreenViewProps) {
   const { t } = useTranslation();
   const typeImageTransition = useImageTransition(180);
@@ -313,6 +320,9 @@ export function HomeScreenView({
           onSeeAll={onSeeAllRoutes}
           onRoutePress={onRoutePress}
         />
+
+        {/* People the user follows close Home, after every discovery section. */}
+        {social ? <HomeSocialSections {...social} /> : null}
       </ScrollView>
     </>
   );

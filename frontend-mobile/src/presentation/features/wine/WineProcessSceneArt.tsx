@@ -42,7 +42,7 @@ import wineWhite from "../../../../assets/images/loading/wine-white.webp";
 import wispOne from "../../../../assets/images/loading/wisp-1.webp";
 import wispTwo from "../../../../assets/images/loading/wisp-2.webp";
 import wispThree from "../../../../assets/images/loading/wisp-3.webp";
-import type { WineProcessScene } from "./WineProcessJourney";
+import type { WineProcessScene, WineScene } from "./WineProcessJourney";
 import {
   POUR_COLORS,
   type SceneGlass,
@@ -55,10 +55,10 @@ import {
 export const SCENE_ART_SIZE = 128;
 const CENTER = SCENE_ART_SIZE / 2;
 
-type Progress = SharedValue<number>;
+export type Progress = SharedValue<number>;
 type LayerStyle = ComponentProps<typeof Animated.View>["style"];
 
-interface Art {
+export interface Art {
   source: ImageSourcePropType;
   /** Pixel size of the prepared watercolor layer. */
   w: number;
@@ -99,7 +99,7 @@ const art = {
   magnifier: { source: magnifierImage, w: 202, h: 220 },
 } satisfies Record<string, Art>;
 
-const wisps = [art.wispOne, art.wispTwo, art.wispThree];
+export const wisps = [art.wispOne, art.wispTwo, art.wispThree];
 const grapes = { red: art.grapesRed, white: art.grapesWhite } as const;
 
 type Box = readonly [x: number, y: number, width: number, height: number];
@@ -110,7 +110,7 @@ interface GlassArt {
   wineBox: Box;
 }
 
-const glasses: Record<SceneGlass, GlassArt> = {
+export const glasses: Record<SceneGlass, GlassArt> = {
   bordeaux: { glass: art.glassRed, wineBox: [0.292, 0.349, 0.423, 0.235] },
   rose: { glass: art.glassRose, wineBox: [0.284, 0.347, 0.433, 0.23] },
   tulip: { glass: art.glassTulip, wineBox: [0.323, 0.347, 0.356, 0.152] },
@@ -144,7 +144,7 @@ const BOTTLE_LIP: Record<WineSceneLook["bottle"], { x: number; y: number }> = {
 };
 
 /** Lines of the handwriting layer: top and bottom as fractions of its height. */
-const handwritingLines = [
+export const handwritingLines = [
   [0, 0.203],
   [0.235, 0.383],
   [0.388, 0.526],
@@ -154,14 +154,14 @@ const handwritingLines = [
 ] as const;
 
 /** 0 before `start`, 1 after `end`, eased in and out between them. */
-function phase(value: number, start: number, end: number) {
+export function phase(value: number, start: number, end: number) {
   "worklet";
   const t = interpolate(value, [start, end], [0, 1], Extrapolation.CLAMP);
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
 /** 0 before `start`, 1 after `end`, slowing down like an object coming to rest. */
-function settle(value: number, start: number, end: number) {
+export function settle(value: number, start: number, end: number) {
   "worklet";
   const t = interpolate(value, [start, end], [0, 1], Extrapolation.CLAMP);
   return 1 - Math.pow(1 - t, 3);
@@ -178,7 +178,7 @@ interface SpriteProps {
 }
 
 /** A watercolor layer placed on the stage, optionally moved by an animated style. */
-function Sprite({ item, scale, x, y, style, children, testID }: SpriteProps) {
+export function Sprite({ item, scale, x, y, style, children, testID }: SpriteProps) {
   const width = item.w * scale;
   const height = item.h * scale;
   return (
@@ -208,7 +208,7 @@ interface FilledGlassProps {
 }
 
 /** A glass whose wine rises or falls: the wine layer is uncovered from the bottom up. */
-function FilledGlass({ progress, look, scale, x, y, from, to, start, end, testID }: FilledGlassProps) {
+export function FilledGlass({ progress, look, scale, x, y, from, to, start, end, testID }: FilledGlassProps) {
   const { glass, wineBox } = glasses[look.glass];
   const width = glass.w * scale;
   const height = glass.h * scale;
@@ -572,14 +572,15 @@ interface WispProps {
   x: number;
   y: number;
   start: number;
+  testID?: string;
 }
 
-function Wisp({ progress, item, scale, x, y, start }: WispProps) {
+export function Wisp({ progress, item, scale, x, y, start, testID = "scene-bouquet-wisp" }: WispProps) {
   const rise = useAnimatedStyle(() => ({
     opacity: 0.8 * phase(progress.value, start, start + 0.3),
     transform: [{ translateY: 10 - 16 * settle(progress.value, start, start + 0.6) }],
   }));
-  return <Sprite testID="scene-bouquet-wisp" item={item} scale={scale} x={x} y={y} style={rise} />;
+  return <Sprite testID={testID} item={item} scale={scale} x={x} y={y} style={rise} />;
 }
 
 /** A sip lowers the wine in the glass. */
@@ -895,7 +896,7 @@ function Grapes({ progress, item, panWidth, panHeight, start }: GrapesProps) {
 }
 
 interface SceneArtProps {
-  scene: WineProcessScene;
+  scene: WineScene;
   progress: Progress;
   looks: WineSceneLooks;
 }
@@ -924,7 +925,7 @@ export function WineProcessSceneArt({ scene, progress, looks }: SceneArtProps) {
 }
 
 /** Scenes whose gesture plays again on the last step while the answer is pending. */
-export const REPLAYABLE_SCENES: ReadonlySet<WineProcessScene> = new Set(["report", "recommendation"]);
+export const REPLAYABLE_SCENES: ReadonlySet<WineProcessScene> = new Set(["report", "recommendation", "quizWheel"]);
 
 const styles = StyleSheet.create({
   layer: { position: "absolute" },

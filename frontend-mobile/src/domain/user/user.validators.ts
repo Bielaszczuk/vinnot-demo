@@ -27,6 +27,7 @@ export const USER_VALIDATION_MESSAGES = {
   lastNameRequired: "validation.user.lastNameRequired",
   nameMax: "validation.user.nameMax",
   phoneMax: "validation.user.phoneMax",
+  bioMax: "validation.user.bioMax",
   avatarUrlInvalid: "validation.user.avatarUrlInvalid",
 } as const;
 
@@ -103,6 +104,9 @@ export const updateUserProfileSchema = z.object({
   firstName: z.string().trim().min(1, m.firstNameRequired).max(100, m.nameMax),
   lastName: z.string().trim().max(100, m.nameMax).optional(),
   avatarUrl: z.string().url(m.avatarUrlInvalid).nullable().optional(),
+  /** Public bio; the backend keeps at most 160 characters. */
+  bio: z.string().max(160, m.bioMax).optional(),
+  cellarVisibility: z.enum(["PUBLIC", "FOLLOWERS", "PRIVATE"]).optional(),
 });
 
 export const completeSocialOnboardingSchema = z.object({

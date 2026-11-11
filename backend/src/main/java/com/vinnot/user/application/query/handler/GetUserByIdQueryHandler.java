@@ -1,5 +1,6 @@
 package com.vinnot.user.application.query.handler;
 
+import com.vinnot.shared.application.port.AvatarUrlResolver;
 import com.vinnot.shared.domain.exception.EntityNotFoundException;
 import com.vinnot.user.application.port.in.GetUserByIdUseCase;
 import com.vinnot.user.application.port.out.SocialIdentityRepositoryPort;
@@ -19,6 +20,7 @@ public class GetUserByIdQueryHandler implements GetUserByIdUseCase {
 
     private final UserRepositoryPort userRepository;
     private final SocialIdentityRepositoryPort socialIdentityRepository;
+    private final AvatarUrlResolver avatars;
 
     @Override
     @Transactional(readOnly = true)
@@ -30,6 +32,7 @@ public class GetUserByIdQueryHandler implements GetUserByIdUseCase {
                 socialIdentityRepository.findByUserId(user.getId()).stream()
                         .map(SocialIdentity::provider)
                         .map(Enum::name)
-                        .collect(Collectors.toUnmodifiableSet()));
+                        .collect(Collectors.toUnmodifiableSet()),
+                avatars.resolve(user.getProfileImageUrl()));
     }
 }

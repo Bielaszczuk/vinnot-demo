@@ -6,6 +6,8 @@
  * Note: Backend uses camelCase for all JSON fields.
  */
 
+import type { CellarVisibilityDto, TasteTraitsDto, TasteWheelEntryDto } from './social.dto'
+
 export type UserRoleDto = 'ROLE_ADMIN' | 'ROLE_MODERATOR' | 'ROLE_PARTNER' | 'ROLE_USER'
 
 
@@ -33,6 +35,8 @@ export interface UserDto {
   hasPassword?: boolean
   socialProviders?: string[]
   onboardingCompleted?: boolean
+  bio?: string | null
+  cellarVisibility?: CellarVisibilityDto
   preferredLanguage?: 'es' | 'en'
   timezone?: string
   isActive?: boolean
@@ -81,20 +85,33 @@ export interface NotificationPreferencesDto {
 
 
 /**
- * Public user profile
+ * GET /users/{id}/profile: public profile as the viewer sees it.
  */
 export interface UserProfileDto {
   id: string
-  name: string
-  avatar?: string | null
-  bio?: string | null
-  location?: string | null
-  favorite_wines?: string[]
-  review_count?: number
-  follower_count?: number
-  following_count?: number
-  is_following?: boolean
-  joined_at: string
+  username: string
+  fullName: string | null
+  avatarUrl: string | null
+  roles: string[]
+  createdAt: string
+  bio: string | null
+  /** Current wax-seal tier key. */
+  tier: string | null
+  followersCount: number
+  followingCount: number
+  reviewsCount: number
+  /** Null when the cellar is not visible to the viewer. */
+  cellarCount: number | null
+  cellarVisible: boolean
+  /** The viewer follows this user. */
+  following: boolean
+  followsYou: boolean
+  /** Null for self or when either user has rated fewer than 5 wines. */
+  affinityPercent: number | null
+  /** Null when the user has rated fewer than 5 wines. */
+  tasteWheel: TasteWheelEntryDto[] | null
+  /** Null under the same 5-rated-wines threshold as the wheel. */
+  tasteTraits: TasteTraitsDto | null
 }
 
 /**
@@ -160,6 +177,9 @@ export interface UpdateUserRequestDto {
   firstName?: string
   lastName?: string
   name?: string
+  /** Trimmed, max 160; blank clears it (400 BIO_TOO_LONG above the limit). */
+  bio?: string
+  cellarVisibility?: CellarVisibilityDto
 }
 
 export interface RequestEmailChangeDto {

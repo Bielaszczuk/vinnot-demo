@@ -4,11 +4,14 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { HomePage } from './HomePage'
 
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }))
-vi.mock('@hooks/useAuth', () => ({ useAuth: () => ({ isAuthenticated: false }) }))
+const auth = { isAuthenticated: false }
+vi.mock('@hooks/useAuth', () => ({ useAuth: () => auth }))
+vi.mock('./HomeSocialSections', () => ({ HomeSocialSections: () => <div data-testid="home-social" /> }))
 
 let reduceMotion = false
 
 beforeEach(() => {
+  auth.isAuthenticated = false
   reduceMotion = false
   vi.spyOn(window, 'matchMedia').mockImplementation((query: string) => ({
     matches: query.includes('reduce') && reduceMotion,
@@ -53,4 +56,25 @@ it('shows the hero and the sections in their final state at first paint under re
 it('keeps a space between the two lines of the hero title when they wrap on small screens', () => {
   mount()
   expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('home.heroTitle home.heroSubtitle')
+})
+
+it('keeps the landing free of social sections for visitors', () => {
+  mount()
+  expect(screen.queryByTestId('home-social')).toBeNull()
+})
+
+it('closes the page with the people-you-follow and people-to-follow sections when signed in', () => {
+  auth.isAuthenticated = true
+  mount()
+  const social = screen.getByTestId('home-social')
+  expect(sectionOf('home.ctaTitle').compareDocumentPosition(social) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(social.parentElement!.lastElementChild).toBe(social)
+})
+
+it('opens each feature from its card: wines, scanner, events and wine routes', () => {
+  mount()
+  expect(screen.getByRole('link', { name: /home\.featureDiscover\b/ })).toHaveAttribute('href', '/wines')
+  expect(screen.getByRole('link', { name: /home\.featureScan\b/ })).toHaveAttribute('href', '/wines/scan')
+  expect(screen.getByRole('link', { name: /nav\.events/ })).toHaveAttribute('href', '/events')
+  expect(screen.getByRole('link', { name: /nav\.routes/ })).toHaveAttribute('href', '/wine-routes')
 })

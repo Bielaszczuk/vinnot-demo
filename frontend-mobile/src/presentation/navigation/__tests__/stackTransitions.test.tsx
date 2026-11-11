@@ -32,6 +32,7 @@ jest.mock("@/presentation/navigation/guards", () => ({
   RoleGuard: ({ children }: { children: React.ReactNode }) => children,
 }));
 jest.mock("@/presentation/features/points/PointsHost", () => ({ PointsHost: () => null }));
+jest.mock("@/presentation/features/tasteQuiz/TasteQuizPromptHost", () => ({ TasteQuizPromptHost: () => null }));
 jest.mock("@/presentation/features/auth", () => ({ authColors: { background: "#fff" } }));
 
 function stackAnimationOf(Layout: ComponentType) {

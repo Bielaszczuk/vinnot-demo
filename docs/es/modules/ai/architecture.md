@@ -63,6 +63,30 @@ flowchart LR
 El módulo consulta el catálogo de vinos por un puerto del módulo `wine` y la
 bodega por un puerto del módulo `winery`. No importa entidades JPA externas.
 
+### Familias aromáticas
+
+`ClassifySensoryFamiliesUseCase` (implementado por
+`SensoryFamilyClassificationService`) agrupa descriptores libres de aromas y
+sabores, en español o en inglés, en familias aromáticas sin llamar a la IA. Cada
+descriptor se clasifica con `SensoryNote.fromDescriptor` y cada nota con
+`SensoryFamily.of`; el resultado son las claves de familia, en el orden del enum,
+a las que pertenece al menos un descriptor. Los descriptores vacíos, nulos o
+desconocidos se ignoran. Lo usa el perfil social de comunidad para los rasgos de
+gusto de un miembro (ver [Comunidad](../community/architecture.md)).
+
+| Familia | Notas |
+|---|---|
+| `FRUIT` | Todas las notas de fruta salvo `DRIED_FRUIT` y `JAM` |
+| `FLORAL` | `HONEYSUCKLE`, `WHITE_FLOWERS`, `CHAMOMILE`, `ROSE`, `VIOLET` |
+| `HERBAL` | `ROASTED_PEPPER`, `RED_PEPPER`, `GREEN_PEPPER`, `DRIED_HERBS`, `TOMATO_LEAF`, `DRIED_LEAF`, `BAY_LEAF`, `FRESH_HERBS`, `TEA`, `BLACK_OLIVE` |
+| `SPICE` | `SWEET_SPICE`, `GINGER`, `ANISE`, `WHITE_PEPPER`, `BLACK_PEPPER` |
+| `OAK` | `VANILLA`, `COFFEE`, `CHOCOLATE`, `OAK`, `SMOKE`, `TOBACCO`, `NUTS`, `BUTTER`, `CARAMEL` |
+| `MINERAL` | `MINERAL`, `SALINE`, `WET_EARTH`, `LEATHER` |
+
+`DRIED_FRUIT`, `JAM`, `HONEY`, `MOLASSES` y `BREAD` no pertenecen a ninguna
+familia. `SensoryFamily.of` nombra cada nota en un `switch` exhaustivo, así una
+nota nueva no compila hasta tener familia (o ninguna) asignada.
+
 ### Idiomas como bundle atómico
 
 `AiContentLanguage` soporta actualmente `es` y `en`. Tags regionales se

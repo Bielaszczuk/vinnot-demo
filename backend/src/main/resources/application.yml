@@ -435,6 +435,8 @@ app:
         redirect-uri: ${MARKETING_TIKTOK_REDIRECT_URI:}
         authorize-url: ${MARKETING_TIKTOK_AUTHORIZE_URL:https://www.tiktok.com/v2/auth/authorize/}
         api-base-url: ${MARKETING_TIKTOK_API_BASE_URL:https://open.tiktokapis.com}
+  # Public API address. Responses turn stored avatar paths (/api/uploads/...) into absolute URLs with it.
+  public-api-base-url: ${APP_PUBLIC_API_BASE_URL:http://localhost:8080/api}
   notifications:
     # Public API address for links that mail providers call directly (RFC 8058 one-click unsubscribe).
     public-api-base-url: ${APP_PUBLIC_API_BASE_URL:http://localhost:8080/api}

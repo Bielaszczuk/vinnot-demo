@@ -10,6 +10,7 @@ import { ImageWithFallback } from '@components/ui/ImageWithFallback'
 import { GlassRating } from '@components/ui/rating/GlassRating'
 import { wineDefaultImage } from '@utils/wine'
 import { formatDecimal } from '@utils/format'
+import { useCountryName } from '@hooks/useCountryName'
 import type { WineSummary } from '@domain/wine/wine.types'
 
 interface WineCardProps {
@@ -28,6 +29,7 @@ function buildLocationLine(winery?: string, country?: string, region?: string) {
 
 export function WineCard({ wine }: WineCardProps) {
   const { t, i18n } = useTranslation()
+  const countryName = useCountryName()
   const fallback = wineDefaultImage(wine.type)
 
   return (
@@ -64,7 +66,7 @@ export function WineCard({ wine }: WineCardProps) {
             </p>
           )}
           <p className="truncate text-xs leading-relaxed text-gray-500">
-            {buildLocationLine(wine.winery, wine.country, wine.region)}
+            {buildLocationLine(wine.winery, countryName(wine.country), wine.region)}
           </p>
         </div>
       </div>

@@ -230,6 +230,21 @@ export function wineTypeSwatch(type?: string | null): string {
 }
 
 /**
+ * Taste wheel washes, the same hex values as the web wheel. Each family is ordered so that
+ * consecutive shades read apart: reds garnet, ruby, violet and plum; whites gold, green-yellow
+ * and straw; rosés in three pinks; anything else warm greys. Styles use `wineTypeSwatches`
+ * with `unknownStyle` for a type without a swatch; regions take eight distinct hues.
+ */
+export const tasteWheelPalette = {
+  red: ["#7A1F3D", "#B8304A", "#6B3F8F", "#9A4A7C"],
+  white: ["#D4A537", "#B7C25A", "#E9D47F"],
+  rose: ["#E58FA6", "#D3637E", "#F2B5BC"],
+  neutral: ["#A99A8C", "#8C7F76", "#CDBDA9"],
+  unknownStyle: "#A59B93",
+  regions: ["#C8664A", "#D9A441", "#8A9A4B", "#3F8C8A", "#4F6FA8", "#8C6BB1", "#C95D85", "#8B5A3C"],
+} as const;
+
+/**
  * One accent per admin section (hero mark, "New" button, stat value). Every
  * accent carries white text and reads on white (at least 4.5:1).
  */

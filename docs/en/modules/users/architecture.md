@@ -17,17 +17,31 @@ flowchart LR
     BAC --> H["Command and query handlers"]
     AC --> H
     UC --> H
+    UC -->|"GET /users/{id}/profile"| CHK["CheckCommunityProfileUseCase (community): blocks"]
     H --> D["User and value objects"]
     H --> PORTS["Ports: repository, tokens, email, storage"]
+    H --> AVATAR["AvatarUrlResolver (shared): absolute photo URL"]
+    H --> SPP["SocialProfilePort"]
+    SPP --> CSPA["CommunitySocialProfileAdapter"]
+    CSPA --> GSU["GetSocialUseCase (community): follows, seal, counters, cellar and taste"]
     PORTS --> DB[("PostgreSQL")]
     PORTS --> OUTBOX["Outbox: emails and deletions"]
 ```
 
-[View the full “Architecture” diagram](https://images.vinnot.com/docs/diagrams/v1/en/modules-users-architecture-07931b47a804.svg)
+[View the full “Architecture” diagram](https://images.vinnot.com/docs/diagrams/v1/en/modules-users-architecture-2508a34e15c6.svg)
 
 The web uses the `/auth/web/*` endpoints, which keep the refresh token in an
 HttpOnly cookie; the app uses `/auth/*` with Bearer and keeps tokens in
 SecureStore. Both share `UserController` for profile and account.
+
+The public profile is composed across two modules: before the query,
+`UserController` asks `CheckCommunityProfileUseCase` to reject with 404 a profile
+with a block in either direction; then `GetPublicUserProfileQueryHandler` loads the
+account and asks `SocialProfilePort` for the social part, whose adapter
+`CommunitySocialProfileAdapter` calls the community input port `GetSocialUseCase`
+and translates its response. The users module uses no community domain types or
+repositories. The profile's reviews and cellar (`GET /users/{id}/reviews` and
+`/cellar`) are served by the community module's `MemberActivityController`.
 
 ## Backend
 
@@ -44,16 +58,40 @@ deletion. Queries project its data and other modules' statistics through ports.
 |---|---|---|
 | `GET /users` | ADMIN | `PageResult<UserResponse>` |
 | `GET /users/{id}` | ADMIN | `UserResponse` wrapper |
-| `GET /users/{id}/profile` | authenticated | `PublicUserProfileResponse` wrapper |
+| `GET /users/{id}/profile` | authenticated | `PublicUserProfileResponse` wrapper; 404 for a missing or inactive account or a block either way |
+| `GET /users/{id}/reviews` | authenticated | the member's approved reviews (community module) |
+| `GET /users/{id}/cellar` | authenticated | the member's visible cellar (community module) |
 | `GET /users/{id}/stats` | ADMIN | `UserStatsResponse` wrapper |
 | `GET /users/me/stats` | authenticated | principal's statistics |
 | `GET /auth/me` | authenticated | current session/profile |
 
 Public profile includes `id`, `username`, `fullName`, `avatarUrl`, `roles`, and
-`createdAt`. It excludes email, account flags, and tokens. `UserResponse`, used
-for own-profile and administration, also contains email, names, account state,
-onboarding, `preferredLanguage`, `timezone`, social providers, and `hasPassword`;
-it never contains passwords or hashes.
+`createdAt`, followed by the social fields of #541: `bio`, `tier` (the seal key),
+`followersCount`, `followingCount`, `reviewsCount`, `cellarCount` (`null` when the
+cellar is not visible to the viewer), `cellarVisible`, `following` (the viewer
+follows the member), `followsYou`, `affinityPercent` (`null` for oneself or when
+either member rated fewer than five wines), `tasteWheel` (`null` below five
+rated wines; otherwise `{kind, value, label, score, tone, ratedWines}` rows: up
+to eight each of `GRAPE`, `TYPE` and `REGION`, best score first, where `tone` is
+a wine type code, `null` for regions; see the
+[Community architecture](../community/architecture.md)) and `tasteTraits` (`null` below the same threshold unless the
+member completed the taste quiz or adjusted a trait; otherwise
+`{structure, families, fromQuiz}`: `structure` holds `{trait, score, wines,
+adjusted}` rows for `ACIDITY`, `BODY`, `TANNIN` and `SWEETNESS`, scored 0–100,
+where `adjusted` is true when the score is the member's manual value,
+`families` holds `{family, percent}` rows for `FRUIT`, `FLORAL`, `HERBAL`,
+`SPICE`, `OAK` and `MINERAL`, most shared first, and `fromQuiz` is true when any
+shown value came from the taste quiz because real data was missing; quiz scores
+report `wines: 0`; see [Community](../community/architecture.md#taste-quiz) and
+[Adjustable palate](../community/architecture.md#adjustable-palate)). It excludes email, phone,
+account flags, the cellar setting, the taste quiz answers and tokens. `GetPublicUserProfileQueryHandler` loads the account (404 when it is
+missing or inactive) and reads the social fields through `SocialProfilePort`,
+implemented by `CommunitySocialProfileAdapter` over the community module; the
+controller first applies the block check of `CheckCommunityProfileUseCase`.
+`UserResponse`, used for own-profile and administration, also contains email,
+names, account state, onboarding, `preferredLanguage`, `timezone`, social
+providers, `hasPassword`, `bio` and `cellarVisibility`; it never contains
+passwords or hashes.
 Role names are projected with the `ROLE_` prefix.
 
 ### Profile update
@@ -63,6 +101,14 @@ Role names are projected with the `ROLE_` prefix.
 through `Username`, checks uniqueness when it changes, applies names, and saves.
 It returns a UUID; the controller calls `GetUserByIdUseCase` and returns the
 projection inside the wrapper.
+
+Social profile fields (#541), both optional (omitted or `null` keeps the value):
+
+- `bio` is trimmed; blank text clears it; more than 160 characters answers 400
+  `BIO_TOO_LONG` (validated by `User.updateBio`, stored in `users.bio`).
+- `cellarVisibility` is `PUBLIC` (default), `FOLLOWERS` or `PRIVATE`; any other
+  value answers 400 `INVALID_CELLAR_VISIBILITY` (`CellarVisibility`, stored in
+  `users.cellar_visibility`, V87).
 
 Name rules:
 
@@ -106,6 +152,39 @@ references, rather than physically deleting inside the handler. Earlier
 reconciliation preserves cleanup when the request fails. The handler has no
 `@Transactional`; repository/outbox own the boundaries. R2 converts to WebP and
 retains durable inventory. [Storage and compensation](../../backend/use-cases/uploads-and-reference-data.md).
+
+#### Stored value and the URL clients receive
+
+`users.profile_image_url` keeps the photo as each source leaves it. Every
+response that carries a photo passes it through `AvatarUrlResolver` (an
+application port in `shared`, implemented by `PublicAvatarUrlResolver`), so
+clients always receive an absolute URL (#541):
+
+| Source | Stored value | URL in the response |
+| --- | --- | --- |
+| Upload with `local` or `s3` storage | `/api/uploads/avatars/<file>` | `app.public-api-base-url` + path, without repeating `/api` (`https://api.vinnot.com/api/uploads/avatars/<file>`) |
+| Upload with `r2` storage | `https://images.vinnot.com/...` | unchanged |
+| Google or Facebook sign-in | provider link | unchanged |
+| No photo | `null` or blank | `null` |
+
+`app.public-api-base-url` reads `APP_PUBLIC_API_BASE_URL` (default
+`http://localhost:8080/api`). The resolver serves `GET /auth/me`, the login
+session, `GET /users`, `GET /users/{id}`, `PATCH /users/me`, the public profile,
+`POST /users/me/avatar`, wine reviews and comments, the followers and following
+lists, suggestions, the feed and profile reviews, and in admin
+`GET /admin/users` (with the `avatarUrl` field) and `GET /admin/reviews`.
+
+#### Social sign-in photo
+
+The rule lives in `User.enrichFromIdentityProvider` and `ProviderPhoto` (domain):
+
+| Case | Result |
+| --- | --- |
+| Google supplies `picture` with a size suffix (`=s96-c`, `=s<n>` or `=s<n>-c` at the end) | stored with `=s256-c` |
+| The account has no photo | the provider photo is stored |
+| The stored photo is a provider link (`googleusercontent.com`, `facebook.com`, `fbcdn.net`, `fbsbx.com`) | replaced on every social sign-in, so a changed Google photo shows |
+| The stored photo is a Vinnot upload (`/api/uploads/...` or R2) or another link | never replaced |
+| The provider supplies no photo (Apple) | nothing changes |
 
 ### Password and email
 

@@ -78,6 +78,34 @@ describe("WineCard", () => {
     expect(flat(screen.getByText("(5) reviews").props.style).textDecorationLine).toBeUndefined();
   });
 
+  it("shows the word in the link colour without an underline, so it reads as part of the link", () => {
+    mockLanguage = "en-US";
+    render(<WineCard wine={withReviews(5)} onPress={jest.fn()} onReviewsPress={jest.fn()} />);
+
+    const word = flat(screen.getByText("reviews").props.style);
+    expect(word.color).toBe(vinnotColors.brand);
+    expect(word.textDecorationLine).toBeUndefined();
+  });
+
+  it("opens the reviews when the word is tapped", () => {
+    mockLanguage = "en-US";
+    const onPress = jest.fn();
+    const onReviewsPress = jest.fn();
+    render(<WineCard wine={withReviews(5)} onPress={onPress} onReviewsPress={onReviewsPress} />);
+
+    fireEvent.press(screen.getByText("reviews"));
+
+    expect(onReviewsPress).toHaveBeenCalledTimes(1);
+    expect(onPress).not.toHaveBeenCalled();
+  });
+
+  it("keeps the word muted when the reviews cannot be opened", () => {
+    mockLanguage = "en-US";
+    render(<WineCard wine={withReviews(5)} onPress={jest.fn()} />);
+
+    expect(flat(screen.getByText("reviews").props.style).color).not.toBe(vinnotColors.brand);
+  });
+
   it("opens the reviews from the count without opening the detail", () => {
     mockLanguage = "en-US";
     const onPress = jest.fn();

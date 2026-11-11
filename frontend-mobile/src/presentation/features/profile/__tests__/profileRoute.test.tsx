@@ -182,14 +182,38 @@ describe("profile route", () => {
     expect(mockReplace).toHaveBeenCalledWith("/(auth)/login");
   });
 
-  it("lists tickets and password first, and the account section before the stats", () => {
-    const screen = render(<ProfileRoute />);
-    const ids = screen.UNSAFE_root.findAll((node) => typeof node.props.testID === "string" && String(node.type) === "Text")
+  const renderedIds = (screen: ReturnType<typeof render>) =>
+    screen.UNSAFE_root.findAll((node) => typeof node.props.testID === "string" && String(node.type) === "Text")
       .map((node) => node.props.testID as string);
+  const QUICK_ACCESS = ["action-cellar", "action-tickets", "action-publicProfile", "action-submissions", "action-community"];
+  const ACCOUNT_SETTINGS = ["action-avatar", "action-password", "action-settings", "action-notifications", "action-language"];
+
+  it("shows the stats first, then quick access to the member's places, then account settings", () => {
+    const ids = renderedIds(render(<ProfileRoute />));
     const actions = ids.filter((id) => id.startsWith("action-"));
-    expect(actions.slice(0, 3)).toEqual(["action-tickets", "action-password", "action-settings"]);
-    expect(actions.indexOf("action-community")).toBeGreaterThan(actions.indexOf("action-submissions"));
-    expect(ids.indexOf("action-tickets")).toBeLessThan(ids.indexOf("stats-cellar"));
+    expect(ids.indexOf("stats-cellar")).toBeLessThan(ids.indexOf("action-cellar"));
+    expect(actions.slice(0, QUICK_ACCESS.length)).toEqual(QUICK_ACCESS);
+    expect(actions.slice(QUICK_ACCESS.length, QUICK_ACCESS.length + ACCOUNT_SETTINGS.length)).toEqual(ACCOUNT_SETTINGS);
+    expect(actions.slice(-2)).toEqual(["action-privacy", "action-help"]);
+  });
+
+  it("adds the admin and partner panels to quick access, before the account settings", () => {
+    mockHasRole.mockReturnValue(true);
+    const actions = renderedIds(render(<ProfileRoute />)).filter((id) => id.startsWith("action-"));
+    expect(actions.slice(0, QUICK_ACCESS.length + 2)).toEqual([...QUICK_ACCESS, "action-admin", "action-partner"]);
+    expect(actions.indexOf("action-avatar")).toBe(QUICK_ACCESS.length + 2);
+  });
+
+  it("opens the cellar from quick access", () => {
+    const screen = render(<ProfileRoute />);
+    fireEvent.press(screen.getByTestId("action-cellar"));
+    expect(mockPush).toHaveBeenCalledWith("/(app)/cellar");
+  });
+
+  it("opens the own public profile, where followers and following live", () => {
+    const view = render(<ProfileRoute />);
+    fireEvent.press(view.getByTestId("action-publicProfile"));
+    expect(mockPush).toHaveBeenCalledWith({ pathname: "/(app)/users/[id]", params: { id: "user-1" } });
   });
 
   it("opens the points screen from the emblem in the header", () => {

@@ -31,7 +31,8 @@
 
 ## Reglas de negocio
 
-- En la web, el inicio presenta Vinnot y ofrece explorar tipos, cepas, vinos, eventos y rutas; abrir una función protegida lleva al login.
+- En la web, el inicio presenta Vinnot y ofrece explorar tipos, cepas, vinos, eventos y rutas; las cuatro tarjetas de «Todo lo que necesitás para descubrir vinos» abren Vinos, el escáner, Eventos y Rutas del vino, y abrir una función protegida lleva al login.
+- Con sesión iniciada, en la web y en la app el inicio cierra con «De gente que seguís» (las últimas reseñas de las personas que sigue, con «Ver todo») y «Personas para seguir» ([Comunidad](../../community/README.md)).
 - Los datos vienen de los módulos de vinos, eventos y rutas.
 - En la app, las cepas populares se pintan con un degradé del color de su vino ([`grapeColors.ts`](../../../../../frontend-mobile/src/presentation/features/home/grapeColors.ts)), con texto blanco cuando la píldora es oscura; una cepa sin paleta usa la píldora neutra. Las cuatro tarjetas de «Todo lo que necesitás para descubrir vinos» abren Vinos, el escáner, Eventos y Rutas.
 

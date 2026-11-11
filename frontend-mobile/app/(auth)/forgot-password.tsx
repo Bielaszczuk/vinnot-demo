@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { useAccountActions } from "@/presentation/hooks/useAccountActions";
 import { emailActionSchema, type EmailActionInput } from "@/domain/user/user.validators";
 import { AUTH_ERROR_MESSAGES } from "@/domain/user/auth.messages";
+import { errorMessageKey } from "@/shared/i18n/localizeMessage";
 import { ForgotPasswordScreenView } from "@/presentation/features/auth";
 
 export default function ForgotPasswordScreen() {
@@ -23,7 +24,7 @@ export default function ForgotPasswordScreen() {
     try {
       setMessage(await forgotPassword(email.trim()));
     } catch (error) {
-      setServerError(error instanceof Error ? error.message : AUTH_ERROR_MESSAGES.forgotPasswordFailed);
+      setServerError(errorMessageKey(error, AUTH_ERROR_MESSAGES.forgotPasswordFailed));
     }
   });
 

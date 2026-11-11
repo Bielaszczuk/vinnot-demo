@@ -296,6 +296,8 @@ export const authService = {
         hasPassword: response.hasPassword,
         socialProviders: response.socialProviders,
         onboardingCompleted: response.onboardingCompleted,
+        bio: response.bio,
+        cellarVisibility: response.cellarVisibility,
         createdAt: response.createdAt ?? new Date().toISOString(),
         updatedAt: response.updatedAt ?? new Date().toISOString(),
       })
@@ -321,6 +323,8 @@ function mapAuthResponse(response: AuthResponseDto): AuthResult {
       hasPassword: response.user.hasPassword,
       socialProviders: response.user.socialProviders,
       onboardingCompleted: response.user.onboardingCompleted,
+      bio: response.user.bio,
+      cellarVisibility: response.user.cellarVisibility,
       createdAt: response.user.createdAt ?? new Date().toISOString(),
       updatedAt: response.user.updatedAt ?? new Date().toISOString(),
     }),

@@ -18,6 +18,7 @@ class PointSourceTest {
         assertThat(PointSource.CELLAR_ADD.points()).isEqualTo(1);
         assertThat(PointSource.EVENT_REGISTRATION.points()).isEqualTo(4);
         assertThat(PointSource.PROFILE_COMPLETE.points()).isEqualTo(5);
+        assertThat(PointSource.FOLLOWER_GAINED.points()).isEqualTo(1);
         for (PointSource source : PointSource.values()) {
             assertThat(source.grant(DailyEarnings.NONE)).as(source.name()).isEqualTo(source.points());
         }
@@ -32,6 +33,14 @@ class PointSourceTest {
         assertThat(PointSource.SCAN_MATCH.grant(new DailyEarnings(3, 3))).isZero();
         assertThat(PointSource.CELLAR_ADD.grant(new DailyEarnings(3, 3))).isZero();
         assertThat(PointSource.REVIEW.grant(new DailyEarnings(30, 30))).isEqualTo(3);
+    }
+
+    @Test
+    void followersEarnOnePointEachUpToTenADayInsideTheGlobalCap() {
+        assertThat(PointSource.FOLLOWER_GAINED.grant(new DailyEarnings(9, 9))).isEqualTo(1);
+        assertThat(PointSource.FOLLOWER_GAINED.grant(new DailyEarnings(10, 10))).isZero();
+        assertThat(PointSource.FOLLOWER_GAINED.grant(new DailyEarnings(0, 40))).isZero();
+        assertThat(PointSource.FOLLOWER_GAINED.countsTowardDailyCap()).isTrue();
     }
 
     @Test

@@ -12,6 +12,7 @@ public record UserAdminResponse(
         String email,
         String firstName,
         String lastName,
+        String avatarUrl,
         String role,
         boolean active,
         boolean locked,
@@ -27,17 +28,20 @@ public record UserAdminResponse(
     /**
      * Creates a UserAdminResponse from a UserAdminData projection.
      *
-     * @param data     the projected user data from the query port
-     * @param standing the member's points and seal (#455)
+     * @param data      the projected user data from the query port
+     * @param standing  the member's points and seal (#455)
+     * @param avatarUrl the profile photo URL clients load, or {@code null} without one
      * @return the admin response DTO
      */
-    public static UserAdminResponse fromData(UserQueryPort.UserAdminData data, UserPointsPort.Standing standing) {
+    public static UserAdminResponse fromData(UserQueryPort.UserAdminData data, UserPointsPort.Standing standing,
+                                             String avatarUrl) {
         return new UserAdminResponse(
                 data.id(),
                 data.username(),
                 data.email(),
                 data.firstName(),
                 data.lastName(),
+                avatarUrl,
                 data.roles(),
                 data.active(),
                 data.locked(),

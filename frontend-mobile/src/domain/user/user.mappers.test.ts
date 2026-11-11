@@ -2,10 +2,10 @@ import { describe, expect, it } from "@jest/globals";
 import {
   mapMeResponseToUser,
   mapUserFromDto,
-  mapUserProfile,
   mapUserStats,
   mapUserStatsFromDto,
 } from "./user.mappers";
+import { mapPublicProfile } from "@/domain/social/social.mappers";
 
 describe("user.mappers", () => {
   it("preserves separated names and social identity from the backend contract", () => {
@@ -55,11 +55,9 @@ describe("user.mappers", () => {
     expect(user.name).toBe("Ana Malbec");
   });
 
-  it("maps legacy profile, me response and both stats contracts", () => {
+  it("maps the me response and both stats contracts", () => {
     expect(mapMeResponseToUser({ id: "u1", email: "u@vinnot.com", name: "U" }))
       .toMatchObject({ id: "u1", name: "U" });
-    expect(mapUserProfile({ id: 7, name: "Legacy", email: "l@vinnot.com" }))
-      .toMatchObject({ id: "7", username: "Legacy", bio: null });
     expect(mapUserStats({ reviewCount: 2, cellarCount: 3 }))
       .toMatchObject({ totalReviews: 2, cellarSize: 3 });
     expect(mapUserStatsFromDto({ reviewsCount: 4, totalCellarWines: 5 }))
@@ -70,5 +68,12 @@ describe("user.mappers", () => {
 it('keeps phone on private session mappings and out of public profile projections', () => {
   expect(mapUserFromDto({ id: 'u', email: 'u@example.com', phoneNumber: '+5491123456789' }).phoneNumber).toBe('+5491123456789');
   expect(mapUserFromDto({ id: 'u', email: 'u@example.com' }).phoneNumber).toBeNull();
-  expect(mapUserProfile({ id: 'u', name: 'Guest', joined_at: '2026-01-01', phoneNumber: '+5491123456789' } as never)).not.toHaveProperty('phoneNumber');
+  expect(mapPublicProfile({ id: 'u', username: 'guest', createdAt: '2026-01-01', phoneNumber: '+5491123456789' } as never)).not.toHaveProperty('phoneNumber');
+});
+
+it("maps the own bio and cellar visibility, defaulting to no bio and a public cellar", () => {
+  expect(mapUserFromDto({ id: "u", email: "u@vinnot.com", bio: "Malbec", cellarVisibility: "FOLLOWERS" }))
+    .toMatchObject({ bio: "Malbec", cellarVisibility: "FOLLOWERS" });
+  expect(mapUserFromDto({ id: "u", email: "u@vinnot.com", cellarVisibility: "SOMETHING" }))
+    .toMatchObject({ bio: null, cellarVisibility: "PUBLIC" });
 });

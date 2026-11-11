@@ -1,5 +1,6 @@
 package com.vinnot.review.application.query.handler;
 
+import com.vinnot.shared.infrastructure.storage.PublicAvatarUrlResolver;
 import java.util.Map;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
@@ -34,16 +35,21 @@ class GetReviewCommentsQueryHandlerTest {
                 .thenReturn(List.of(first, second));
         when(users.findAllByIds(any()))
                 .thenReturn(List.of(new UserQueryPort.UserData(
-                        knownUser, "ana", "Ana", null, "avatar")));
+                        knownUser, "ana", "Ana", null, "/api/uploads/avatars/ana.webp")));
         when(badges.badgeTiers(any())).thenReturn(Map.of(knownUser, "LAGAR"));
 
-        var result = new GetReviewCommentsQueryHandler(comments, users, badges)
+        var result = new GetReviewCommentsQueryHandler(comments, users, badges,
+                new PublicAvatarUrlResolver("https://api.vinnot.test/api"))
                 .execute(new GetReviewCommentsQuery(reviewId));
 
         assertThat(result).hasSize(2);
         assertThat(result.getFirst().reviewer().displayName()).isEqualTo("Ana");
         assertThat(result.get(1).reviewer()).isNull();
         assertThat(result.getFirst().reviewer().badgeTier()).isEqualTo("LAGAR");
+        assertThat(result.getFirst().reviewer().avatarUrl())
+                .isEqualTo("https://api.vinnot.test/api/uploads/avatars/ana.webp");
+        assertThat(result.getFirst().reviewer().username()).isEqualTo("ana");
+        assertThat(result.getFirst().content()).isEqualTo("First");
         verify(badges, times(1)).badgeTiers(any());
     }
 

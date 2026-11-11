@@ -6,6 +6,7 @@ import { useGrapeTypes } from '@hooks/queries/wine/useGrapeTypes'
 import { useCountries } from '@hooks/queries/wine/useCountries'
 import { useRegions } from '@hooks/queries/wine/useRegions'
 import { useLocationCountry } from '@hooks/useLocationCountry'
+import { useCountryName } from '@hooks/useCountryName'
 import { useReducedMotion } from '@hooks/useReducedMotion'
 import { useWineTypes } from '@hooks/queries/wine/useWineTypes'
 import { wineTypeLabel } from '@shared/i18n/wineTypeLabel'
@@ -17,6 +18,7 @@ export function useWineSearchViewModel() {
   const { t, i18n } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const reducedMotion = useReducedMotion()
+  const countryName = useCountryName()
 
   const initialSearch = searchParams.get('q') ?? searchParams.get('search') ?? ''
   const initialType = (searchParams.get('type') ?? '') as WineType | ''
@@ -68,9 +70,10 @@ export function useWineSearchViewModel() {
 
   const { data, isLoading, isError, error, refetch } = useWineSearch(effectiveSearch, filters, page, PAGE_SIZE, !resolvingCountry)
 
+  // The value stays the stored name the API filters by; only the label follows the interface language.
   const countryOptions = useMemo(() => {
-    return countries.map((country) => country.name)
-  }, [countries])
+    return countries.map((country) => ({ value: country.name, label: countryName(country.name) }))
+  }, [countries, countryName])
 
   const regionOptions = useMemo(() => {
     if (!effectiveCountry) return []
@@ -177,6 +180,7 @@ export function useWineSearchViewModel() {
     selectedType,
     selectedGrape: effectiveSelectedGrape,
     selectedCountry: effectiveCountry,
+    selectedCountryLabel: countryName(effectiveCountry),
     selectedRegion,
     page,
     wines,

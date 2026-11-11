@@ -14,6 +14,7 @@ import com.vinnot.user.application.port.in.ChangePasswordUseCase;
 import com.vinnot.user.application.port.in.CompleteUserOnboardingUseCase;
 import com.vinnot.user.application.port.in.DeactivateOwnAccountUseCase;
 import com.vinnot.user.application.port.in.DeleteOwnAccountUseCase;
+import com.vinnot.user.application.port.in.GetPublicUserProfileUseCase;
 import com.vinnot.user.application.port.in.GetUserByIdUseCase;
 import com.vinnot.user.application.port.in.GetUserStatsUseCase;
 import com.vinnot.user.application.port.in.RequestEmailChangeUseCase;
@@ -21,6 +22,7 @@ import com.vinnot.user.application.port.in.SearchUsersUseCase;
 import com.vinnot.user.application.port.in.UpdateUserPreferencesUseCase;
 import com.vinnot.user.application.port.in.UpdateUserProfileUseCase;
 import com.vinnot.user.application.port.in.UploadUserAvatarUseCase;
+import com.vinnot.user.application.query.model.GetPublicUserProfileQuery;
 import com.vinnot.user.application.query.model.GetUserByIdQuery;
 import com.vinnot.user.application.query.model.GetUserStatsQuery;
 import com.vinnot.user.application.query.model.SearchUsersQuery;
@@ -66,6 +68,7 @@ public class UserController {
     private final CheckCommunityProfileUseCase communityProfileAccess;
     private final GetUserStatsUseCase getUserStatsUseCase;
     private final GetUserByIdUseCase getUserByIdUseCase;
+    private final GetPublicUserProfileUseCase getPublicUserProfileUseCase;
     private final UpdateUserProfileUseCase updateUserProfileUseCase;
     private final UpdateUserPreferencesUseCase updateUserPreferencesUseCase;
     private final CompleteUserOnboardingUseCase completeUserOnboardingUseCase;
@@ -125,7 +128,9 @@ public class UserController {
                 request.firstName(),
                 request.lastName(),
                 request.name(),
-                request.phoneNumber()));
+                request.phoneNumber(),
+                request.bio(),
+                request.cellarVisibility()));
         return ResponseEntity.ok(ApiResponseWrapper.of(
                 getUserByIdUseCase.execute(new GetUserByIdQuery(userId))));
     }
@@ -199,8 +204,8 @@ public class UserController {
             @PathVariable UUID id, @AuthenticationPrincipal String principal) {
         UUID viewer = Objects.isNull(principal) || "anonymousUser".equals(principal) ? null : UUID.fromString(principal);
         communityProfileAccess.execute(viewer, id);
-        UserResponse response = getUserByIdUseCase.execute(new GetUserByIdQuery(id));
-        return ResponseEntity.ok(ApiResponseWrapper.of(PublicUserProfileResponse.from(response)));
+        return ResponseEntity.ok(ApiResponseWrapper.of(
+                getPublicUserProfileUseCase.execute(new GetPublicUserProfileQuery(viewer, id))));
     }
 
     @DeleteMapping("/me")

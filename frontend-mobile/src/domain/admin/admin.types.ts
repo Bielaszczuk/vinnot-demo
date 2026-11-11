@@ -239,6 +239,8 @@ export interface AdminUser {
   createdAt: string;
   points: number;
   badgeTier: BadgeTier | null;
+  /** Profile photo; the mapper always sets it, older fixtures may omit it. */
+  avatarUrl?: string | null;
 }
 
 export interface AdminReview {

@@ -3,7 +3,12 @@
  * @contract: keep in sync with frontend-react/src/domain/user/user.mappers.ts
  */
 import type { Role } from "@/shared/config/roles";
-import type { SocialProvider, User, UserProfile, UserStats } from "./user.types";
+import {
+  CELLAR_VISIBILITIES,
+  DEFAULT_CELLAR_VISIBILITY,
+  type CellarVisibility,
+} from "@/domain/social/social.types";
+import type { SocialProvider, User, UserStats } from "./user.types";
 
 type AuthUserInput = {
   id: string;
@@ -22,18 +27,10 @@ type AuthUserInput = {
   hasPassword?: boolean;
   socialProviders?: string[];
   onboardingCompleted?: boolean;
+  bio?: string | null;
+  cellarVisibility?: string | null;
   createdAt?: string;
   updatedAt?: string;
-};
-
-type UserProfileInput = {
-  id: string | number;
-  name: string;
-  email: string;
-  avatarUrl?: string | null;
-  roles?: string[];
-  bio?: string | null;
-  createdAt?: string | null;
 };
 
 type BasicUserStatsInput = {
@@ -66,6 +63,12 @@ export function resolveHasPassword(
   return hasPassword ?? !(hasSocialIdentity ?? false);
 }
 
+function parseCellarVisibility(value: string | null | undefined): CellarVisibility {
+  return (CELLAR_VISIBILITIES as readonly string[]).includes(value ?? "")
+    ? (value as CellarVisibility)
+    : DEFAULT_CELLAR_VISIBILITY;
+}
+
 /**
  * Maps the raw auth user payload (from login/register/me) to the domain User.
  * Accepts both `AuthUserDto` and `MeResponseDto` (the latter has timestamps).
@@ -92,6 +95,8 @@ export function mapUserFromDto(
     hasPassword: resolveHasPassword(dto.hasPassword, dto.hasSocialIdentity),
     socialProviders: (dto.socialProviders ?? []) as SocialProvider[],
     onboardingCompleted: dto.onboardingCompleted ?? true,
+    bio: dto.bio ?? null,
+    cellarVisibility: parseCellarVisibility(dto.cellarVisibility),
     createdAt: dto.createdAt ?? now,
     updatedAt: dto.updatedAt ?? now,
   };
@@ -99,34 +104,6 @@ export function mapUserFromDto(
 
 export function mapMeResponseToUser(dto: AuthUserInput): User {
   return mapUserFromDto(dto);
-}
-
-/**
- * Legacy users-service profile mapper. The legacy `/users/profile` endpoint
- * uses a slightly different shape (`UserProfileDto`) — keep parity until that
- * service is migrated to the unified contract.
- */
-export function mapUserProfile(dto: UserProfileInput): UserProfile {
-  const now = new Date().toISOString();
-  return {
-    id: String(dto.id),
-    username: dto.name, // legacy: username unavailable
-    email: dto.email,
-    firstName: dto.name,
-    lastName: "",
-    name: dto.name,
-    avatarUrl: dto.avatarUrl ?? null,
-    roles: (dto.roles as Role[]) ?? [],
-    emailVerified: false,
-    hasSocialIdentity: false,
-    hasPassword: true,
-    socialProviders: [],
-    onboardingCompleted: true,
-    createdAt: dto.createdAt ?? now,
-    updatedAt: dto.createdAt ?? now,
-    bio: dto.bio ?? null,
-    location: null,
-  };
 }
 
 export function mapUserStats(dto: BasicUserStatsInput): UserStats {

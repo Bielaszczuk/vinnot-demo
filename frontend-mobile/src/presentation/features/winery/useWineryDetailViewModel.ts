@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { useWinery, useUpdateWineryCoordinates, useWineryWines } from "@/presentation/hooks/queries/winery";
 import { useGeocoding } from "@/presentation/hooks/useGeocoding";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 import { useDetailViewTracking } from "@/presentation/hooks/useDetailViewTracking";
 import type { Winery } from "@/domain/winery/winery.types";
 import { retryableLoadError } from "@/presentation/feedback/illustratedState";
@@ -18,6 +19,7 @@ export function useWineryDetailViewModel() {
   const isLoadingWines = winesQuery.isLoading;
   const updateCoordinates = useUpdateWineryCoordinates();
   const { geocodeAddress } = useGeocoding();
+  const countryName = useCountryName();
   const [resolvedWinery, updateResolvedWinery] = useState<Winery | null>(null);
   const geocodeAttemptedRef = useRef<string | null>(null);
 
@@ -72,7 +74,7 @@ export function useWineryDetailViewModel() {
   const wines = winesData?.items ?? [];
   const address =
     displayWinery?.address ??
-    [displayWinery?.subregion, displayWinery?.regionName, displayWinery?.countryName]
+    [displayWinery?.subregion, displayWinery?.regionName, countryName(displayWinery?.countryName)]
       .filter(Boolean)
       .join(", ");
   const mapQuery =

@@ -42,6 +42,9 @@ describe("PointsScreen", () => {
     render(<PointsScreenContent />);
     expect(screen.getByTestId("points-rule-REVIEW")).toHaveTextContent(/points\.rules\.review.*\+3/);
     expect(screen.getByTestId("points-rule-LIKE_RECEIVED")).toHaveTextContent(/points\.limits\.perDay \{"count":5\}/);
+    expect(screen.getByTestId("points-rule-FOLLOWER_GAINED")).toHaveTextContent(
+      /points\.rules\.followerGained.*points\.limits\.perDay \{"count":10\}.*\+1/,
+    );
     expect(screen.getByText('points.dailyCapNote {"cap":40}')).toBeTruthy();
     expect(screen.getByText('points.todayEarned {"earned":4,"cap":40}')).toBeTruthy();
   });

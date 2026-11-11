@@ -8,6 +8,7 @@ import com.vinnot.user.application.port.in.UpdateUserProfileUseCase;
 import com.vinnot.user.application.port.out.ProfilePointsPort;
 import com.vinnot.user.application.port.out.UserRepositoryPort;
 import com.vinnot.user.domain.model.User;
+import com.vinnot.user.domain.valueobject.CellarVisibility;
 import com.vinnot.user.domain.valueobject.Username;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +45,12 @@ public class UpdateUserProfileCommandHandler implements UpdateUserProfileUseCase
         user.updateProfile(profileName.firstName(), profileName.lastName());
         if (Objects.nonNull(command.phoneNumber())) {
             user.updatePhoneNumber(phoneNumbers.normalizeOptional(command.phoneNumber()));
+        }
+        if (Objects.nonNull(command.bio())) {
+            user.updateBio(command.bio());
+        }
+        if (Objects.nonNull(command.cellarVisibility())) {
+            user.changeCellarVisibility(CellarVisibility.of(command.cellarVisibility()));
         }
         userRepository.save(user);
         points.profileChanged(user);

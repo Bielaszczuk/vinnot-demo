@@ -63,7 +63,7 @@ describe("wine navigation", () => {
     });
   });
 
-  it("opens a wine straight on its reviews tab, keeping the back destination", () => {
+  it("opens a wine straight on its reviews, keeping the back destination", () => {
     expect(createWineDetailRoute("wine-1", undefined, { tab: "reviews" })).toEqual({
       pathname: "/(app)/(tabs)/wines/[id]",
       params: { id: "wine-1", tab: "reviews" },
@@ -74,14 +74,14 @@ describe("wine navigation", () => {
     });
   });
 
-  it("opens a scanned wine on its reviews tab inside the scanner", () => {
+  it("opens a scanned wine on its reviews inside the scanner", () => {
     expect(createScannedWineDetailRoute("wine-1", HOME_ROUTE, { tab: "reviews" })).toEqual({
       pathname: "/(app)/(tabs)/wines/[id]",
       params: { id: "wine-1", scanReturnTo: HOME_ROUTE, tab: "reviews" },
     });
   });
 
-  it("recognises only the reviews tab parameter", () => {
+  it("recognises only the reviews parameter", () => {
     expect(opensWineReviewsTab("reviews")).toBe(true);
     expect(opensWineReviewsTab(["reviews"])).toBe(true);
     expect(opensWineReviewsTab(undefined)).toBe(false);

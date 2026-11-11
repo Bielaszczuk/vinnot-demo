@@ -39,6 +39,19 @@ export function resolveUserAssetUrls<
   };
 }
 
+/**
+ * Resolves the author avatar of a review, comment or admin review: the nested reviewer and the
+ * legacy flat userAvatarUrl. Idempotent: absolute URLs pass through unchanged.
+ */
+export function resolveAuthorAssetUrls<
+  T extends { reviewer?: { avatarUrl?: string | null } | null; userAvatarUrl?: string | null },
+>(item: T): T {
+  return {
+    ...item,
+    ...("userAvatarUrl" in item ? { userAvatarUrl: resolveApiAssetUrl(item.userAvatarUrl) } : {}),
+    ...(item.reviewer ? { reviewer: resolveUserAssetUrls(item.reviewer) } : {}),
+  };
+}
 
 /** Resolve catalog media at the HTTP boundary, preserving the DTO shape. */
 export function resolveWineAssetUrls<T extends object>(wine: T): T {

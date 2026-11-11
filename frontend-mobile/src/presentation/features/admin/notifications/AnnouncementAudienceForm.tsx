@@ -15,6 +15,7 @@ import {
 import type { AdminCountry, AdminRegion } from "@/domain/admin/admin.types";
 import { lightTokens, radii } from "@/shared/theme/tokens";
 import { textStyles } from "@/shared/theme/typography";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 import { NotificationOptionPicker } from "./NotificationOptionPicker";
 import { notificationStyles } from "./notificationStyles";
 
@@ -82,6 +83,7 @@ export function AnnouncementAudienceForm({
   onDestinationChange: (destination: AnnouncementDestination) => void;
 }) {
   const { t } = useTranslation();
+  const countryName = useCountryName();
   const noChannel = !audience.email && !audience.push;
   return (
     <View style={notificationStyles.card}>
@@ -124,7 +126,7 @@ export function AnnouncementAudienceForm({
       <NotificationOptionPicker
         label={t("admin.notifications.audience.country")}
         value={audience.countryId}
-        options={countries}
+        options={countries.map((country) => ({ ...country, name: countryName(country.name) }))}
         allLabel={t("admin.notifications.audience.allCountries")}
         disabled={disabled}
         onSelect={onCountryChange}

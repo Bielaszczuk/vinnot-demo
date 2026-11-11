@@ -4,6 +4,7 @@ import { useGeolocation } from '@hooks/useGeolocation'
 import { useDebounce } from '@hooks/useDebounce'
 import { useUrlFilters } from '@hooks/useUrlFilters'
 import { useReducedMotion } from '@hooks/useReducedMotion'
+import { useCountryName } from '@hooks/useCountryName'
 import { useDiscoverEvents } from '@hooks/queries/event/useDiscoverEvents'
 import { useEvents } from '@hooks/queries/event/useEvents'
 import { useCountries } from '@hooks/queries/wine/useCountries'
@@ -19,6 +20,7 @@ export function useEventsNearbyViewModel() {
   // Search, filters and page live in the URL so they survive Back.
   const { values, page: currentPage, update } = useUrlFilters(FILTER_KEYS)
   const reducedMotion = useReducedMotion()
+  const countryName = useCountryName()
   const search = values.search
   const selectedType = values.type as EventType | ''
   const selectedCountry = values.country
@@ -79,9 +81,10 @@ export function useEventsNearbyViewModel() {
     return discoveredEvents ?? []
   }, [allQuery.data?.events, discovery, useGlobalSearch])
 
+  // The value stays the stored name the API filters by; only the label follows the interface language.
   const countryOptions = useMemo(() => {
-    return countries.map((country) => ({ value: country.name, label: country.name }))
-  }, [countries])
+    return countries.map((country) => ({ value: country.name, label: countryName(country.name) }))
+  }, [countries, countryName])
 
   const regionOptions = useMemo(() => {
     if (!selectedCountry) return []

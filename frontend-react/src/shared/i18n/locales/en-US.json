@@ -175,12 +175,12 @@
     "socialComingSoon": "{{provider}} login coming soon!",
     "usernameRequired": "Username is required",
     "usernameMinLength": "Username must be at least 3 characters",
-    "usernameMaxLength": "Username must be at most 50 characters",
-    "usernameInvalid": "Username can only contain letters, numbers, and underscores",
+    "usernameMaxLength": "Username must be at most 40 characters",
+    "usernameInvalid": "Use letters, numbers, dots, hyphens or underscores, starting and ending with a letter or number",
     "emailRequired": "Email is required",
     "passwordRequired": "Password is required",
     "nameRequired": "Name is required",
-    "nameTooLong": "Name must be less than 100 characters",
+    "nameTooLong": "Name must be at most 100 characters",
     "confirmPasswordRequired": "Please confirm your password",
     "invalidEmail": "Please enter a valid email address",
     "passwordMinLength": "Password must be at least 8 characters",
@@ -235,7 +235,11 @@
     "socialLoginError": "Could not sign in with {{provider}}.",
     "reactivateAccountTitle": "Reactivate your account?",
     "reactivateAccountMessage": "Your account is deactivated. Reactivating it will restore access to your profile and data.",
-    "reactivateAccountAction": "Reactivate account"
+    "reactivateAccountAction": "Reactivate account",
+    "firstNameRequired": "First name is required",
+    "lastNameRequired": "Last name is required",
+    "lastNameTooLong": "Last name must be at most 100 characters",
+    "currentPasswordRequired": "Current password is required"
   },
   "footer": {
     "social": {
@@ -1031,9 +1035,6 @@
   "generate": "Generate",
   "compareWith": "Compare with",
   "page": "Page",
-  "q": "q",
-  "redirect": "redirect",
-  "returnUrl": "returnUrl",
   "socialOnboarding": {
     "title": "How should we call you?",
     "description": "Choose the username people will see in reviews and other community spaces.",
@@ -2052,7 +2053,13 @@
         "ONBOARDING": "First steps",
         "WINBACK": "We miss you",
         "MILESTONE": "Community milestone",
-        "POST_EVENT": "After the event"
+        "POST_EVENT": "After the event",
+        "NEW_FOLLOWER": "New follower",
+        "TIER_REACHED": "New tier reached",
+        "SOCIAL_ACCOUNT_RECONNECT": "Reconnect social account",
+        "SOCIAL_BATCH_READY": "Post batch ready",
+        "SOCIAL_POST_FAILED": "Post failed",
+        "SOCIAL_TIKTOK_DRAFT_WAITING": "TikTok draft waiting"
       },
       "detail": {
         "recipients": "Target accounts",
@@ -2946,7 +2953,8 @@
   },
   "externalMaps": {
     "notice": "This map connects to Google. Loading it shares connection data with that provider. You can change this preference in Cookie settings.",
-    "allow": "Allow and load maps"
+    "allow": "Allow and load maps",
+    "unavailable": "We could not show the map right now."
   },
   "publicDocument": {
     "eyebrow": "Information and trust",
@@ -3057,6 +3065,10 @@
       "PROFILE_COMPLETE": {
         "title": "Complete profile",
         "rule": "Photo, first name, last name and phone; once only"
+      },
+      "FOLLOWER_GAINED": {
+        "title": "New follower",
+        "rule": "Someone with a verified email and an approved review follows you; up to 10 per day"
       }
     },
     "sources": {
@@ -3069,6 +3081,7 @@
       "CELLAR_ADD": "Added to cellar",
       "EVENT_REGISTRATION": "Event registration",
       "PROFILE_COMPLETE": "Complete profile",
+      "FOLLOWER_GAINED": "New follower",
       "unknown": "Activity"
     },
     "celebration": {
@@ -3099,6 +3112,200 @@
       "other": "+ Other: “{{query}}”",
       "remove": "Remove {{name}}",
       "none": "No grape varieties yet."
+    }
+  },
+  "social": {
+    "homeFeedTitle": "From people you follow",
+    "homeFeedSubtitle": "The latest reviews from the people you follow.",
+    "seeAll": "See all",
+    "suggestionsTitle": "People to follow",
+    "suggestionsSubtitle": "People whose taste is close to yours.",
+    "suggestionsEmpty": "No suggestions right now. Come back when more people rate wines.",
+    "feedEmpty": "No reviews from people you follow yet.",
+    "feedEmptyHint": "Follow other people to see their new reviews here.",
+    "feedTitle": "From people you follow",
+    "feedSubtitle": "Approved reviews from the people you follow, newest first.",
+    "loadError": "We couldn't load this section.",
+    "follow": "Follow",
+    "followingState": "Following",
+    "followLabel": "Follow {{name}}",
+    "unfollowLabel": "Unfollow {{name}}",
+    "followError": "We couldn't update the follow. Please try again.",
+    "followsYou": "Follows you",
+    "editProfile": "Edit profile",
+    "affinity": "{{percent}}% taste match",
+    "affinityHint": "How close their taste in wine is to yours",
+    "affinityShort": "{{percent}}% match",
+    "reviewsCount_one": "{{count}} review",
+    "reviewsCount_other": "{{count}} reviews",
+    "counters": {
+      "followers": "Followers",
+      "following": "Following",
+      "reviews": "Reviews",
+      "cellar": "Wines in cellar"
+    },
+    "cellarCountHidden": "Cellar not visible",
+    "tasteWheelLabel": "Taste wheel: {{summary}}",
+    "tasteWheelScore": "{{label}} {{score}} of 5",
+    "tasteWheelLocked": "The taste profile appears once this person rates 5 wines.",
+    "tasteWheelLockedOwn": "Rate 5 wines to discover your taste profile.",
+    "tasteWheelKinds": {
+      "GRAPE": "Grapes",
+      "TYPE": "Styles",
+      "REGION": "Regions"
+    },
+    "tasteWheelViewsLabel": "Show the wheel by",
+    "tasteWheelSliceName_one": "{{label}}, {{score}} of 5, {{count}} rated wine",
+    "tasteWheelSliceName_other": "{{label}}, {{score}} of 5, {{count}} rated wines",
+    "tasteWheelWines_one": "{{count}} wine",
+    "tasteWheelWines_other": "{{count}} wines",
+    "tasteWheelHint": "Tap a color to see what it is.",
+    "tasteProfile": {
+      "title": "Taste profile",
+      "subtitle": "Based on the wines they rated highest",
+      "subtitleOwn": "Based on the wines you rated highest",
+      "structureTitle": "Structure",
+      "aromasTitle": "Preferred aromas",
+      "aromasTitleOwn": "Your preferred aromas",
+      "percent": "{{percent}}%",
+      "traits": {
+        "ACIDITY": "Acidity",
+        "BODY": "Body",
+        "TANNIN": "Tannin",
+        "SWEETNESS": "Sweetness"
+      },
+      "levels": {
+        "ACIDITY": {
+          "LOW": "Low",
+          "MEDIUM": "Medium",
+          "HIGH": "High"
+        },
+        "BODY": {
+          "LOW": "Low",
+          "MEDIUM": "Medium",
+          "HIGH": "High"
+        },
+        "TANNIN": {
+          "LOW": "Low",
+          "MEDIUM": "Medium",
+          "HIGH": "High"
+        },
+        "SWEETNESS": {
+          "LOW": "Dry",
+          "MEDIUM": "Off-dry",
+          "HIGH": "Sweet"
+        }
+      },
+      "families": {
+        "FRUIT": "Fruity",
+        "FLORAL": "Floral",
+        "HERBAL": "Herbal",
+        "SPICE": "Spicy",
+        "OAK": "Oak",
+        "MINERAL": "Mineral"
+      },
+      "fromQuiz": "Based on the taste quiz",
+      "fromQuizOwn": "Based on your taste quiz",
+      "wheelLocked": "The taste wheel appears once they rate 5 wines.",
+      "wheelLockedOwn": "Rate 5 wines to complete your taste wheel.",
+      "adjust": {
+        "start": "Adjust",
+        "hint": "Move the bars to fill or empty them to your taste.",
+        "save": "Save",
+        "cancel": "Cancel",
+        "reset": "Reset to calculated",
+        "adjusted": "Adjusted",
+        "empty": "We don't know the structure you enjoy yet. Set it your way.",
+        "error": "We couldn't save your changes. Please try again."
+      }
+    },
+    "reviewsTitle": "Reviews",
+    "reviewsEmpty": "No reviews published yet.",
+    "cellarTitle": "Cellar",
+    "cellarEmpty": "The cellar is empty.",
+    "cellarLocked": "This cellar isn't visible to you.",
+    "cellarLockedHint": "Its owner shares it only with followers or keeps it private.",
+    "cellarAdded": "Added on {{date}}",
+    "notFound": "This profile isn't available.",
+    "notFoundHint": "The account may no longer exist, or you may not have access.",
+    "followersOf": "{{name}}'s followers",
+    "followingOf": "People {{name}} follows",
+    "followersEmpty": "No followers yet.",
+    "followingEmpty": "Not following anyone yet.",
+    "backToProfile": "Back to profile",
+    "openProfile": "Open {{name}}'s profile",
+    "reviewOn": "on {{wine}}",
+    "publicProfile": {
+      "title": "Public profile",
+      "subtitle": "What other people see on your profile.",
+      "bio": "Bio",
+      "bioPlaceholder": "Tell people about your taste in wine",
+      "bioCounter": "{{count}}/{{max}}",
+      "bioTooLong": "The bio allows up to {{max}} characters.",
+      "cellarVisibility": "Who can see your cellar",
+      "cellarVisibilityHint": "Your private notes and purchase prices are never shown.",
+      "visibility": {
+        "PUBLIC": "Public",
+        "FOLLOWERS": "Followers only",
+        "PRIVATE": "Private"
+      },
+      "save": "Save public profile",
+      "saved": "Public profile updated.",
+      "saveError": "We couldn't save your public profile. Please try again.",
+      "view": "View my public profile"
+    }
+  },
+  "tasteQuiz": {
+    "eyebrow": "Your taste profile",
+    "progress": "Question {{current}} of {{total}}",
+    "hint": "Pick what tempts you most. There are no wrong answers.",
+    "back": "Back",
+    "skip": "Skip",
+    "take": "Take the taste quiz",
+    "retake": "Retake the quiz",
+    "questions": {
+      "RAINY_DAY": "A rainy day: what do you prefer?",
+      "FRUIT": "Your favorite fruit",
+      "DESSERT": "Pick a dessert",
+      "DINNER": "A special dinner",
+      "AROMA": "The scent you like most"
+    },
+    "options": {
+      "DARK_CHOCOLATE_COFFEE": "Dark chocolate with hot coffee",
+      "SPICED_TEA_APPLE_TART": "Spiced tea with a tart apple pie",
+      "CITRUS": "Lemon and grapefruit",
+      "RED_BERRIES": "Strawberries and cherries",
+      "DARK_BERRIES": "Blackberries and plums",
+      "STONE_TROPICAL": "Peach and pineapple",
+      "LEMON_TART": "Lemon tart",
+      "CARAMEL_FLAN": "Caramel flan",
+      "BROWNIE": "Brownie",
+      "FRESH_FRUIT": "Fresh fruit",
+      "GRILLED_RED_MEAT": "Grilled red meat",
+      "LEMON_FISH": "Fish with lemon",
+      "MUSHROOM_PASTA": "Mushroom pasta",
+      "SPICY_CURRY": "Spicy curry",
+      "VANILLA_TOAST": "Vanilla and toasted bread",
+      "PEPPER_CINNAMON": "Pepper and cinnamon",
+      "ROSES_VIOLETS": "Roses and violets",
+      "CUT_GRASS": "Freshly cut grass"
+    },
+    "loading": {
+      "eyebrow": "Taste quiz",
+      "title": "Defining your taste profile",
+      "subtitle": "We are turning your answers into a profile made for you.",
+      "steps": {
+        "gather": "Gathering your picks",
+        "fill": "Filling your glass",
+        "blend": "Blending your flavors",
+        "paint": "Shaping your taste profile"
+      }
+    },
+    "error": {
+      "title": "We couldn't save your quiz",
+      "description": "Your answers are still here. Try again in a moment.",
+      "retry": "Try again",
+      "later": "Not now"
     }
   }
 }

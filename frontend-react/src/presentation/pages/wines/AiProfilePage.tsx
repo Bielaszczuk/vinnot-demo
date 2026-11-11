@@ -21,8 +21,10 @@ import { WineColorSwatch } from '@/presentation/components/ui/WineColorSwatch'
 import { RotatingVignette, type VignetteItem } from '@/presentation/components/ui/RotatingVignette'
 import { ServingThermometer } from '@/presentation/components/ui/ServingThermometer'
 import { EMPTY_PROFILE_ART_VIEW } from './aiProfileArt'
+import { useCountryName } from '@hooks/useCountryName'
 
 export function AiProfilePage() {
+  const countryName = useCountryName()
   const {
     id,
     t,
@@ -118,7 +120,7 @@ export function AiProfilePage() {
               {formatWineDisplayName(wine?.name ?? '', wine?.grapeVarieties)}
             </h1>
             <p className="mt-1 text-sm text-gray-300">
-              {wine?.winery} · {wine?.vintage || 'NV'} · {wine?.region}, {wine?.country}
+              {wine?.winery} · {wine?.vintage || 'NV'} · {wine?.region}, {countryName(wine?.country)}
             </p>
           </div>
         </div>

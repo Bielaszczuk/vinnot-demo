@@ -1,5 +1,6 @@
 package com.vinnot.admin.application.query.handler;
 
+import com.vinnot.shared.application.port.AvatarUrlResolver;
 import com.vinnot.admin.application.port.in.SearchAdminUsersUseCase;
 import com.vinnot.admin.application.port.out.UserPointsPort;
 import com.vinnot.admin.application.port.out.UserQueryPort;
@@ -22,6 +23,7 @@ public class SearchAdminUsersQueryHandler implements SearchAdminUsersUseCase {
 
     private final UserQueryPort userQueryPort;
     private final UserPointsPort userPoints;
+    private final AvatarUrlResolver avatars;
 
     @Override
     @Transactional(readOnly = true)
@@ -34,7 +36,7 @@ public class SearchAdminUsersQueryHandler implements SearchAdminUsersUseCase {
         List<UUID> userIds = users.content().stream().map(UserQueryPort.UserAdminData::id).toList();
         Map<UUID, UserPointsPort.Standing> standings = userIds.isEmpty() ? Map.of() : userPoints.standings(userIds);
         return users.map(user -> UserAdminResponse.fromData(user,
-                standings.getOrDefault(user.id(), UserPointsPort.Standing.NONE)));
+                standings.getOrDefault(user.id(), UserPointsPort.Standing.NONE), avatars.resolve(user.profileImageUrl())));
     }
 }
 

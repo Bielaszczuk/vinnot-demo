@@ -12,7 +12,8 @@ export type PointsSourceDto =
   | "SCAN_MATCH"
   | "CELLAR_ADD"
   | "EVENT_REGISTRATION"
-  | "PROFILE_COMPLETE";
+  | "PROFILE_COMPLETE"
+  | "FOLLOWER_GAINED";
 
 export interface PointsEntryDto {
   id: string;

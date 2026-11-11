@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseArguments, preflightPlan } from '../ci-preflight.mjs';
+import { metroConflict, parseArguments, preflightPlan } from '../ci-preflight.mjs';
 import { classifyChanges, fullImpact } from '../ci-impact.mjs';
 import { preflightBase } from '../pre-push.mjs';
 
@@ -93,4 +93,12 @@ test('the pre-push hook compares feature branches with development and main push
   // Deleting a remote branch pushes nothing to validate.
   assert.equal(preflightBase(`(delete) ${zero} refs/heads/old ${sha}\n`), null);
   assert.equal(preflightBase(''), null);
+});
+
+test('stops before npm ci when Metro runs from this app, and ignores Metro in another checkout', () => {
+  const mobileDir = '/work/rewine/frontend-mobile';
+  assert.match(metroConflict({ metroCwds: [mobileDir], mobileDir }), /Metro is running from \/work\/rewine\/frontend-mobile\. Stop it/);
+  assert.match(metroConflict({ metroCwds: [`${mobileDir}/src`], mobileDir }), /Metro is running/);
+  assert.equal(metroConflict({ metroCwds: ['/work/other/frontend-mobile', '/work/rewine/frontend-mobile-old'], mobileDir }), null);
+  assert.equal(metroConflict({ metroCwds: [], mobileDir }), null);
 });

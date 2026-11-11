@@ -6,6 +6,7 @@ import com.vinnot.shared.domain.exception.DomainException;
 import com.vinnot.user.application.command.model.UpdateUserProfileCommand;
 import com.vinnot.user.application.port.out.UserRepositoryPort;
 import com.vinnot.user.domain.model.User;
+import com.vinnot.user.domain.valueobject.CellarVisibility;
 import com.vinnot.user.domain.valueobject.Email;
 import com.vinnot.user.domain.valueobject.Password;
 import org.junit.jupiter.api.Test;
@@ -169,6 +170,42 @@ class UpdateUserProfileCommandHandlerTest {
         verify(points, never()).profileChanged(any());
         assertThatThrownBy(() -> user.updatePhoneNumber("not-normalized"))
                 .isInstanceOf(DomainException.class);
+    }
+
+    @Test
+    void updatesTheBioAndCellarVisibilityAndKeepsThemWhenOmitted() {
+        User user = namedUser();
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        var handler = new UpdateUserProfileCommandHandler(userRepository,
+                new LibPhoneNumberNormalizer(), points);
+        handler.execute(new UpdateUserProfileCommand(user.getId(), null, null, null, null, null,
+                "  Sommelier in Mendoza ", "FOLLOWERS"));
+        assertThat(user.getBio()).isEqualTo("Sommelier in Mendoza");
+        assertThat(user.getCellarVisibility()).isEqualTo(CellarVisibility.FOLLOWERS);
+        assertThat(user.getFirstName()).isEqualTo("Cristhian");
+        handler.execute(new UpdateUserProfileCommand(user.getId(), null, "Cris", null, null, null));
+        assertThat(user.getBio()).isEqualTo("Sommelier in Mendoza");
+        assertThat(user.getCellarVisibility()).isEqualTo(CellarVisibility.FOLLOWERS);
+        assertThat(user.getFirstName()).isEqualTo("Cris");
+        handler.execute(new UpdateUserProfileCommand(user.getId(), null, null, null, null, null, "", null));
+        assertThat(user.getBio()).isNull();
+    }
+
+    @Test
+    void rejectsATooLongBioOrUnknownVisibilityWithoutSaving() {
+        User user = namedUser();
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        var handler = new UpdateUserProfileCommandHandler(userRepository,
+                new LibPhoneNumberNormalizer(), points);
+        assertThatThrownBy(() -> handler.execute(new UpdateUserProfileCommand(
+                user.getId(), null, null, null, null, null, "a".repeat(161), null)))
+                .isInstanceOf(DomainException.class).extracting("code").isEqualTo("BIO_TOO_LONG");
+        assertThatThrownBy(() -> handler.execute(new UpdateUserProfileCommand(
+                user.getId(), null, null, null, null, null, null, "FRIENDS")))
+                .isInstanceOf(DomainException.class).extracting("code").isEqualTo("INVALID_CELLAR_VISIBILITY");
+        verify(userRepository, never()).save(user);
+        assertThat(user.getBio()).isNull();
+        assertThat(user.getCellarVisibility()).isEqualTo(CellarVisibility.PUBLIC);
     }
 
     private User namedUser() {

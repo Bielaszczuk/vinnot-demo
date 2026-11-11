@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { createInstance } from 'i18next'
 import { I18nextProvider, initReactI18next } from 'react-i18next'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import en from '@i18n/locales/en-US.json'
 import es from '@i18n/locales/es-AR.json'
@@ -26,9 +27,9 @@ const review: WineReview = {
 async function mount(lng: 'es-AR' | 'en-US', value: WineReview, permissions: { canEdit?: boolean; canDelete?: boolean } = {}) {
   const i18n = createInstance()
   await i18n.use(initReactI18next).init({ lng, resources: { 'es-AR': { translation: es }, 'en-US': { translation: en } } })
-  return render(<I18nextProvider i18n={i18n}>
+  return render(<MemoryRouter><I18nextProvider i18n={i18n}>
     <ReviewCard review={value} text={text} {...permissions} formatDate={(date) => date.toISOString().slice(0, 10)} />
-  </I18nextProvider>)
+  </I18nextProvider></MemoryRouter>)
 }
 
 describe('ReviewCard vintage', () => {
@@ -99,7 +100,9 @@ describe('ReviewCard seal and glasses', () => {
   it('shows the reviewer seal right after the name', async () => {
     await mount('en-US', { ...review, reviewer: { ...review.reviewer!, badgeTier: 'CRIANZA' } })
     const seal = screen.getByRole('img', { name: 'Aging seal' })
-    expect(screen.getByText('Ana')).toContainElement(seal)
+    // The name is now a profile link; the seal stays right after it, on the same line.
+    expect(screen.getByText('Ana').closest('p')).toContainElement(seal)
+    expect(screen.getByText('Ana').nextElementSibling).toBe(seal)
     expect(seal).toHaveClass('is-list')
   })
 
@@ -117,5 +120,37 @@ describe('ReviewCard seal and glasses', () => {
     expect(Array.from(glasses.querySelectorAll('.vinnot-glass')).map((glass) => glass.getAttribute('data-fill')))
       .toEqual(['1', '1', '1', '0.6', '0'])
     expect(view.container.querySelectorAll('.lucide-star')).toHaveLength(0)
+  })
+})
+
+describe('ReviewCard author', () => {
+  it('opens the reviewer profile from the avatar and from the name', async () => {
+    await mount('en-US', review)
+    expect(screen.getByRole('link', { name: 'Ana' })).toHaveAttribute('href', '/users/user-1')
+    expect(screen.getByRole('link', { name: "Open Ana's profile" })).toHaveAttribute('href', '/users/user-1')
+  })
+
+  it('keeps an anonymous review without profile links', async () => {
+    await mount('en-US', { ...review, reviewer: null })
+    expect(screen.getByText('User')).toBeInTheDocument()
+    expect(screen.queryByRole('link')).toBeNull()
+  })
+})
+
+describe('ReviewCard reviewer handle', () => {
+  it('shows the @username under the display name in small muted text', async () => {
+    await mount('en-US', review)
+    const handle = screen.getByText('@ana')
+    expect(handle).toHaveClass('text-xs', 'text-gray-500')
+    const name = screen.getByRole('link', { name: 'Ana' })
+    expect(name).toHaveAttribute('href', '/users/user-1')
+    expect(name.compareDocumentPosition(handle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('renders no handle when the reviewer has no username', async () => {
+    await mount('en-US', { ...review, reviewer: { ...review.reviewer!, username: '' } })
+    expect(screen.queryByText(/^@/)).toBeNull()
+    await mount('en-US', { ...review, id: 'review-2', reviewer: null })
+    expect(screen.queryByText(/^@/)).toBeNull()
   })
 })

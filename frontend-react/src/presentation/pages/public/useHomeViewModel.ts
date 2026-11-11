@@ -32,21 +32,25 @@ export function useHomeViewModel() {
     () => [
       {
         icon: 'discover' as const,
+        to: '/wines',
         title: t('home.featureDiscover'),
         description: t('home.featureDiscoverDesc'),
       },
       {
         icon: 'scan' as const,
+        to: '/wines/scan',
         title: t('home.featureScan'),
         description: t('home.featureScanDesc'),
       },
       {
         icon: 'events' as const,
+        to: '/events',
         title: t('nav.events'),
         description: t('home.featureEventsDesc'),
       },
       {
         icon: 'routes' as const,
+        to: '/wine-routes',
         title: t('nav.routes'),
         description: t('home.featureRoutesDesc'),
       },

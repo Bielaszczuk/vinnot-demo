@@ -107,6 +107,7 @@ export function mapAdminUserFromRaw(raw: Record<string, unknown>): AdminUser {
     createdAt: String(raw.createdAt ?? ''),
     points: Number(raw.points ?? 0),
     badgeTier: parseBadgeTier(raw.badgeTier),
+    avatarUrl: typeof raw.avatarUrl === 'string' && raw.avatarUrl ? raw.avatarUrl : null,
   }
 }
 

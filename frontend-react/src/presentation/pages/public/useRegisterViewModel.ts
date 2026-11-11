@@ -64,7 +64,7 @@ export function useRegisterViewModel() {
             if (messages.length > 0 && Object.hasOwn(registerUserSchema.shape, field)) {
               form.setError(field as keyof RegisterUserInput, {
                 type: 'server',
-                message: t('auth.errors.invalidField'),
+                message: 'auth.errors.invalidField',
               })
             }
           }

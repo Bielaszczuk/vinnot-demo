@@ -8,7 +8,7 @@ import {
   loginUserSchema,
   registerUserSchema,
 } from "@/domain/user/user.validators";
-import { localizeMessage } from "./localizeMessage";
+import { errorMessageKey, localizeMessage } from "./localizeMessage";
 
 async function translator(lng: "es-AR" | "en-US"): Promise<TFunction> {
   const instance = i18next.createInstance();
@@ -90,5 +90,26 @@ describe("localizeMessage", () => {
     ]) {
       expect(localizeMessage(t, key)).not.toBe(key);
     }
+  });
+});
+
+describe("errorMessageKey", () => {
+  it("keeps an error message that is a translation key", () => {
+    expect(errorMessageKey(new Error("authErrors.offline"), "common.error")).toBe("authErrors.offline");
+    expect(errorMessageKey({ message: "authErrors.timeout" }, "common.error")).toBe("authErrors.timeout");
+  });
+
+  it("never returns raw server or platform text", () => {
+    expect(errorMessageKey({ message: "A user with this email already exists" }, "common.error")).toBe("common.error");
+    expect(errorMessageKey(new Error("Sin conexión a internet"), "auth.loginError")).toBe("auth.loginError");
+    expect(errorMessageKey("authErrors.offline", "common.error")).toBe("common.error");
+    expect(errorMessageKey(null, "common.error")).toBe("common.error");
+  });
+
+  it("translates the offline and timeout keys the transport layer returns", async () => {
+    const es = await translator("es-AR");
+    const en = await translator("en-US");
+    expect(localizeMessage(en, "authErrors.timeout")).toBe("The request took too long. Please try again.");
+    expect(localizeMessage(es, "authErrors.offline")).toBe("Sin conexión. Verificá tu internet.");
   });
 });

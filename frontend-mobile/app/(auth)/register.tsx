@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, type Href } from "expo-router";
 import { useTranslation } from "react-i18next";
+import { errorMessageKey } from "@/shared/i18n/localizeMessage";
 import { useAuth } from "@/presentation/hooks/useAuth";
 import { useToast } from "@/presentation/providers/ToastProvider";
 import { useAccountActions } from "@/presentation/hooks/useAccountActions";
@@ -111,9 +112,7 @@ export default function RegisterScreen() {
           : "/(app)/complete-profile"
       ) as Href);
     } catch (error) {
-      setServerError(
-        error instanceof Error ? error.message : t("auth.socialLoginError")
-      );
+      setServerError(errorMessageKey(error, t("auth.socialLoginError")));
     } finally {
       setBusyProvider(null);
     }

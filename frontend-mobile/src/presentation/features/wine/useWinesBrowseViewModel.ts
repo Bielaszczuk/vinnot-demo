@@ -17,6 +17,7 @@ import { toWineType, type WineFilter, type WineType } from "@/domain/wine/wine.t
 import type { OpenFilter } from "@/presentation/features/wine";
 import { useFormatters } from "@/presentation/hooks/ui/useFormatters";
 import { wineListSubtitle } from "./catalogCountLabel";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 
 const PAGE_SIZE = 20;
 const INITIAL_COUNTRY_TIMEOUT_MS = 10_000;
@@ -25,6 +26,7 @@ export function useWinesBrowseViewModel() {
   const params = useLocalSearchParams<{ type?: string; grape?: string }>();
   const { isAuthenticated, user } = useAuth();
   const { t } = useTranslation();
+  const displayCountry = useCountryName();
   const { formatNumber } = useFormatters();
   const [search, updateSearch] = useState("");
   const [selectedType, chooseType] = useState<WineType | undefined>();
@@ -204,7 +206,13 @@ export function useWinesBrowseViewModel() {
   const totalLabel = wineListSubtitle({
     status: { isError: pagination.isError, isLoading, hasData: !!pagination.data },
     total: pagination.data?.total ?? pagination.wines.length,
-    filters: { search, type: selectedType, grape: selectedGrape, country: selectedCountry, region: selectedRegion },
+    filters: {
+      search,
+      type: selectedType,
+      grape: selectedGrape,
+      country: displayCountry(selectedCountry),
+      region: selectedRegion,
+    },
     t,
     format: formatNumber,
   });

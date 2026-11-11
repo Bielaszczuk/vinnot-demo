@@ -10,6 +10,7 @@ import { useToast } from "@/presentation/providers/ToastProvider";
  */
 import { useState } from "react";
 import { useAuth } from "@/presentation/hooks/useAuth";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 import { ROLES } from "@/shared/config/roles";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
@@ -50,6 +51,7 @@ function WineryRow({
   canDelete: boolean;
 }) {
   const { t } = useTranslation();
+  const countryName = useCountryName();
 
   return (
     <View style={rowStyles.card}>
@@ -67,7 +69,7 @@ function WineryRow({
           )}
         </View>
         <Text numberOfLines={1} style={rowStyles.location}>
-          {[item.regionName, item.countryName].filter(Boolean).join(", ")}
+          {[item.regionName, countryName(item.countryName)].filter(Boolean).join(", ")}
         </Text>
         <Text style={rowStyles.winesCount}>
           {t("admin.wineries.winesCount", { count: item.winesCount })}
@@ -149,6 +151,7 @@ export function AdminWineriesScreen() {
   const canDelete = hasRole(ROLES.ADMIN);
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const countryName = useCountryName();
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [countryId, setCountryId] = useState<string | null>(null);
@@ -241,7 +244,7 @@ export function AdminWineriesScreen() {
                 <AdminFilterPicker
                   label={t("admin.wineries.country")}
                   value={countryId}
-                  options={countries}
+                  options={countries.map((country) => ({ ...country, name: countryName(country.name) }))}
                   allLabel={t("admin.wineries.allCountries")}
                   searchPlaceholder={t("admin.wineries.countrySearch")}
                   onSelect={(id) => {

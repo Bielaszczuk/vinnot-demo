@@ -84,3 +84,12 @@ it('speaks to the administrator with usted in Spanish', async () => {
   expect(within(dialog).getByText('Use hasta 100 caracteres.')).toBeInTheDocument()
   expect(within(dialog).getByRole('button', { name: 'Guardar datos' })).toBeInTheDocument()
 })
+
+it('shows the account photo next to the username, falling back to the initial', async () => {
+  const { dialog } = await mount({ user: { ...user, avatarUrl: 'https://api.vinnot.com/api/uploads/avatars/ana.webp' } })
+  const avatar = within(dialog).getByTestId('admin-user-avatar-user-1')
+  const photo = avatar.querySelector('img')
+  expect(photo).toHaveAttribute('src', 'https://api.vinnot.com/api/uploads/avatars/ana.webp')
+  fireEvent.error(photo!)
+  expect(avatar).toHaveTextContent('A')
+})

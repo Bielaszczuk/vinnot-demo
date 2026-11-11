@@ -56,7 +56,7 @@ class CommunityCommandHandlersTest {
         verify(outcomes).reportClosed(dismissed,false);
     }
     @Test void blocksAreIdempotentAndUnblockDoesNotRequireTargetToStillExist() {
-        var blocks=mock(UserBlockRepositoryPort.class);var handler=new ChangeUserBlockCommandHandler(blocks);
+        var blocks=mock(UserBlockRepositoryPort.class);var handler=new ChangeUserBlockCommandHandler(blocks,mock(FollowRepositoryPort.class),mock(FollowerPointsPort.class));
         assertThatThrownBy(()->handler.execute(new ChangeUserBlockCommand(reporter,reporter,true))).hasMessageContaining("yourself");
         assertThatThrownBy(()->handler.execute(new ChangeUserBlockCommand(reporter,author,true))).hasMessageContaining("User");
         when(blocks.userExists(author)).thenReturn(true);

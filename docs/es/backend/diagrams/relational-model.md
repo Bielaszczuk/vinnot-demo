@@ -2,7 +2,7 @@
 
 ## Notación y alcance
 
-Este DER describe el esquema acumulado de Flyway V1–V69. Presenta columnas
+Este DER describe el esquema acumulado de Flyway V1–V89. Presenta columnas
 relevantes para identidad, relaciones e invariantes; el diccionario completo de
 atributos está en el [modelo de datos](../data/database-model.md) y en las
 migraciones. No es un diagrama de clases JPA.
@@ -31,6 +31,8 @@ erDiagram
   varchar phone_number "NULL"
   varchar preferred_language
   varchar timezone
+  varchar bio "NULL"
+  varchar cellar_visibility
  }
  SOCIAL_IDENTITIES {
   uuid id PK
@@ -61,9 +63,9 @@ erDiagram
  USERS ||--o{ USER_ACTION_TOKENS : user_id
 ```
 
-[Ver diagrama de «Identidad y credenciales» completo](https://images.vinnot.com/docs/diagrams/v1/es/backend-diagrams-relational-model-26f47df18d72.svg)
+[Ver diagrama de «Identidad y credenciales» completo](https://images.vinnot.com/docs/diagrams/v1/es/backend-diagrams-relational-model-eaf8c8cab1af.svg)
 
-Todos los enlaces a usuario de este bloque usan `ON DELETE CASCADE`. Identidad social tiene unicidad compuesta `(provider, provider_subject)` y `(user_id, provider)`. El token de acción guarda `used_at`, no un enum de estado. `target_value` se agrega en V7 para el cambio de email. V57 amplía `lock_reason` a 300 caracteres. Refresh guarda hash y referencia al hash reemplazante; esa referencia es texto, no FK.
+Todos los enlaces a usuario de este bloque usan `ON DELETE CASCADE`. Identidad social tiene unicidad compuesta `(provider, provider_subject)` y `(user_id, provider)`. El token de acción guarda `used_at`, no un enum de estado. `target_value` se agrega en V7 para el cambio de email. V57 amplía `lock_reason` a 300 caracteres. Refresh guarda hash y referencia al hash reemplazante; esa referencia es texto, no FK. V87 agrega la `bio` pública de `users` (hasta 160 caracteres, opcional) y `cellar_visibility` (`varchar(20) NOT NULL`, por defecto PUBLIC, CHECK PUBLIC, FOLLOWERS o PRIVATE); ver [Social y perfil de gustos](#social-y-perfil-de-gustos-v87v89).
 
 ## Autorización
 
@@ -1026,3 +1028,39 @@ erDiagram
 [Ver diagrama de «Publicación en redes (V82–V84)» completo](https://images.vinnot.com/docs/diagrams/v1/es/backend-diagrams-relational-model-5fdf7a8bfdbf.svg)
 
 Las FKs `social_publications.post_id` y `social_post_metrics.publication_id` son `ON DELETE CASCADE`. `social_publications` tiene una fila por publicación y red (UNIQUE `post_id, network`, que también indexa la FK) e índices por `status` y `published_at`; CHECK de `network` (INSTAGRAM, FACEBOOK, THREADS, TIKTOK) y de `status` (QUEUED, PUBLISHING, PUBLISHED, DRAFT_SENT, FAILED). `social_post_metrics` guarda una foto por publicación y día (PK `publication_id, captured_on`); una métrica nula es una que la red no da. `social_accounts` tiene una fila por red conectada con OAuth (Threads y TikTok), CHECK de `network` y de `status` (CONNECTED, REFRESH_FAILED); los tokens se guardan cifrados con AES-256-GCM, `connected_by` es el id del administrador sin FK y `refresh_claimed_until` es el lease de renovación. V82 agrega `content_pillars.auto_approve` (`false`) y `social_posts.publishing` (JSONB `{startedAt, finishedAt, error}`, nulo hasta empezar); V83 agrega `content_pillars.active` (`true`); V84 inserta los pilares `TERROIR`, `WINEMAKING`, `HISTORY`, `REGION`, `TASTING` y `SERVICE`, reescribe los briefs de `QUIZ` y `CURIOUS_FACT` y apaga `HUMOR`. Las tres migraciones son aditivas.
+
+## Social y perfil de gustos (V87–V89)
+
+```mermaid
+erDiagram
+ USERS {
+  uuid id PK
+  varchar bio "NULL"
+  varchar cellar_visibility
+ }
+ USER_FOLLOWS {
+  uuid follower_id PK,FK
+  uuid followee_id PK,FK
+  timestamptz created_at
+ }
+ USER_TASTE_QUIZ {
+  uuid user_id PK,FK
+  varchar status
+  jsonb answers "NULL"
+  timestamptz updated_at
+ }
+ USER_TASTE_ADJUSTMENTS {
+  uuid user_id PK,FK
+  varchar trait PK
+  smallint score
+  timestamptz updated_at
+ }
+ USERS ||--o{ USER_FOLLOWS : follower_id
+ USERS ||--o{ USER_FOLLOWS : followee_id
+ USERS ||--o| USER_TASTE_QUIZ : user_id
+ USERS ||--o{ USER_TASTE_ADJUSTMENTS : user_id
+```
+
+[Ver diagrama de «Social y perfil de gustos (V87–V89)» completo](https://images.vinnot.com/docs/diagrams/v1/es/backend-diagrams-relational-model-70494a1e7e66.svg)
+
+Las tres tablas son del módulo de comunidad y referencian `users` con `ON DELETE CASCADE`. `user_follows` (V87) guarda un seguimiento asimétrico, sin aprobación: la PK `(follower_id, followee_id)` impide repetirlo, un CHECK impide seguirse a uno mismo, la PK sirve para «a quién sigo» e `idx_user_follows_followee (followee_id, created_at DESC)` para «quién me sigue», del más reciente al más antiguo. Un bloqueo de `user_blocks` ([Comunidad y evidencia privada](#comunidad-y-evidencia-privada-v24)) borra los seguimientos del par en ambos sentidos en la misma transacción; es una regla del caso de uso, no una FK. `user_taste_quiz` (V88) tiene una fila por miembro: `status` COMPLETED o SKIPPED y `answers` (objeto de clave de pregunta a clave de opción) presente si y solo si es COMPLETED, ambos con CHECK; sin fila, el test está pendiente. `user_taste_adjustments` (V89) guarda el puntaje manual del paladar, uno por miembro y rasgo: PK `(user_id, trait)`, CHECK de `trait` (ACIDITY, BODY, TANNIN o SWEETNESS) y de `score` (0 a 100); sin fila, el rasgo muestra su valor calculado. El perfil público combina estas tablas con `user_taste_affinities` ([Engagement y actividad](#engagement-y-actividad-v52-v66v67)) y con los perfiles IA de los vinos; ese cálculo no se persiste. Las tres migraciones son aditivas.

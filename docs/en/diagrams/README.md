@@ -41,7 +41,7 @@ Each use case has its sequence diagram on its page. By module:
 - [Administration and moderation](../modules/admin/use-cases/README.md): 15 use cases
 - [AI profiles and comparisons](../modules/ai/use-cases/README.md): 4 use cases
 - [Cellar](../modules/cellar/use-cases/README.md): 6 use cases
-- [Community](../modules/community/use-cases/README.md): 4 use cases
+- [Community](../modules/community/use-cases/README.md): 13 use cases
 - [Events and tickets](../modules/events/use-cases/README.md): 9 use cases
 - [Points and seals](../modules/gamification/use-cases/README.md): 4 use cases
 - [Legal](../modules/legal/use-cases/README.md): 8 use cases
@@ -233,6 +233,7 @@ Each use case has its sequence diagram on its page. By module:
 | Architecture | [Sharing · Architecture](../modules/sharing/architecture.md) |
 | Architecture | [Support and public information · Architecture](../modules/support/architecture.md) |
 | Architecture | [Users and account · Architecture](../modules/users/architecture.md) |
+| UC-USR-13 · View the profile, roles and stats | [Users and account · UC-USR-13 · View the profile, roles and stats](../modules/users/use-cases/uc-usr-13-view-profile.md) |
 | Architecture | [Wine routes · Architecture](../modules/wine-routes/architecture.md) |
 | Creation | [Wine routes · Architecture](../modules/wine-routes/architecture.md) |
 | Filter hierarchy | [Wine routes · Architecture](../modules/wine-routes/architecture.md) |
@@ -291,6 +292,7 @@ Each use case has its sequence diagram on its page. By module:
 | Identity and access | [Data model and persistence](../backend/data/database-model.md) |
 | Catalog | [Data model and persistence](../backend/data/database-model.md) |
 | Reviews and cellar | [Data model and persistence](../backend/data/database-model.md) |
+| Social and taste profile | [Data model and persistence](../backend/data/database-model.md) |
 | Events and payments | [Data model and persistence](../backend/data/database-model.md) |
 | Routes | [Data model and persistence](../backend/data/database-model.md) |
 | AI and submissions | [Data model and persistence](../backend/data/database-model.md) |
@@ -318,6 +320,7 @@ Each use case has its sequence diagram on its page. By module:
 | Digest cursors (V54–V55) | [Detailed ERD by context](../backend/diagrams/relational-model.md) |
 | Minimum app versions (V69) | [Detailed ERD by context](../backend/diagrams/relational-model.md) |
 | Social publishing (V82–V84) | [Detailed ERD by context](../backend/diagrams/relational-model.md) |
+| Social and taste profile (V87–V89) | [Detailed ERD by context](../backend/diagrams/relational-model.md) |
 | Data | [Administration and moderation](../modules/admin/README.md) |
 | Data | [AI profiles and comparisons](../modules/ai/README.md) |
 | Data | [Cellar](../modules/cellar/README.md) |
@@ -365,6 +368,7 @@ Each use case has its sequence diagram on its page. By module:
 | Contract review | [Public navigation and recovery](../frontend-web/diagrams/public-information.md) |
 | States and timing | [AI profiles and comparisons · Architecture](../modules/ai/architecture.md) |
 | API | [Community · Architecture](../modules/community/architecture.md) |
+| Taste quiz | [Community · Architecture](../modules/community/architecture.md) |
 | Review and comment publication | [Community · Architecture](../modules/community/architecture.md) |
 | Report states | [Community](../modules/community/README.md) |
 | Event states | [Events and tickets](../modules/events/README.md) |

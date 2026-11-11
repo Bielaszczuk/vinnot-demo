@@ -23,7 +23,7 @@
 1. La persona abre un vino desde el catálogo, el inicio u otro módulo.
 2. El cliente pide `GET /wines/{id}`.
 3. La API carga el vino, su bodega con el origen y el resumen del perfil guardado.
-4. El cliente muestra los datos del vino (descripción en el idioma de la interfaz, bodega y origen, uvas, alcohol y valoración) y el resumen sensorial, separados de las reseñas y del perfil con IA.
+4. El cliente muestra los datos del vino (descripción en el idioma de la interfaz, bodega y origen, uvas, alcohol y valoración) y el resumen sensorial, separados del perfil con IA. En la app, las reseñas cierran la pestaña «Info».
 5. Ofrece ir a la bodega, comparar, compartir y agregar a la cava.
 
 ## Flujos alternativos

@@ -103,3 +103,11 @@ it("shows the commenter seal after the name and nothing when there is none", asy
   expect(screen.getByText("Ana")).toContainElement(seal);
   expect(screen.getByText("bob").querySelector(".vinnot-seal")).toBeNull();
 });
+
+it("shows each comment author's @username in muted text, and nothing when it is missing", () => {
+  state.comments = [comment("c1", "lucia"), { ...comment("c2", "anon"), reviewer: { id: "anon", username: "", displayName: "Anon", avatarUrl: null } }];
+  render(<ReviewComments wineId="wine" reviewId="review" />);
+  const handle = screen.getByText("@lucia");
+  expect(handle).toHaveClass("text-gray-500");
+  expect(screen.getAllByText(/^@/)).toHaveLength(1);
+});

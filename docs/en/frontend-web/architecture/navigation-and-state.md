@@ -10,7 +10,7 @@
 | public | home, about, contact, help, legal and legal/:slug, legal/ranking, terms, privacy, cookies, content-policy | none; legal information bypasses incomplete-onboarding redirection |
 | service states | 403, 404, 500, 503, 429, offline, timeout, wildcard | none; inside AppShell |
 | catalog | wines, detail, events, wineries, routes | AppShell + ProtectedLayout |
-| authenticated | compare, scan, AI profile, profile, cellar, community, my-tickets, my-tickets/:id | ProtectedLayout |
+| authenticated | compare, scan, AI profile, profile, cellar, community, my-tickets, my-tickets/:id, users/:id, users/:id/followers, users/:id/following, feed | ProtectedLayout |
 | partner | partner/events | PartnerLayout (`PARTNER` or `ADMIN`) |
 | payment account | partner/payments, partner/payments/callback | no route guard, outside AppShell; exist only with the payments flag |
 | administrative | dashboard, wines, wines/:id/ai-profile, wineries, events, routes, reviews, wine-submissions, publications, community | AdminLayout (`ADMIN` or `MODERATOR`) |
@@ -44,6 +44,14 @@ flowchart LR
 Keys include every parameter affecting results. `enabled` prevents invalid-ID
 requests. `keepPreviousData` may retain a page during pagination without
 presenting it as the response to new filters.
+
+Follow and unfollow (`useFollowUser`) are optimistic: the button, the profile
+follower count and every cached list under `social` change at once; a failed
+request restores the previous copy and warns. When it settles, profiles, people
+lists and the feed are invalidated, but not «People to follow», so a person just
+followed keeps showing «Following» until the list loads again. Someone else's
+cellar is only requested when the profile says `cellarVisible`; the service turns
+a `403 CELLAR_NOT_VISIBLE` into a locked cellar state.
 
 ## Refresh and logout
 

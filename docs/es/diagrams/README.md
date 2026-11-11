@@ -41,7 +41,7 @@ Cada caso de uso tiene su diagrama de secuencia en su página. Por módulo:
 - [Administración y moderación](../modules/admin/use-cases/README.md): 15 casos de uso
 - [Perfiles y comparaciones IA](../modules/ai/use-cases/README.md): 4 casos de uso
 - [Cava](../modules/cellar/use-cases/README.md): 6 casos de uso
-- [Comunidad](../modules/community/use-cases/README.md): 4 casos de uso
+- [Comunidad](../modules/community/use-cases/README.md): 13 casos de uso
 - [Eventos y entradas](../modules/events/use-cases/README.md): 9 casos de uso
 - [Puntos y sellos](../modules/gamification/use-cases/README.md): 4 casos de uso
 - [Legal](../modules/legal/use-cases/README.md): 8 casos de uso
@@ -233,6 +233,7 @@ Cada caso de uso tiene su diagrama de secuencia en su página. Por módulo:
 | Arquitectura | [Compartir · Arquitectura](../modules/sharing/architecture.md) |
 | Arquitectura | [Soporte e información pública · Arquitectura](../modules/support/architecture.md) |
 | Arquitectura | [Usuarios y cuenta · Arquitectura](../modules/users/architecture.md) |
+| UC-USR-13 · Ver el perfil, los roles y las estadísticas | [Usuarios y cuenta · UC-USR-13 · Ver el perfil, los roles y las estadísticas](../modules/users/use-cases/uc-usr-13-view-profile.md) |
 | Arquitectura | [Rutas del vino · Arquitectura](../modules/wine-routes/architecture.md) |
 | Creación | [Rutas del vino · Arquitectura](../modules/wine-routes/architecture.md) |
 | Jerarquía de filtros | [Rutas del vino · Arquitectura](../modules/wine-routes/architecture.md) |
@@ -291,6 +292,7 @@ Cada caso de uso tiene su diagrama de secuencia en su página. Por módulo:
 | Identidad y acceso | [Modelo de datos y persistencia](../backend/data/database-model.md) |
 | Catálogo | [Modelo de datos y persistencia](../backend/data/database-model.md) |
 | Reseñas y cava | [Modelo de datos y persistencia](../backend/data/database-model.md) |
+| Social y perfil de gustos | [Modelo de datos y persistencia](../backend/data/database-model.md) |
 | Eventos y pagos | [Modelo de datos y persistencia](../backend/data/database-model.md) |
 | Rutas | [Modelo de datos y persistencia](../backend/data/database-model.md) |
 | IA y propuestas | [Modelo de datos y persistencia](../backend/data/database-model.md) |
@@ -318,6 +320,7 @@ Cada caso de uso tiene su diagrama de secuencia en su página. Por módulo:
 | Cursores de resúmenes (V54–V55) | [DER detallado por contexto](../backend/diagrams/relational-model.md) |
 | Versiones mínimas de la app (V69) | [DER detallado por contexto](../backend/diagrams/relational-model.md) |
 | Publicación en redes (V82–V84) | [DER detallado por contexto](../backend/diagrams/relational-model.md) |
+| Social y perfil de gustos (V87–V89) | [DER detallado por contexto](../backend/diagrams/relational-model.md) |
 | Datos | [Administración y moderación](../modules/admin/README.md) |
 | Datos | [Perfiles y comparaciones IA](../modules/ai/README.md) |
 | Datos | [Cava](../modules/cellar/README.md) |
@@ -365,6 +368,7 @@ Cada caso de uso tiene su diagrama de secuencia en su página. Por módulo:
 | Revisión contractual | [Navegación pública y recuperación](../frontend-web/diagrams/public-information.md) |
 | Estados y tiempo | [Perfiles y comparaciones IA · Arquitectura](../modules/ai/architecture.md) |
 | API | [Comunidad · Arquitectura](../modules/community/architecture.md) |
+| Test de gustos | [Comunidad · Arquitectura](../modules/community/architecture.md) |
 | Publicación de reseñas y comentarios | [Comunidad · Arquitectura](../modules/community/architecture.md) |
 | Estados de una denuncia | [Comunidad](../modules/community/README.md) |
 | Estados de un evento | [Eventos y entradas](../modules/events/README.md) |

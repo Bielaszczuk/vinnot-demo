@@ -26,10 +26,12 @@ import { editorial, lightTokens, wine, layout, radii } from "@/shared/theme/toke
 import { textStyles } from "@/shared/theme/typography";
 import type { RouteDifficulty, WineRoute } from "@/domain/route/route.types";
 import { BrandRefreshControl } from "@/presentation/components/ui/BrandRefreshControl";
+import { useCountryName } from "@/presentation/hooks/useCountryName";
 import { vinnotColors } from "@/shared/theme/vinnotTheme";
 
 export default function WineRoutesScreen() {
   const { t } = useTranslation();
+  const countryName = useCountryName();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -63,7 +65,7 @@ export default function WineRoutesScreen() {
     selectedDifficulty !== "ALL"
       ? t(`wineRoutes.difficulty.${selectedDifficulty}`, selectedDifficulty)
       : null,
-    selectedCountry,
+    countryName(selectedCountry),
     selectedRegion,
   ]
     .filter(Boolean)
@@ -199,7 +201,7 @@ export default function WineRoutesScreen() {
             {countryOptions.map((country) => (
               <FilterOption
                 key={country}
-                label={country}
+                label={countryName(country)}
                 selected={selectedCountry === country}
                 onPress={() => selectCountry(country)}
               />

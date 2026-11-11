@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { useCountryName } from '@hooks/useCountryName'
 import { Home, X } from 'lucide-react'
 import { Spinner } from '@components/ui/Spinner'
 import { FormSection } from '@components/ui/FormSection'
@@ -16,11 +17,12 @@ const TITLE_ID = 'admin-winery-form-title'
 /** Winery create/edit dialog: collapsible sections on react-hook-form + Zod, guarded close, upload-on-pick logo and cover. */
 export function AdminWineryFormDialog(options: AdminWineryEditorOptions) {
   const { t } = useTranslation()
+  const displayCountry = useCountryName()
   const editor = useAdminWineryEditor(options)
   const { watch, section, errorMessages, busy, isEditing } = editor
   const name = watch('name')
   const logoUrl = watch('logoUrl')
-  const countryName = editor.countries.find((country) => country.id === watch('countryId'))?.name
+  const countryName = displayCountry(editor.countries.find((country) => country.id === watch('countryId'))?.name)
   const regionName = editor.regions.find((region) => region.id === watch('regionId'))?.name
   const contact = [watch('email'), watch('phone'), watch('website')].filter(Boolean).join(' · ')
   const images = [logoUrl && t('admin.wineries.form.logo'), watch('imageUrl') && t('admin.wineries.form.cover')].filter(Boolean).join(' · ')

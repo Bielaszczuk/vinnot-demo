@@ -52,23 +52,7 @@ export interface AddToCellarDto {
   status?: "DRINKING" | "AGING" | "CONSUMED";
 }
 
-// ─── Users ────────────────────────────────────────────────────────────────────
-export interface UserProfileDto {
-  id: number;
-  name: string;
-  email: string;
-  avatarUrl?: string | null;
-  bio?: string | null;
-  roles: string[];
-  createdAt: string;
-}
-
-export interface UserStatsDto {
-  cellarCount: number;
-  reviewCount: number;
-  followingCount: number;
-  followersCount: number;
-}
+// Users and social profiles live in users.dto.ts and social.dto.ts (S7 contract).
 
 // ─── Wine Routes ──────────────────────────────────────────────────────────────
 export interface WineRouteSummaryDto {

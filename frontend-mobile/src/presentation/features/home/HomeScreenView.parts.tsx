@@ -21,6 +21,9 @@ import WhiteGlassImage from "../../../../assets/images/common/whiteglass.webp";
 import RoseGlassImage from "../../../../assets/images/common/roseglass.webp";
 import SparklingGlassImage from "../../../../assets/images/common/sparklinglass.webp";
 import { styles } from "./HomeScreenView.styles";
+import { HomeListHeader } from "./HomeSectionHeaders";
+
+export { HomeListHeader, SectionTitle } from "./HomeSectionHeaders";
 
 export type WineTypeKey = "red" | "white" | "rose" | "sparkling";
 
@@ -68,38 +71,6 @@ export function GrapePill({ grape }: { grape: string }) {
         {grape}
       </Text>
     </LinearGradient>
-  );
-}
-
-export function SectionTitle({ children }: { children: ReactNode }) {
-  return <Text style={styles.sectionTitle}>{children}</Text>;
-}
-
-function HomeListHeader({
-  title,
-  actionLabel,
-  onAction,
-}: {
-  title: string;
-  actionLabel: string;
-  onAction: () => void;
-}) {
-  return (
-    <View style={styles.homeListHeader}>
-      <View style={styles.homeListCopy}>
-        <Text style={styles.homeListEyebrow}>Vinnot</Text>
-        <Text style={styles.homeListTitle}>{title}</Text>
-      </View>
-      <MotionPressable
-        onPress={onAction}
-        style={styles.homeListAction}
-        pressedScale={0.965}
-        accessibilityRole="button"
-        accessibilityLabel={actionLabel}
-      >
-        <Text style={styles.homeListActionText}>{actionLabel}</Text>
-      </MotionPressable>
-    </View>
   );
 }
 

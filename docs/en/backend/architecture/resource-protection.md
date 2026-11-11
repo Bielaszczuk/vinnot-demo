@@ -126,11 +126,13 @@ administrative images do not need to satisfy camera-photo conditions.
 Subsampling takes place before allocating the full raster, and persisted
 images retain a maximum long edge of 1600 pixels.
 
-Heavy processing shares a semaphore per `WineLabelUploadValidator` instance,
-with no waiting queue: two operations by default.
+Heavy processing shares a semaphore per `WineLabelUploadValidator` instance:
+two operations by default. A request waits up to 2 seconds for a permit, because
+decoding takes a fraction of a second.
 `IMAGE_PROCESSING_MAX_CONCURRENT` accepts values from 1 to 8. The permit covers
 decoding, analysis/normalization and buffer cleanup; it is always released on
-completion or failure. Saturation returns 503 with `IMAGE_PROCESSING_BUSY`.
+completion or failure. When no permit frees up within that wait, the API returns
+503 with `IMAGE_PROCESSING_BUSY`.
 It is not converted into a wine-not-found result.
 
 ## Transport timeouts
@@ -195,7 +197,8 @@ sequenceDiagram
 
 | Variable | Default | Meaning |
 |---|---:|---|
-| `AI_MAXIMUM_CONCURRENT_REQUESTS` | 3 | simultaneous paid attempts across replicas sharing a DB; range 1–20 |
+| `AI_MAXIMUM_CONCURRENT_REQUESTS` | 3 | simultaneous paid attempts across replicas sharing a DB; range 1–20; with 3 or more, the last slot is kept for interactive label scans |
+| `AI_INTERACTIVE_WAIT` | 4s | longest wait of an interactive request (label scan) for a free slot |
 | `AI_MONTHLY_LIMIT_USD` | 10 | UTC calendar-month window |
 | `AI_DAILY_LIMIT_USD` | 0 | optional UTC daily window; 0 disables only this additional limit |
 | `AI_PAID_CALLS_ENABLED` | true | pauses new paid calls without invalidating cache |
@@ -210,7 +213,10 @@ sequenceDiagram
 | `AI_IMAGES_TIMEOUT` | 110s | whole image call with retries; at most 115 s so it never outlives the 2-minute lease |
 | `AI_IMAGES_MAX_ATTEMPTS` | 2 | image attempts; only 429 and 5xx are retried, never a timeout or a rejected image |
 
-Capacity acquisition has no queue: unavailable slots cause immediate rejection.
+Background work (profiles, comparisons, refresh) has no queue: unavailable slots
+cause immediate rejection. With three or more slots, the last one is reserved for
+interactive requests: a label scan tries it first and then polls every slot for up
+to `AI_INTERACTIVE_WAIT` before answering 503 `AI_CAPACITY_EXCEEDED`.
 The `provider-capacity:<slot>` leases last two minutes, above the 60-second
 maximum for one OpenAI operation. They differ from per-wine/pair single-flight,
 which retains its finite wait to reuse an ongoing generation.

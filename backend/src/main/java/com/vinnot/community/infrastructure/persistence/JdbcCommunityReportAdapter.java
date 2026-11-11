@@ -27,6 +27,12 @@ import java.util.ArrayList;
 public class JdbcCommunityReportAdapter implements CommunityReportRepositoryPort {
     private static final String MODERATION_SCOPE =
             "reporter_id IS DISTINCT FROM ? AND author_id IS DISTINCT FROM ?";
+    private static final String INSERT =
+            """
+            INSERT INTO community_reports(id,reporter_id,target_type,target_id,author_id,reason,description,excerpt,status,
+              reviewer_id,decision,created_at,updated_at,related_target_id)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """;
     private final JdbcTemplate jdbc;
 
     @Override
@@ -96,12 +102,43 @@ public class JdbcCommunityReportAdapter implements CommunityReportRepositoryPort
     @Override
     public CommunityReport save(CommunityReport r) {
         jdbc.update(
-                """
-                INSERT INTO community_reports(id,reporter_id,target_type,target_id,author_id,reason,description,excerpt,status,reviewer_id,decision,created_at,updated_at)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                INSERT
+                        + """
                 ON CONFLICT(id) DO UPDATE SET status=EXCLUDED.status,reviewer_id=EXCLUDED.reviewer_id,
                   decision=EXCLUDED.decision,updated_at=EXCLUDED.updated_at
                 """,
+                columns(r));
+        recordAction(r);
+        return r;
+    }
+
+    @Override
+    public boolean hasOpenCatalogReport(UUID wineId, UUID otherWineId) {
+        return Boolean.TRUE.equals(jdbc.queryForObject(
+                """
+                SELECT EXISTS (SELECT 1 FROM community_reports WHERE reason='CATALOG_QUALITY'
+                  AND status IN ('OPEN','IN_REVIEW')
+                  AND LEAST(target_id,related_target_id)=LEAST(?::uuid,?::uuid)
+                  AND GREATEST(target_id,related_target_id)=GREATEST(?::uuid,?::uuid))
+                """,
+                Boolean.class,
+                wineId,
+                otherWineId,
+                wineId,
+                otherWineId));
+    }
+
+    @Override
+    public boolean insertIfAbsent(CommunityReport r) {
+        if (jdbc.update(INSERT + " ON CONFLICT DO NOTHING", columns(r)) == 0) {
+            return false;
+        }
+        recordAction(r);
+        return true;
+    }
+
+    private static Object[] columns(CommunityReport r) {
+        return new Object[] {
                 r.id(),
                 r.reporterId(),
                 r.target().type().name(),
@@ -114,7 +151,12 @@ public class JdbcCommunityReportAdapter implements CommunityReportRepositoryPort
                 r.reviewerId(),
                 r.decision(),
                 Timestamp.from(r.createdAt()),
-                Timestamp.from(r.updatedAt()));
+                Timestamp.from(r.updatedAt()),
+                r.relatedTargetId()
+        };
+    }
+
+    private void recordAction(CommunityReport r) {
         jdbc.update(
                 "INSERT INTO"
                     + " community_report_actions(report_id,reviewer_id,status,decision,created_at)"
@@ -124,7 +166,6 @@ public class JdbcCommunityReportAdapter implements CommunityReportRepositoryPort
                 r.status().name(),
                 r.decision(),
                 Timestamp.from(r.updatedAt()));
-        return r;
     }
 
     @Override
@@ -183,6 +224,7 @@ public class JdbcCommunityReportAdapter implements CommunityReportRepositoryPort
                 r.getObject("reviewer_id", UUID.class),
                 r.getString("decision"),
                 r.getTimestamp("created_at").toInstant(),
-                r.getTimestamp("updated_at").toInstant());
+                r.getTimestamp("updated_at").toInstant(),
+                r.getObject("related_target_id", UUID.class));
     }
 }

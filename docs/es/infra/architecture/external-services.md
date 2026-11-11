@@ -110,17 +110,18 @@ flowchart LR
   SDK ([`OpenAiClient.java`](../../../../backend/src/main/java/com/vinnot/shared/infrastructure/ai/OpenAiClient.java)).
 - **Modelos:** `gpt-6-luna` para texto, `gpt-4o-mini` para visión y `omni-moderation-latest`
   para moderación, con nivel de servicio `priority` ([`application.yml`](../../../../backend/src/main/resources/application.yml)).
-- **Claves:** `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_VISION_MODEL`, `OPENAI_MODERATION_MODEL`,
+- **Claves:** `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_VISION_MODEL`, `OPENAI_VISION_REASONING_EFFORT`, `OPENAI_MODERATION_MODEL`,
   `OPENAI_SERVICE_TIER`, `OPENAI_INPUT_PER_MILLION_USD`, `OPENAI_OUTPUT_PER_MILLION_USD`,
   `AI_PROVIDER`, `AI_ENABLED`, `AI_MONTHLY_LIMIT_USD`, `AI_DAILY_LIMIT_USD`,
-  `AI_MAXIMUM_CONCURRENT_REQUESTS`, `AI_PROFILE_REFRESH_ENABLED`, `AI_PROFILE_REFRESH_INTERVAL`,
+  `AI_MAXIMUM_CONCURRENT_REQUESTS`, `AI_INTERACTIVE_WAIT`, `AI_PROFILE_REFRESH_ENABLED`, `AI_PROFILE_REFRESH_INTERVAL`,
   `AI_PROFILE_REFRESH_PROFILES_PER_RUN`, `AI_PROFILE_REFRESH_BUDGET_SHARE`.
 - **Ilustraciones:** `/v1/images/edits` con `gpt-image-1`, apagado por defecto
   ([`OpenAiImageClient.java`](../../../../backend/src/main/java/com/vinnot/shared/infrastructure/ai/OpenAiImageClient.java)); claves `AI_IMAGES_ENABLED`, `AI_IMAGES_MODEL`,
   `AI_IMAGES_QUALITY`, `AI_IMAGES_SIZE`, `AI_IMAGES_MAX_COST_USD`, `AI_IMAGES_TIMEOUT`,
   `AI_IMAGES_MAX_ATTEMPTS`, `AI_IMAGES_INITIAL_BACKOFF_MS` y `OPENAI_IMAGES_URL`. Cada imagen
   reserva un costo fijo contra el mismo tope mensual; sin IA se usa la viñeta del pilar.
-- **Límites:** 3 llamadas simultáneas y un tope mensual en USD que se reserva antes de cada
+- **Límites:** 3 llamadas simultáneas (la última reservada para los escaneos de etiquetas, que
+  esperan hasta 4 s un cupo) y un tope mensual en USD que se reserva antes de cada
   llamada; cada persona puede generar 20 por hora.
 - **Si falla:** conexión de 10 s, lectura de 30 s y hasta 2 intentos. Sin margen de capacidad
   o presupuesto, la API responde 503. Con otro proveedor configurado, la lectura de etiquetas
@@ -165,6 +166,22 @@ flowchart LR
   `EXPO_PUBLIC_GOOGLE_MAPS_IOS_API_KEY`; en producción la clave de iOS queda vacía
   ([`app.config.ts`](../../../../frontend-mobile/app.config.ts)).
 - **Más:** [Google Maps: credenciales y consumo](environments-and-secrets.md#google-maps-credenciales-y-consumo).
+
+## Google Gemini
+
+- **Para qué:** embeddings de imagen para la búsqueda visual de etiquetas: el backend compara
+  una foto escaneada con las imágenes de etiquetas del catálogo que aloja Vinnot
+  ([Vinos](../../modules/wines/architecture.md#precisión-del-escaneo-de-etiquetas)).
+- **Integración:** llamadas HTTP propias a la API de Gemini (`generativelanguage.googleapis.com/v1beta`),
+  sin SDK y con el encabezado `x-goog-api-key`
+  ([`GeminiImageEmbeddingAdapter.java`](../../../../backend/src/main/java/com/vinnot/wine/infrastructure/visual/GeminiImageEmbeddingAdapter.java)).
+- **Modelo:** `gemini-embedding-2` con 768 dimensiones; los vectores se guardan como int8 en
+  `wine_image_embeddings` y se mantienen en memoria.
+- **Claves:** `GEMINI_API_KEY` (opcional), `GEMINI_BASE_URL`, `GEMINI_EMBEDDING_MODEL`,
+  `GEMINI_EMBEDDING_DIMENSIONS`, `GEMINI_CONNECT_TIMEOUT`, `GEMINI_TIMEOUT` y los ajustes
+  `WINE_LABEL_VISUAL_INDEX_*`.
+- **Cuando falla:** 3 s para conectar y 8 s por pedido. Sin clave, o si una llamada falla, los
+  escaneos usan solo la búsqueda por texto y nunca informan un error por eso.
 
 ## Amazon SES
 

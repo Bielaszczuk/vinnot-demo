@@ -38,7 +38,6 @@ import { useFormatters } from "@/presentation/hooks/ui/useFormatters";
 import type { ReportReceipt, ReportStatus } from "@/domain/community/community.types";
 import {
   MAX_REPORT_DECISION_LENGTH,
-  REPORT_OUTCOME_REASONS,
   type ReportOutcome,
   type ReportReasonCode,
 } from "@/domain/admin/moderationReasons";
@@ -243,7 +242,9 @@ function ModerationContent() {
     USER: "/(app)/admin/users",
     EVENT: "/(app)/admin/events",
     WINE_ROUTE: "/(app)/admin/routes",
+    WINE: "/(app)/admin/wines",
   } as const;
+  const catalogQuality = item?.reason === "CATALOG_QUALITY";
   const canRemove = item?.target.type === "REVIEW" || item?.target.type === "COMMENT";
   const removeContent = () =>
     Alert.alert(t("community.removeContent"), t("community.removeConfirm"), [
@@ -326,12 +327,19 @@ function ModerationContent() {
                   {item.excerpt}
                 </Text>
               )}
-              {!!item.description && (
-                <Text selectable style={adminStyles.help}>
-                  {item.description}
-                </Text>
+              {catalogQuality ? (
+                <Text style={adminStyles.help}>{t("community.catalogQualityDescription")}</Text>
+              ) : (
+                !!item.description && (
+                  <Text selectable style={adminStyles.help}>
+                    {item.description}
+                  </Text>
+                )
               )}
             </View>
+            {catalogQuality && (
+              <DetailField label={t("community.reportedByLabel")}>{t("community.automaticReporter")}</DetailField>
+            )}
             {!!item.authorUsername && (
               <DetailField label={t("community.authorLabel")}>{item.authorUsername}</DetailField>
             )}
@@ -339,6 +347,9 @@ function ModerationContent() {
               <DetailField label={t("community.aboutLabel")}>
                 {`${t(`community.targets.${item.target.type}`)} · ${item.targetLabel}`}
               </DetailField>
+            )}
+            {!!item.relatedTargetLabel && (
+              <DetailField label={t("community.chosenWineLabel")}>{item.relatedTargetLabel}</DetailField>
             )}
             {!!item.reviewerUsername && (
               <DetailField label={t("community.reviewedByLabel")}>
@@ -383,7 +394,7 @@ function ModerationContent() {
                 />
                 <ReasonPicker<ReportReasonCode>
                   label={t("community.decision")}
-                  reasons={REPORT_OUTCOME_REASONS[vm.outcome]}
+                  reasons={vm.reasons}
                   value={vm.reasonCode}
                   onChange={vm.chooseReason}
                   labelFor={(code) => t(`community.decisionReasons.${code}`)}

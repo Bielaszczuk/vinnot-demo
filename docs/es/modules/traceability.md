@@ -11,11 +11,11 @@ por eso los totales de tests cuentan referencias, no archivos.
 |---|---|---|---|---|---|---|---|
 | [Usuarios y cuenta](users/README.md) | 23 | 30 | 35 | 68 | 59 | 34 | 44 |
 | [Legal](legal/README.md) | 8 | 7 | 7 | 27 | 18 | 11 | 11 |
-| [Vinos](wines/README.md) | 9 | 12 | 23 | 43 | 28 | 11 | 20 |
+| [Vinos](wines/README.md) | 9 | 12 | 27 | 53 | 42 | 11 | 25 |
 | [Bodegas y regiones](wineries/README.md) | 3 | 4 | 5 | 13 | 8 | 4 | 6 |
 | [Reseñas](reviews/README.md) | 7 | 10 | 10 | 33 | 24 | 10 | 10 |
 | [Cava](cellar/README.md) | 6 | 7 | 8 | 26 | 13 | 11 | 8 |
-| [Comunidad](community/README.md) | 4 | 4 | 4 | 21 | 12 | 8 | 4 |
+| [Comunidad](community/README.md) | 4 | 4 | 4 | 23 | 13 | 8 | 4 |
 | [Eventos y entradas](events/README.md) | 9 | 16 | 15 | 46 | 30 | 21 | 15 |
 | [Pagos](payments/README.md) | 6 | 3 | 2 | 30 | 32 | 12 | 12 |
 | [Rutas del vino](wine-routes/README.md) | 4 | 7 | 7 | 15 | 4 | 7 | 11 |
@@ -27,8 +27,8 @@ por eso los totales de tests cuentan referencias, no archivos.
 | [Marketing en redes](marketing/README.md) | 10 | 31 | 3 | 66 | 108 | 56 | 19 |
 | [Soporte e información pública](support/README.md) | 3 | 5 | 5 | 10 | 6 | 8 | 7 |
 | [Partners](partner/README.md) | 6 | 7 | 7 | 23 | 12 | 12 | 14 |
-| [Administración y moderación](admin/README.md) | 15 | 33 | 33 | 63 | 56 | 39 | 34 |
-| **Total** | **134** | **208** | **209** | **601** | **527** | **274** | **281** |
+| [Administración y moderación](admin/README.md) | 15 | 34 | 33 | 64 | 58 | 41 | 34 |
+| **Total** | **134** | **209** | **213** | **614** | **544** | **276** | **286** |
 
 ## Usuarios y cuenta
 
@@ -85,7 +85,7 @@ La matriz del módulo está en [Pruebas](wines/testing.md).
 | [`UC-WIN-02`](wines/use-cases/uc-win-02-page-catalog.md) | RF-WEB-WIN-06, RF-WEB-WIN-07, RF-WEB-WIN-08, RF-APK-WIN-06, RF-APK-WIN-07, RF-APK-WIN-08 | CP-WIN-09, CP-WIN-10, CP-WIN-11, CP-WIN-12, CP-WIN-13, CP-WIN-14 | 2 | 2 | 1 |
 | [`UC-WIN-03`](wines/use-cases/uc-win-03-view-wine-detail.md) | RF-WEB-WIN-09, RF-WEB-WIN-10, RF-WEB-WIN-11, RF-APK-WIN-09, RF-APK-WIN-10, RF-APK-WIN-11 | CP-WIN-15, CP-WIN-16, CP-WIN-17 | 3 | 3 | 3 |
 | [`UC-WIN-04`](wines/use-cases/uc-win-04-scan-invitation.md) | RF-WEB-WIN-12 | CP-WIN-18 | 0 | 1 | n/a |
-| [`UC-WIN-05`](wines/use-cases/uc-win-05-scan-label.md) | RF-APK-WIN-12, RF-APK-WIN-13, RF-APK-WIN-14, RF-APK-WIN-15, RF-APK-WIN-16, RF-APK-WIN-17, RF-APK-WIN-18 | CP-WIN-19, CP-WIN-20, CP-WIN-21, CP-WIN-22, CP-WIN-23, CP-WIN-24, CP-WIN-25, CP-WIN-42 | 8 | n/a | 7 |
+| [`UC-WIN-05`](wines/use-cases/uc-win-05-scan-label.md) | RF-APK-WIN-12, RF-APK-WIN-13, RF-APK-WIN-14, RF-APK-WIN-15, RF-APK-WIN-16, RF-APK-WIN-17, RF-APK-WIN-18, RF-APK-WIN-24, RF-APK-WIN-25, RF-APK-WIN-26, RF-APK-WIN-27 | CP-WIN-19, CP-WIN-20, CP-WIN-21, CP-WIN-22, CP-WIN-23, CP-WIN-24, CP-WIN-25, CP-WIN-42, CP-WIN-44, CP-WIN-45, CP-WIN-46, CP-WIN-47, CP-WIN-48, CP-WIN-49, CP-WIN-50, CP-WIN-51, CP-WIN-52, CP-WIN-53 | 22 | n/a | 12 |
 | [`UC-WIN-06`](wines/use-cases/uc-win-06-manual-search-from-scan.md) | RF-APK-WIN-19 | CP-WIN-26, CP-WIN-27, CP-WIN-28 | 1 | n/a | 1 |
 | [`UC-WIN-07`](wines/use-cases/uc-win-07-submit-wine.md) | RF-APK-WIN-20, RF-APK-WIN-21 | CP-WIN-29, CP-WIN-30, CP-WIN-31, CP-WIN-32, CP-WIN-33, CP-WIN-43 | 4 | n/a | 4 |
 | [`UC-WIN-08`](wines/use-cases/uc-win-08-attach-label-photo.md) | RF-APK-WIN-22 | CP-WIN-34, CP-WIN-35, CP-WIN-36, CP-WIN-37, CP-WIN-38 | 2 | n/a | 1 |
@@ -134,10 +134,10 @@ La matriz del módulo está en [Pruebas](community/testing.md).
 
 | Caso de uso | Requisitos | Casos de prueba | Backend | Web | App |
 |---|---|---|---|---|---|
-| [`UC-COM-01`](community/use-cases/uc-com-01-report-content.md) | RF-WEB-COM-01, RF-WEB-COM-02, RF-APK-COM-01, RF-APK-COM-02 | CP-COM-01, CP-COM-02, CP-COM-03, CP-COM-04, CP-COM-05, CP-COM-06, CP-COM-07, CP-COM-08 | 4 | 4 | 2 |
+| [`UC-COM-01`](community/use-cases/uc-com-01-report-content.md) | RF-WEB-COM-01, RF-WEB-COM-02, RF-APK-COM-01, RF-APK-COM-02 | CP-COM-01, CP-COM-02, CP-COM-03, CP-COM-04, CP-COM-05, CP-COM-06, CP-COM-07, CP-COM-08, CP-COM-75 | 5 | 4 | 2 |
 | [`UC-COM-02`](community/use-cases/uc-com-02-block-user.md) | RF-WEB-COM-03, RF-APK-COM-03 | CP-COM-09, CP-COM-10, CP-COM-11, CP-COM-12, CP-COM-13, CP-COM-14 | 2 | 2 | 1 |
 | [`UC-COM-03`](community/use-cases/uc-com-03-my-community.md) | RF-WEB-COM-04, RF-APK-COM-04 | CP-COM-15, CP-COM-16, CP-COM-17, CP-COM-18 | 2 | 2 | 1 |
-| [`UC-COM-04`](community/use-cases/uc-com-04-report-outcome-and-retention.md) | — | CP-COM-19, CP-COM-20, CP-COM-21 | 4 | n/a | n/a |
+| [`UC-COM-04`](community/use-cases/uc-com-04-report-outcome-and-retention.md) | — | CP-COM-19, CP-COM-20, CP-COM-21, CP-COM-76 | 4 | n/a | n/a |
 
 ## Eventos y entradas
 
@@ -289,7 +289,7 @@ La matriz del módulo está en [Pruebas](admin/testing.md).
 | [`UC-ADM-04`](admin/use-cases/uc-adm-04-manage-events.md) | RF-WEB-ADM-10, RF-WEB-ADM-11, RF-WEB-ADM-12, RF-APK-ADM-10, RF-APK-ADM-11, RF-APK-ADM-12 | CP-ADM-11, CP-ADM-12, CP-ADM-13, CP-ADM-14, CP-ADM-56 | 3 | 3 | 2 |
 | [`UC-ADM-05`](admin/use-cases/uc-adm-05-manage-routes.md) | RF-WEB-ADM-13, RF-WEB-ADM-14, RF-WEB-ADM-15, RF-APK-ADM-13, RF-APK-ADM-14, RF-APK-ADM-15 | CP-ADM-15, CP-ADM-16, CP-ADM-17, CP-ADM-18 | 2 | 1 | 1 |
 | [`UC-ADM-06`](admin/use-cases/uc-adm-06-review-wine-submissions.md) | RF-WEB-ADM-16, RF-WEB-ADM-17, RF-WEB-ADM-18, RF-WEB-ADM-19, RF-WEB-ADM-20, RF-APK-ADM-16, RF-APK-ADM-17, RF-APK-ADM-18, RF-APK-ADM-19, RF-APK-ADM-20 | CP-ADM-19, CP-ADM-20, CP-ADM-21, CP-ADM-22, CP-ADM-23, CP-ADM-24 | 1 | 2 | 2 |
-| [`UC-ADM-07`](admin/use-cases/uc-adm-07-moderate-reports.md) | RF-WEB-ADM-21, RF-WEB-ADM-22, RF-APK-ADM-21, RF-APK-ADM-22 | CP-ADM-25, CP-ADM-26, CP-ADM-27, CP-ADM-28, CP-ADM-29 | 4 | 3 | 1 |
+| [`UC-ADM-07`](admin/use-cases/uc-adm-07-moderate-reports.md) | RF-WEB-ADM-21, RF-WEB-ADM-22, RF-WEB-ADM-34, RF-APK-ADM-21, RF-APK-ADM-22 | CP-ADM-25, CP-ADM-26, CP-ADM-27, CP-ADM-28, CP-ADM-29, CP-ADM-64 | 6 | 5 | 1 |
 | [`UC-ADM-08`](admin/use-cases/uc-adm-08-review-publications.md) | RF-WEB-ADM-23, RF-APK-ADM-23 | CP-ADM-30, CP-ADM-31, CP-ADM-32, CP-ADM-33 | 3 | 2 | 1 |
 | [`UC-ADM-09`](admin/use-cases/uc-adm-09-manage-reviews.md) | RF-WEB-ADM-24, RF-APK-ADM-24 | CP-ADM-34, CP-ADM-35, CP-ADM-36 | 1 | 1 | 1 |
 | [`UC-ADM-10`](admin/use-cases/uc-adm-10-manage-users.md) | RF-WEB-ADM-25, RF-WEB-ADM-26, RF-WEB-ADM-27, RF-WEB-ADM-28, RF-WEB-ADM-29, RF-APK-ADM-25, RF-APK-ADM-26, RF-APK-ADM-27, RF-APK-ADM-28, RF-APK-ADM-29 | CP-ADM-37, CP-ADM-38, CP-ADM-39, CP-ADM-40 | 5 | 2 | 2 |

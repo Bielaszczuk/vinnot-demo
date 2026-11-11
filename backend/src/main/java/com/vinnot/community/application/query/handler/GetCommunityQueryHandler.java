@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -71,7 +72,9 @@ public class GetCommunityQueryHandler implements GetCommunityUseCase {
         ModerationNames names =
                 targets.describe(
                         found.content().stream()
-                                .map(CommunityReport::target)
+                                .flatMap(report -> Stream.concat(
+                                        Stream.of(report.target()),
+                                        ModerationReport.relatedTarget(report).stream()))
                                 .collect(Collectors.toSet()),
                         users);
         return found.map(report -> ModerationReport.from(report, names));

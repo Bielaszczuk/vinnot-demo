@@ -32,6 +32,7 @@ jest.mock("@/infrastructure/api/clients/wines.client", () => ({
     regenerateAiProfile: jest.fn(),
     compareWines: jest.fn(),
     scanLabel: jest.fn(),
+    sendScanFeedback: jest.fn(),
     submitWine: jest.fn(),
     getMySubmissions: jest.fn(),
     attachLabelImage: jest.fn(),
@@ -68,7 +69,28 @@ describe("wines.service", () => {
       "file:///capture.jpg",
       [],
       controller.signal,
+      undefined,
     );
+  });
+
+  it("passes the barcode read next to the label to the scan", async () => {
+    await winesService.scanLabel({
+      imageUri: "file:///capture.jpg",
+      observedText: ["CATENA"],
+      barcode: "7791234567898",
+    });
+    expect(winesClientMock.scanLabel).toHaveBeenLastCalledWith(
+      "file:///capture.jpg",
+      ["CATENA"],
+      undefined,
+      "7791234567898",
+    );
+  });
+
+  it("sends scan feedback with the chosen wine", async () => {
+    winesClientMock.sendScanFeedback.mockResolvedValue(undefined);
+    await winesService.sendScanFeedback({ scanId: "scan-1", verdict: "NOT_IN_CATALOG", wineId: null });
+    expect(winesClientMock.sendScanFeedback).toHaveBeenCalledWith("scan-1", "NOT_IN_CATALOG", null);
   });
   beforeEach(() => {
     jest.clearAllMocks();
@@ -282,6 +304,7 @@ describe("wines.service", () => {
     expect(winesClientMock.scanLabel).toHaveBeenCalledWith(
       "file:///label.jpg",
       ["Malbec"],
+      undefined,
       undefined,
     );
     expect(winesClientMock.createWineReview).toHaveBeenCalledWith("wine-1", {

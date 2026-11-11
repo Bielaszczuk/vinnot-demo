@@ -104,8 +104,25 @@ describe("community application boundary", () => {
       authorUsername: "ana",
       reviewerUsername: null,
       targetLabel: "Malbec",
+      relatedTargetLabel: null,
     });
     expect(communityClient.moderation).toHaveBeenCalledWith(0, "OPEN");
+    // A catalog quality report names the wine the member chose instead.
+    jest.mocked(communityClient.moderation).mockResolvedValueOnce({
+      content: [{
+        ...moderation,
+        target: { type: "WINE", id: "matched" },
+        reason: "CATALOG_QUALITY",
+        relatedTargetLabel: "Malbec Reserva",
+      }],
+      totalItems: 1,
+      totalPages: 1,
+    });
+    expect((await communityService.moderation(0, "OPEN")).items[0]).toMatchObject({
+      target: { type: "WINE", id: "matched" },
+      reason: "CATALOG_QUALITY",
+      relatedTargetLabel: "Malbec Reserva",
+    });
     // An older API without names still maps to explicit nulls.
     jest
       .mocked(communityClient.moderation)

@@ -111,6 +111,29 @@ it("adds the wine with the tasted vintage, suggesting the catalog vintage first"
     expect.objectContaining({ wineId: "new", vintage: 2019 }), expect.any(Object)));
 });
 
+it("prefills a new entry with the vintage read on the scanned label", async () => {
+  const view = render(
+    <CellarAddSheet visible onClose={jest.fn()} initialWine={{ ...wine("new"), vintage: 2019 }} initialVintage={2017} />,
+  );
+
+  expect(view.getByLabelText("vintage.label").props.accessibilityValue).toEqual({ text: "2017" });
+  fireEvent.press(view.getByText("common.save"));
+
+  await waitFor(() => expect(mockAdd).toHaveBeenCalledWith(
+    expect.objectContaining({ wineId: "new", vintage: 2017 }), expect.any(Object)));
+});
+
+it("keeps the stored vintage of an edited entry over a scanned one", async () => {
+  const entry = { id: "entry-1", wine: wine("owned"), rating: 3, purchasePrice: null, notes: null, vintage: 2018 };
+  const view = render(<CellarAddSheet visible onClose={jest.fn()} entry={entry as never} initialVintage={2017} />);
+
+  expect(view.getByLabelText("vintage.label").props.accessibilityValue).toEqual({ text: "2018" });
+  fireEvent.press(view.getByText("common.save"));
+
+  await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1));
+  expect(mockUpdate.mock.calls[0]?.[0].updates.vintage).toBeUndefined();
+});
+
 it("clears the vintage of an edited note", async () => {
   const entry = { id: "entry-1", wine: wine("owned"), rating: 4, purchasePrice: null, notes: "Nota", vintage: 2018 };
   const view = render(<CellarAddSheet visible onClose={jest.fn()} entry={entry as never} />);

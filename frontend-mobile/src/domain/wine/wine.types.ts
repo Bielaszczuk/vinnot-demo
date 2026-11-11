@@ -322,11 +322,28 @@ export interface WineScanResult {
   suggestions: WineSummary[];
   candidates: WineScanCandidate[];
   extractedData: ExtractedLabelData | null;
+  /** The recorded scan the member can confirm or correct; null when it was not recorded. */
+  scanId: string | null;
 }
 
 export interface WineLabelScanInput {
   imageUri: string;
   observedText: string[];
+  /** EAN/UPC digits read next to the label, when the camera saw one. */
+  barcode?: string | null;
+}
+
+/**
+ * What the member did with a scan result: opened or added the matched wine,
+ * picked another wine, or proposed the wine because the catalog lacks it.
+ */
+export type WineScanFeedbackVerdict = "CONFIRMED" | "CORRECTED" | "NOT_IN_CATALOG";
+
+export interface WineScanFeedbackInput {
+  scanId: string;
+  verdict: WineScanFeedbackVerdict;
+  /** The chosen wine; null only for NOT_IN_CATALOG. */
+  wineId: string | null;
 }
 
 export interface WineScanCandidate {

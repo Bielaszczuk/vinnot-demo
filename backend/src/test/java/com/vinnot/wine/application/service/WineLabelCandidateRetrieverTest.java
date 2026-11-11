@@ -39,6 +39,57 @@ class WineLabelCandidateRetrieverTest {
     }
 
     @Test
+    void neverSearchesGenericDesignationLinesOnTheirOwn() {
+        var label = new ExtractedWineLabel("Bodega Viva", "Isabella", "Pinot Noir", 2012, "RED",
+                "Mendoza", "Argentina", null, 0.9, null, null, true,
+                List.of("Edición Limitada", "ESTATE GROWN PINOT NOIR", "VINO FINO TINTO", "OLD VINE BLEND",
+                        "Isabella Reserva", "PINOT NOIR", "MENDOZA ARGENTINA"));
+        retriever.retrieve(label);
+        var queries = ArgumentCaptor.forClass(WineLabelSearchCriteria.class);
+        verify(wineRepository, atLeastOnce()).findByIndexedIdentity(queries.capture());
+        var standalone = queries.getAllValues().stream()
+                .map(query -> query.identityTerms().getFirst()).toList();
+        assertThat(standalone).contains("Isabella", "Bodega Viva")
+                .doesNotContain("Edición Limitada", "ESTATE GROWN PINOT NOIR", "VINO FINO TINTO", "OLD VINE BLEND");
+    }
+
+    @Test
+    void retrievesTheIdentifiedProducersCatalogBeforeRanking() {
+        var producerWine = Wine.create("Gran Reserva Blend", null, WineType.RED, UUID.randomUUID());
+        when(wineRepository.findByProducerIdentity(any())).thenReturn(List.of(producerWine));
+        var label = new ExtractedWineLabel("MEVI", "Gran Reserva", "Blend", 2014, "RED", null, null,
+                null, 0.9, null, null, true, List.of("MEVI", "GRAN RESERVA"));
+
+        assertThat(retriever.retrieve(label)).contains(producerWine);
+        var query = ArgumentCaptor.forClass(WineLabelSearchCriteria.class);
+        verify(wineRepository).findByProducerIdentity(query.capture());
+        assertThat(query.getValue().identityTerms()).containsExactly("mevi");
+        assertThat(query.getValue().limit()).isEqualTo(150);
+    }
+
+    @Test
+    void skipsProducerRetrievalWithoutADistinctiveProducer() {
+        for (String winery : new String[] {null, " ", "Bodega", "Finca La", "Viñedos y Bodegas", "Sur",
+                "MALBEC", "Gran Reserva"}) {
+            var label = new ExtractedWineLabel(winery, "Malbec Reserva", "Malbec", null, "RED", null, null,
+                    null, 0.9, null, null, true, List.of("MALBEC RESERVA"));
+            retriever.retrieve(label);
+        }
+        verify(wineRepository, never()).findByProducerIdentity(any());
+    }
+
+    @Test
+    void producerRetrievalTimeoutDoesNotHideOtherCandidates() {
+        var indexed = Wine.create("Malbec", null, WineType.RED, UUID.randomUUID());
+        when(wineRepository.findByProducerIdentity(any()))
+                .thenThrow(new WineLabelCatalogSearchTimeoutException(new RuntimeException()));
+        when(wineRepository.findByIndexedIdentity(any())).thenReturn(List.of(indexed));
+        var label = new ExtractedWineLabel("Altamonte", "Malbec", "Malbec", null, "RED", null, null,
+                null, 0.9, null, null, true, List.of("ALTAMONTE"));
+        assertThat(retriever.retrieve(label)).containsExactly(indexed);
+    }
+
+    @Test
     void prioritizesObservedNumberedProductsOverCombinedOriginAndAlcoholLines() {
         var label = new ExtractedWineLabel("San Felipe", "Brand", null, null, "RED", "Mendoza", "Argentina",
                 null, 0.9, "Brand", null, true,
@@ -73,6 +124,21 @@ class WineLabelCandidateRetrieverTest {
         doReturn(List.of(wine)).when(port).findByFuzzyMatch(any());
         assertThat(service.retrieveApproximate(anonymous,
                 new WineLabelScanDeadline(WineLabelScanDeadline.DEFAULT_BUDGET))).containsExactly(wine);
+    }
+
+    @Test
+    void visualHintsAreLoadedInTheirOrderAndInactiveOrMissingWinesAreDropped() {
+        Wine first = Wine.create("Gran Cuvee", UUID.randomUUID(), WineType.RED, UUID.randomUUID());
+        Wine second = Wine.create("Reserva Malbec", UUID.randomUUID(), WineType.RED, UUID.randomUUID());
+        Wine inactive = Wine.create("Old Label", UUID.randomUUID(), WineType.RED, UUID.randomUUID());
+        inactive.deactivate();
+        UUID missing = UUID.randomUUID();
+        List<UUID> ids = List.of(second.getId(), missing, inactive.getId(), first.getId());
+        when(wineRepository.findAllByIds(ids)).thenReturn(List.of(first, inactive, second));
+
+        assertThat(retriever.retrieveByIds(ids)).containsExactly(second, first);
+        assertThat(retriever.retrieveByIds(List.of())).isEmpty();
+        verify(wineRepository, times(1)).findAllByIds(any());
     }
 
     private final WineRepositoryPort wineRepository = mock(WineRepositoryPort.class);
@@ -189,7 +255,7 @@ class WineLabelCandidateRetrieverTest {
         when(wineRepository.findByIndexedIdentity(any()))
                 .thenAnswer(invocation -> {
                     WineLabelSearchCriteria criteria = invocation.getArgument(0);
-                    if (criteria.identityTerms().equals(List.of("Reserva"))) {
+                    if (criteria.identityTerms().equals(List.of("Tapiz Reserva Malbec"))) {
                         throw new WineLabelCatalogSearchTimeoutException(
                                 new RuntimeException("broad term timeout"));
                     }
@@ -201,12 +267,12 @@ class WineLabelCandidateRetrieverTest {
 
         ArgumentCaptor<WineLabelSearchCriteria> criteria =
                 ArgumentCaptor.forClass(WineLabelSearchCriteria.class);
-        verify(wineRepository, times(5))
+        verify(wineRepository, times(4))
                 .findByIndexedIdentity(criteria.capture());
+        // A generic designation such as "Reserva" is never searched on its own.
         assertThat(criteria.getAllValues())
                 .extracting(WineLabelSearchCriteria::identityTerms)
                 .containsExactly(
-                        List.of("Reserva"),
                         List.of("Tapiz Reserva Malbec"),
                         List.of("Tapiz"),
                         List.of("BLACK TEARS"),

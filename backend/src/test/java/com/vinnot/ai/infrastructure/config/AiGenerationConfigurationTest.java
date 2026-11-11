@@ -63,6 +63,23 @@ class AiGenerationConfigurationTest {
         assertThat(new AiProfileRefreshPolicy(20, BigDecimal.ONE).budgetShare()).isEqualByComparingTo("1");
     }
 
+    @Test
+    void keepsOneSlotForInteractiveRequestsFromThreeSlotsAndBoundsTheirWait() {
+        assertThat(policy(1).backgroundSlots()).isEqualTo(1);
+        assertThat(policy(2).backgroundSlots()).isEqualTo(2);
+        assertThat(policy(3).backgroundSlots()).isEqualTo(2);
+        assertThat(policy(20).backgroundSlots()).isEqualTo(19);
+        assertThat(policy(3).interactiveWait()).isEqualTo(Duration.ofSeconds(4));
+        assertThatThrownBy(() -> new AiProviderAdmissionPolicy(3, Duration.ofMinutes(2), BigDecimal.ONE,
+                BigDecimal.ZERO, true, Duration.ofSeconds(16))).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new AiProviderAdmissionPolicy(3, Duration.ofMinutes(2), BigDecimal.ONE,
+                BigDecimal.ZERO, true, Duration.ofSeconds(-1))).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private static AiProviderAdmissionPolicy policy(int slots) {
+        return new AiProviderAdmissionPolicy(slots, Duration.ofMinutes(2), BigDecimal.ONE, BigDecimal.ZERO, true);
+    }
+
     private void assertInvalid(int concurrent, Duration lease, BigDecimal monthly, BigDecimal daily) {
         assertThatThrownBy(() -> new AiProviderAdmissionPolicy(concurrent, lease, monthly, daily, true))
                 .isInstanceOf(IllegalArgumentException.class);

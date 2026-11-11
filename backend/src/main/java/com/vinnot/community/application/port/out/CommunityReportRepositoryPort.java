@@ -24,6 +24,17 @@ public interface CommunityReportRepositoryPort {
 
     CommunityReport save(CommunityReport report);
 
+    /** Whether a catalog quality report about these two wines, in either order, is still open or in review. */
+    boolean hasOpenCatalogReport(UUID wineId, UUID otherWineId);
+
+    /**
+     * Stores a new report unless an open one already covers the same catalog wine pair; concurrent duplicates are
+     * dropped by the database instead of failing.
+     *
+     * @return whether the report was stored
+     */
+    boolean insertIfAbsent(CommunityReport report);
+
     Optional<CommunityReport> findForUpdate(UUID id);
 
     PageResult<CommunityReport> findMine(UUID reporter, PageQuery page);

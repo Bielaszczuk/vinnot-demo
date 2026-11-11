@@ -21,9 +21,11 @@ export interface ReportRequestDto {
     | "OTHER";
   description: string;
 }
-export interface ModerationReportDto extends ReportReceiptDto {
+export interface ModerationReportDto extends Omit<ReportReceiptDto, "target"> {
+  /** WINE is only used by catalog quality reports, which Vinnot files itself. */
+  target: { type: ReportReceiptDto["target"]["type"] | "WINE"; id: string };
   authorId: string | null;
-  reason: ReportRequestDto["reason"];
+  reason: ReportRequestDto["reason"] | "CATALOG_QUALITY";
   description: string;
   excerpt: string;
   reviewerId: string | null;
@@ -31,8 +33,11 @@ export interface ModerationReportDto extends ReportReceiptDto {
   /** Null when the user or content was deleted; absent from APIs before #407. */
   authorUsername?: string | null;
   reviewerUsername?: string | null;
-  /** Wine name (review, comment), event title, route name or username. */
+  /** Wine name (review, comment, wine), event title, route name or username. */
   targetLabel?: string | null;
+  /** The other wine of a catalog quality report; absent from APIs before #544. */
+  relatedTargetId?: string | null;
+  relatedTargetLabel?: string | null;
 }
 export interface BlockedUserDto {
   userId: string;

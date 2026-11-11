@@ -80,8 +80,10 @@ jest.mock("@/presentation/hooks/queries/cellar", () => ({
 jest.mock("@/presentation/features/cellar", () => {
   const mockReact = jest.requireActual<typeof import("react")>("react");
   return {
-    CellarAddSheet: ({ visible }: { visible: boolean }) =>
-      visible ? mockReact.createElement("Text", null, "Cellar sheet") : null,
+    CellarAddSheet: ({ visible, initialVintage }: { visible: boolean; initialVintage?: number | null }) =>
+      visible
+        ? mockReact.createElement("Text", null, `Cellar sheet${initialVintage ? ` ${initialVintage}` : ""}`)
+        : null,
   };
 });
 
@@ -189,6 +191,15 @@ describe("wine detail route", () => {
     fireEvent.press(screen.getByText("wineDetails.addToCellar"));
 
     expect(within(screen.getByTestId("screen-sheet-host")).getByText("Cellar sheet")).toBeTruthy();
+  });
+
+  it("prefills Add to Cellar with the vintage read on the scanned label", () => {
+    mockParams = { id: "wine-1", scanReturnTo: "/(app)/(tabs)/wines", scannedVintage: "2017" };
+    const screen = render(<WineDetailRoute />);
+
+    fireEvent.press(screen.getByText("wineDetails.addToCellar"));
+
+    expect(screen.getByText("Cellar sheet 2017")).toBeTruthy();
   });
 
   it("keeps Add to Cellar in the app-level sheet host for a regular wine detail", () => {

@@ -393,6 +393,30 @@ whole catalog (#531). Plan for it:
 - After the window, autovacuum sets the visibility map of the new tables within
   minutes. Until then, grape pages read a few more pages; nothing else is needed.
 
+#### Label scanning: V90–V93
+
+`V90__accent_insensitive_catalog_search.sql`, `V91__wine_image_embeddings.sql`,
+`V92__label_scan_feedback_and_barcodes.sql` and `V93__catalog_quality_reports.sql` (#544)
+are short: V90 only replaces search functions, V91 and V92 create small tables and an
+index and add nullable columns, and V93 widens two CHECKs and adds a nullable column and
+a partial index on `community_reports`. None rewrites catalog rows.
+
+The heavy work runs in the new backend after it starts, on the catalog maintenance
+scheduler, and needs no window:
+
+- About 60 s after startup, `CatalogSearchAccentNormalizer` rewrites the search rows
+  indexed with accents before V90 in batches of 5000 with a 200 ms pause, and checks again
+  every hour. The log shows `Rewrote <n> catalog search row(s) without accents`. Until it
+  finishes, searches match both the accented and the unaccented form.
+- About 30 s after startup, and then every minute, the visual index loads its vectors
+  (`Loaded <n> label image vector(s) into the visual index`) and embeds up to 200 hosted
+  label images (`Embedded <n> catalog label image(s) for visual search`). A failure logs
+  `Visual index refresh failed: <type>` and scans keep using text search only.
+
+Read the logs with `docker logs --since 30m vinnot-prod-backend`, sent through 7.1.
+The visual index needs the optional `GEMINI_API_KEY` in `vinnot/prod/backend` (7.5);
+without it the backend starts normally and the visual index stays off.
+
 ### 7.4 Registering runtime files
 
 After installing the files (7.2) and, when there are migrations, after 7.3. Command for
@@ -427,7 +451,9 @@ Order:
 1. Change the value in the AWS console (region `us-east-1`): **Secrets Manager ›
    `vinnot/prod/backend` › Retrieve secret value › Edit**. Update every variable that
    `infra/aws-low-cost/compose.production.yml` reads; for example, the monthly AI cap uses
-   `PROD_AI_MONTHLY_LIMIT_USD` and `AI_MONTHLY_LIMIT_USD`.
+   `PROD_AI_MONTHLY_LIMIT_USD` and `AI_MONTHLY_LIMIT_USD`. Every entry of the secret also
+   reaches the backend through `runtime.env`: optional keys such as `GEMINI_API_KEY`
+   (Google embeddings for visual label search) only need to be added there.
 2. `prepare` (6.1) of the release that carries the change.
 3. Refresh the file and record its hash with this script, sent through 7.1:
 

@@ -223,7 +223,8 @@ jobs:
       group: ci-backend-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # Room for the encoder install fallbacks on top of the ~13-minute test run.
+    timeout-minutes: 25
     env:
       DB_USERNAME: vinnot
       DB_PASSWORD: vinnot_secret
@@ -244,8 +245,29 @@ jobs:
           java-version: '25'
           cache: maven
 
+      # The encoder packages are cached per runner image, so a run does not depend on the
+      # Ubuntu mirrors. On a cache miss, docker/apt-install.sh falls back to mirrors on other
+      # domains when ubuntu.com does not resolve (#544).
+      - name: Restore WebP encoder packages
+        id: webp-packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/webp-debs
+          key: webp-debs-v1-${{ runner.arch }}-${{ env.ImageOS }}-${{ env.ImageVersion }}
+
       - name: Install WebP encoder
-        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends webp
+        env:
+          CACHE_HIT: ${{ steps.webp-packages.outputs.cache-hit }}
+        run: |
+          set -euo pipefail
+          debs="$HOME/webp-debs"
+          if command -v cwebp >/dev/null; then cwebp -version; exit 0; fi
+          if [ "$CACHE_HIT" = "true" ] && sudo dpkg -i "$debs"/*.deb; then cwebp -version; exit 0; fi
+          mkdir -p "$debs/partial"
+          sudo sh docker/apt-install.sh -o Dir::Cache::archives="$debs" --download-only webp
+          sudo dpkg -i "$debs"/*.deb
+          sudo chown -R "$(id -u):$(id -g)" "$debs"
+          cwebp -version
 
       - name: Test with coverage
         run: mvn -B clean verify

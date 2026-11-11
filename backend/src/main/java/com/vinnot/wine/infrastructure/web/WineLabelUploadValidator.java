@@ -15,10 +15,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Map;
+import java.time.Duration;
 import java.util.Objects;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -30,6 +32,7 @@ public class WineLabelUploadValidator {
 
     private static final long MAX_BYTES = ImageResourceLimits.MAX_BYTES;
     private static final int DEFAULT_CONCURRENT_PROCESSING = 2;
+    private static final Duration PROCESSING_SLOT_WAIT = Duration.ofSeconds(2);
     private static final int MAX_CONCURRENT_PROCESSING = 8;
     private static final int MIN_SHORT_EDGE_PIXELS = 320;
     private static final int MIN_LONG_EDGE_PIXELS = 720;
@@ -111,7 +114,7 @@ public class WineLabelUploadValidator {
 
     private <T> T withDecodedImage(byte[] bytes, boolean requireLabelResolution,
             Function<BufferedImage, T> operation) {
-        if (!processingSlots.tryAcquire()) {
+        if (!acquireProcessingSlot()) {
             throw new ExternalServiceUnavailableException("IMAGE_PROCESSING_BUSY",
                     "Image processing is busy. Please try again shortly.", null);
         }
@@ -124,6 +127,16 @@ public class WineLabelUploadValidator {
             }
         } finally {
             processingSlots.release();
+        }
+    }
+
+    /** Decoding takes a fraction of a second, so a short wait beats sending the member a busy error. */
+    private boolean acquireProcessingSlot() {
+        try {
+            return processingSlots.tryAcquire(PROCESSING_SLOT_WAIT.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            return false;
         }
     }
 

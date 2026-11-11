@@ -49,6 +49,15 @@ function createViewModel() {
       isPending: false,
     },
     attachCapturedImageIfMissing: jest.fn(),
+    scannedVintage: null as number | null,
+    reportWineChosen: jest.fn(),
+    reportNotInCatalog: jest.fn(),
+    barcodeDetected: false,
+    handleBarcodeDetected: jest.fn(),
+    isBackLabelScan: false,
+    canScanBackLabel: false,
+    startBackLabelScan: jest.fn(),
+    cancelBackLabelScan: jest.fn(),
     isCapturing: false,
     capture: jest.fn(),
     retryAnalysis: jest.fn(),
@@ -58,6 +67,11 @@ function createViewModel() {
 }
 
 let mockViewModel = createViewModel();
+let mockCameraProps: Record<string, unknown> = {};
+let mockSubmissionResult: { status: string; wine: typeof sampleWine | null } = {
+  status: "NEEDS_REVIEW",
+  wine: null,
+};
 let mockParams: Record<string, string> = { returnTo: "/(app)/(tabs)" };
 
 jest.mock("expo-router", () => ({
@@ -85,9 +99,10 @@ jest.mock("@/presentation/providers/WineLabelCameraProvider", () => {
   const mockReact = jest.requireActual<typeof import("react")>("react");
   return {
     useWineLabelCamera: () => ({
-      CameraViewport: mockReact.forwardRef(() =>
-        mockReact.createElement("View", { testID: "camera" }),
-      ),
+      CameraViewport: mockReact.forwardRef((props: Record<string, unknown>) => {
+        mockCameraProps = props;
+        return mockReact.createElement("View", { testID: "camera" });
+      }),
     }),
   };
 });
@@ -182,17 +197,25 @@ jest.mock("./WineSubmissionForm", () => {
       onComplete,
     }: {
       imageUri: string;
-      onComplete: (result: { status: "NEEDS_REVIEW"; wine: null }) => void;
+      onComplete: (result: typeof mockSubmissionResult) => void;
     }) =>
       mockReact.createElement(
         "Text",
         {
           testID: "submission-form",
-          onPress: () => onComplete({ status: "NEEDS_REVIEW", wine: null }),
+          onPress: () => onComplete(mockSubmissionResult),
         },
         imageUri,
       ),
   };
+});
+
+const exactResult = (extractedData: { vintage: number | null } | null = null) => ({
+  wine: sampleWine,
+  suggestions: [],
+  candidates: [{ wine: sampleWine, score: 0.95 }],
+  confidence: 0.95,
+  extractedData: extractedData as null,
 });
 
 describe("WineLabelScanScreen interactions", () => {
@@ -200,6 +223,7 @@ describe("WineLabelScanScreen interactions", () => {
     jest.clearAllMocks();
     mockViewModel = createViewModel();
     mockParams = { returnTo: "/(app)/(tabs)" };
+    mockSubmissionResult = { status: "NEEDS_REVIEW", wine: null };
   });
 
   it("lets the person add a wine without a photo when the bottle is not at hand", () => {
@@ -381,4 +405,107 @@ it("keeps the shutter visible in camera mode and disables it while capturing", (
   expect(screen.getByTestId("scan-shutter")).toBeDisabled();
   fireEvent.press(screen.getByTestId("scan-shutter"));
   expect(mockViewModel.capture).toHaveBeenCalledTimes(1);
+});
+
+describe("WineLabelScanScreen scan feedback, vintage, back label and barcode", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockViewModel = createViewModel();
+    mockParams = { returnTo: "/(app)/(tabs)" };
+    mockSubmissionResult = { status: "NEEDS_REVIEW", wine: null };
+  });
+
+  it("reports the opened wine and carries the scanned vintage to its detail", () => {
+    mockViewModel.mode = "result";
+    mockViewModel.scanMutation.data = exactResult();
+    mockViewModel.scannedVintage = 2017;
+    const screen = render(<WineLabelScanScreen />);
+
+    fireEvent.press(screen.getByText("scan.viewDetails"));
+
+    expect(mockViewModel.reportWineChosen).toHaveBeenCalledWith(sampleWine);
+    expect(mockCreateDetailRoute).toHaveBeenCalledWith("wine-1", "/(app)/(tabs)", { scannedVintage: 2017 });
+  });
+
+  it("still opens manual search from Not my wine without sending feedback", () => {
+    mockViewModel.mode = "result";
+    mockViewModel.scanMutation.data = exactResult();
+    const screen = render(<WineLabelScanScreen />);
+
+    fireEvent.press(screen.getByText("scan.notMyWine"));
+
+    expect(mockViewModel.setMode).toHaveBeenCalledWith("manual-search");
+    expect(mockViewModel.reportWineChosen).not.toHaveBeenCalled();
+  });
+
+  it("reports a picked manual search result", () => {
+    mockViewModel.mode = "manual-search";
+    mockViewModel.manualResults = [sampleWine];
+    const screen = render(<WineLabelScanScreen />);
+
+    fireEvent.press(screen.getByTestId("wine-wine-1"));
+
+    expect(mockViewModel.reportWineChosen).toHaveBeenCalledWith(sampleWine);
+  });
+
+  it("reports a proposed wine as not in the catalog", () => {
+    mockViewModel.mode = "submission";
+    const screen = render(<WineLabelScanScreen />);
+
+    fireEvent.press(screen.getByTestId("submission-form"));
+
+    expect(mockViewModel.reportNotInCatalog).toHaveBeenCalledTimes(1);
+    expect(mockViewModel.reportWineChosen).not.toHaveBeenCalled();
+  });
+
+  it("reports the existing wine when a proposal turns out to be a duplicate", () => {
+    mockViewModel.mode = "submission";
+    mockSubmissionResult = { status: "DUPLICATE", wine: sampleWine };
+    const screen = render(<WineLabelScanScreen />);
+
+    fireEvent.press(screen.getByTestId("submission-form"));
+
+    expect(mockViewModel.reportWineChosen).toHaveBeenCalledWith(sampleWine);
+    expect(mockViewModel.reportNotInCatalog).not.toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith("/wine/detail");
+  });
+
+  it("offers the back label on a weak result", () => {
+    mockViewModel.mode = "result";
+    mockViewModel.canScanBackLabel = true;
+    mockViewModel.scanMutation.data = { ...exactResult(), wine: null, suggestions: [] };
+    const screen = render(<WineLabelScanScreen />);
+
+    fireEvent.press(screen.getByText("scan.scanBackLabel"));
+
+    expect(mockViewModel.startBackLabelScan).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not offer the back label once it was merged", () => {
+    mockViewModel.mode = "result";
+    mockViewModel.scanMutation.data = { ...exactResult(), wine: null, suggestions: [] };
+    const screen = render(<WineLabelScanScreen />);
+
+    expect(screen.queryByText("scan.scanBackLabel")).toBeNull();
+  });
+
+  it("guides the back label capture and lets the member return to the result", () => {
+    mockViewModel.isBackLabelScan = true;
+    const screen = render(<WineLabelScanScreen />);
+
+    expect(screen.getByText("scan.backLabelHeadline")).toBeTruthy();
+    expect(screen.getByText("scan.backLabelHint")).toBeTruthy();
+    fireEvent.press(screen.getByText("scan.backLabelCancel"));
+    expect(mockViewModel.cancelBackLabelScan).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads barcodes in the viewfinder and says when one was found", () => {
+    const screen = render(<WineLabelScanScreen />);
+    expect(mockCameraProps.onBarcodeDetected).toBe(mockViewModel.handleBarcodeDetected);
+    expect(screen.queryByText("scan.barcodeDetected")).toBeNull();
+
+    mockViewModel.barcodeDetected = true;
+    screen.rerender(<WineLabelScanScreen />);
+    expect(screen.getByText("scan.barcodeDetected")).toBeTruthy();
+  });
 });

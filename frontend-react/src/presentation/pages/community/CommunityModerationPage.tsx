@@ -46,12 +46,15 @@ function ReportCard({
   const final = report.status === "RESOLVED" || report.status === "DISMISSED";
   const disabled =
     pending || final || (!!report.reviewerId && report.reviewerId !== reviewer);
+  // Catalog quality reports are filed by Vinnot itself and compare two wines.
+  const catalog = report.reason === "CATALOG_QUALITY";
   const destination = {
     REVIEW: "/admin/reviews",
     COMMENT: "/admin/reviews",
     USER: "/admin/users",
     EVENT: "/admin/events",
     WINE_ROUTE: "/admin/routes",
+    WINE: "/admin/wines",
   }[report.target.type];
   return (
     <article className="space-y-3 rounded-xl border border-border bg-surface p-4 shadow-sm">
@@ -68,19 +71,35 @@ function ReportCard({
       </p>
       <ModerationNames
         fields={[
+          [t("community.reportedByLabel"), catalog ? t("community.automaticReporter") : null],
           [t("community.authorLabel"), report.authorUsername],
           [
             t("community.aboutLabel"),
             report.targetLabel &&
               `${t(`community.targets.${report.target.type}`)} · ${report.targetLabel}`,
           ],
+          [t("community.relatedWineLabel"), report.relatedTargetLabel],
           [t("community.reviewedByLabel"), report.reviewerUsername],
         ]}
       />
       <blockquote className="whitespace-pre-wrap rounded-xl bg-surface-cream p-3">
         {report.excerpt}
       </blockquote>
-      <p className="whitespace-pre-wrap">{report.description}</p>
+      <p className="whitespace-pre-wrap">
+        {catalog ? t("community.catalogQualityDescription") : report.description}
+      </p>
+      {catalog && (
+        <div className="flex flex-wrap gap-3">
+          <LinkButton variant="link" to={`/wines/${report.target.id}`}>
+            {t("community.openMatchedWine")}
+          </LinkButton>
+          {report.relatedTargetId && (
+            <LinkButton variant="link" to={`/wines/${report.relatedTargetId}`}>
+              {t("community.openChosenWine")}
+            </LinkButton>
+          )}
+        </div>
+      )}
       {report.target.type !== "USER" || canManageAccounts ? (
         <LinkButton variant="link" to={destination}>
           {t("community.reviewContent")}

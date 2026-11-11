@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { useWineLabelScanViewModel } from "./useWineLabelScanViewModel";
 import type { WineSummary } from "@/domain/wine/wine.types";
 
-const mockMutateAsync = jest.fn<(input: { imageUri: string; observedText: string[] }) => Promise<void>>();
+const mockMutateAsync =
+  jest.fn<(input: { imageUri: string; observedText: string[]; barcode?: string }) => Promise<void>>();
+const mockSendFeedback = jest.fn();
 const mockReset = jest.fn();
 const mockCancel = jest.fn();
 const mockAttachImage = jest.fn();
@@ -13,7 +15,14 @@ const mockReleaseImage = jest.fn();
 const mockReleaseLease = jest.fn();
 const mockRetainImage = jest.fn(() => mockReleaseLease);
 const mockUseWines = jest.fn();
-let mockScanData: { outcome: string; wine?: { id: string } } | undefined;
+let mockScanData:
+  | {
+      outcome: string;
+      wine?: { id: string } | null;
+      scanId?: string | null;
+      extractedData?: { vintage: number | null } | null;
+    }
+  | undefined;
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -44,6 +53,7 @@ jest.mock("@/presentation/hooks/queries/wine/useWines", () => ({
     mutate: mockAttachImage,
     isPending: false,
   }),
+  useSendScanFeedback: () => ({ mutate: mockSendFeedback }),
   useWines: (...args: unknown[]) => {
     mockUseWines(...args);
     return {
@@ -372,5 +382,205 @@ describe("useWineLabelScanViewModel", () => {
     await act(async () => result.current.capture());
 
     expect(result.current.mode).toBe("result");
+  });
+
+  describe("scan feedback", () => {
+    const chosen = (id: string) => ({ id }) as unknown as WineSummary;
+
+    it("confirms the exact wine once per scan, ignoring later verdicts", () => {
+      mockScanData = { outcome: "EXACT_MATCH", wine: { id: "exact" }, scanId: "scan-1" };
+      const { result } = renderHook(() => useWineLabelScanViewModel());
+
+      act(() => result.current.reportWineChosen(chosen("exact")));
+      act(() => result.current.reportWineChosen(chosen("other")));
+      act(() => result.current.reportNotInCatalog());
+
+      expect(mockSendFeedback).toHaveBeenCalledTimes(1);
+      expect(mockSendFeedback).toHaveBeenCalledWith({
+        scanId: "scan-1",
+        verdict: "CONFIRMED",
+        wineId: "exact",
+      });
+    });
+
+    it("corrects the scan when the member picks another suggestion or search result", () => {
+      mockScanData = { outcome: "EXACT_MATCH", wine: { id: "exact" }, scanId: "scan-2" };
+      const { result } = renderHook(() => useWineLabelScanViewModel());
+
+      act(() => result.current.reportWineChosen(chosen("picked")));
+
+      expect(mockSendFeedback).toHaveBeenCalledWith({
+        scanId: "scan-2",
+        verdict: "CORRECTED",
+        wineId: "picked",
+      });
+    });
+
+    it("reports a wine the catalog lacks without a wine", () => {
+      mockScanData = { outcome: "NO_MATCH", wine: null, scanId: "scan-3" };
+      const { result } = renderHook(() => useWineLabelScanViewModel());
+
+      act(() => result.current.reportNotInCatalog());
+
+      expect(mockSendFeedback).toHaveBeenCalledWith({
+        scanId: "scan-3",
+        verdict: "NOT_IN_CATALOG",
+        wineId: null,
+      });
+    });
+
+    it("sends nothing for a scan that was not recorded", () => {
+      mockScanData = { outcome: "EXACT_MATCH", wine: { id: "exact" }, scanId: null };
+      const { result } = renderHook(() => useWineLabelScanViewModel());
+
+      act(() => result.current.reportWineChosen(chosen("exact")));
+      act(() => result.current.reportNotInCatalog());
+
+      expect(mockSendFeedback).not.toHaveBeenCalled();
+    });
+
+    it("fires and forgets: no callbacks, no error shown", () => {
+      mockScanData = { outcome: "POSSIBLE_MATCHES", wine: null, scanId: "scan-4" };
+      const { result } = renderHook(() => useWineLabelScanViewModel());
+
+      act(() => result.current.reportWineChosen(chosen("picked")));
+
+      expect(mockSendFeedback.mock.calls[0]).toHaveLength(1);
+      expect(mockShowError).not.toHaveBeenCalled();
+    });
+  });
+
+  it("exposes only a plausible vintage read on the label", () => {
+    mockScanData = { outcome: "EXACT_MATCH", scanId: "scan-5", extractedData: { vintage: 2017 } };
+    const { result, rerender } = renderHook(() => useWineLabelScanViewModel());
+    expect(result.current.scannedVintage).toBe(2017);
+
+    mockScanData = { outcome: "EXACT_MATCH", scanId: "scan-5", extractedData: { vintage: 3017 } };
+    rerender({});
+    expect(result.current.scannedVintage).toBeNull();
+  });
+
+  describe("barcode", () => {
+    it("keeps the last valid code seen and sends it with the scan", async () => {
+      mockMutateAsync.mockResolvedValue(undefined);
+      const { result } = renderHook(() => useWineLabelScanViewModel());
+      expect(result.current.barcodeDetected).toBe(false);
+
+      act(() => result.current.handleBarcodeDetected("not-a-code"));
+      expect(result.current.barcodeDetected).toBe(false);
+      act(() => result.current.handleBarcodeDetected("7791234567898"));
+      act(() => result.current.handleBarcodeDetected("12345"));
+      act(() => result.current.handleBarcodeDetected("036000291452"));
+      expect(result.current.barcodeDetected).toBe(true);
+
+      result.current.cameraRef.current = {
+        capture: async () => "file:///label.jpg",
+        recognizeText: async () => ["CATENA"],
+      };
+      await act(async () => result.current.capture());
+
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        imageUri: "file:///label.jpg",
+        observedText: ["CATENA"],
+        barcode: "036000291452",
+      });
+    });
+
+    it("forgets the code when the member scans another label", async () => {
+      mockMutateAsync.mockResolvedValue(undefined);
+      const { result } = renderHook(() => useWineLabelScanViewModel());
+      act(() => result.current.handleBarcodeDetected("7791234567898"));
+      act(() => result.current.reset());
+      expect(result.current.barcodeDetected).toBe(false);
+
+      result.current.cameraRef.current = {
+        capture: async () => "file:///label.jpg",
+        recognizeText: async () => ["CATENA"],
+      };
+      await act(async () => result.current.capture());
+
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        imageUri: "file:///label.jpg",
+        observedText: ["CATENA"],
+      });
+    });
+  });
+
+  describe("back label", () => {
+    it("merges the back reading and re-sends the front photo", async () => {
+      mockMutateAsync.mockResolvedValue(undefined);
+      mockScanData = { outcome: "POSSIBLE_MATCHES", wine: null, scanId: "scan-6" };
+      const { result } = renderHook(() => useWineLabelScanViewModel());
+      const capture = jest
+        .fn<() => Promise<string | null>>()
+        .mockResolvedValueOnce("file:///front.jpg")
+        .mockResolvedValueOnce("file:///back.jpg");
+      const recognizeText = jest
+        .fn<(uri: string) => Promise<string[]>>()
+        .mockResolvedValueOnce(["CATENA", "MALBEC"])
+        .mockResolvedValueOnce(["Malbec", "Bodega Catena Zapata"]);
+      result.current.cameraRef.current = { capture, recognizeText };
+
+      await act(async () => result.current.capture());
+      expect(result.current.canScanBackLabel).toBe(true);
+      act(() => result.current.startBackLabelScan());
+      expect(result.current.mode).toBe("camera");
+      expect(result.current.isBackLabelScan).toBe(true);
+      act(() => result.current.handleBarcodeDetected("7791234567898"));
+      await act(async () => result.current.capture());
+
+      expect(recognizeText).toHaveBeenLastCalledWith("file:///back.jpg");
+      expect(mockMutateAsync).toHaveBeenLastCalledWith({
+        imageUri: "file:///front.jpg",
+        observedText: ["CATENA", "MALBEC", "Bodega Catena Zapata"],
+        barcode: "7791234567898",
+      });
+      expect(mockReleaseImage).toHaveBeenCalledWith("file:///back.jpg");
+      expect(mockReleaseImage).not.toHaveBeenCalledWith("file:///front.jpg");
+      expect(result.current.capturedUri).toBe("file:///front.jpg");
+      expect(result.current.mode).toBe("result");
+      expect(result.current.isBackLabelScan).toBe(false);
+      expect(result.current.canScanBackLabel).toBe(false);
+    });
+
+    it("returns to the previous result when the member cancels the back label", async () => {
+      mockMutateAsync.mockResolvedValue(undefined);
+      mockScanData = { outcome: "NO_MATCH", wine: null, scanId: "scan-7" };
+      const { result } = renderHook(() => useWineLabelScanViewModel());
+      result.current.cameraRef.current = {
+        capture: async () => "file:///front.jpg",
+        recognizeText: async () => ["CATENA"],
+      };
+      await act(async () => result.current.capture());
+
+      act(() => result.current.startBackLabelScan());
+      act(() => result.current.cancelBackLabelScan());
+
+      expect(result.current.mode).toBe("result");
+      expect(result.current.isBackLabelScan).toBe(false);
+      expect(result.current.capturedUri).toBe("file:///front.jpg");
+      expect(mockReset).not.toHaveBeenCalled();
+    });
+
+    it("keeps the previous result when the back photo cannot be used", async () => {
+      mockMutateAsync.mockResolvedValue(undefined);
+      mockScanData = { outcome: "NO_MATCH", wine: null, scanId: "scan-8" };
+      const { result } = renderHook(() => useWineLabelScanViewModel());
+      const capture = jest
+        .fn<() => Promise<string | null>>()
+        .mockResolvedValueOnce("file:///front.jpg")
+        .mockRejectedValueOnce({ code: "LABEL_IMAGE_TOO_DARK" });
+      result.current.cameraRef.current = { capture, recognizeText: async () => ["CATENA"] };
+      await act(async () => result.current.capture());
+
+      act(() => result.current.startBackLabelScan());
+      await act(async () => result.current.capture());
+
+      expect(mockShowError).toHaveBeenCalledWith("scan.imageTooDark");
+      expect(mockReset).not.toHaveBeenCalled();
+      expect(result.current.mode).toBe("camera");
+      expect(result.current.isBackLabelScan).toBe(true);
+      expect(result.current.capturedUri).toBe("file:///front.jpg");
+    });
   });
 });

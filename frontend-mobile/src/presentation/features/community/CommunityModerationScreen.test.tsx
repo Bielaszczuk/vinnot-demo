@@ -16,6 +16,7 @@ const report: ModerationReport = {
   authorUsername: null,
   reviewerUsername: null,
   targetLabel: null,
+  relatedTargetLabel: null,
 };
 const mockState = {
   reports: {
@@ -37,8 +38,9 @@ jest.mock("./CommunityOverview", () => ({
   ReportStatusBadge: () => null,
 }));
 jest.mock("react-i18next", () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+const mockPush = jest.fn();
 jest.mock("expo-router", () => ({
-  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
+  useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }),
 }));
 jest.mock("react-native-safe-area-context", () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 20 }),
@@ -63,6 +65,39 @@ function open() {
   );
 }
 const NOTE = "community.decisionDetail";
+it("shows a catalog quality report as Vinnot's automatic report and opens the wine catalog", () => {
+  mockState.reports.data = {
+    items: [{
+      ...report,
+      target: { type: "WINE", id: "matched-wine" },
+      reason: "CATALOG_QUALITY",
+      authorId: null,
+      description: "Scan exact match corrected by a member: possible duplicate, wrong winery or wrong image",
+      excerpt: "Gran Malbec 2020 (Bodega Norte) → Gran Malbec Reserva 2020 (Bodega Norte)",
+      targetLabel: "Gran Malbec 2020",
+      relatedTargetLabel: "Gran Malbec Reserva 2020",
+    }],
+    totalItems: 1,
+    totalPages: 1,
+  };
+  render(<CommunityModerationScreen />);
+  fireEvent.press(
+    screen.getByRole("button", { name: "community.openCase: community.reasons.CATALOG_QUALITY" }),
+  );
+
+  expect(screen.getByText("community.catalogQualityDescription")).toBeTruthy();
+  expect(screen.queryByText(/Scan exact match corrected/)).toBeNull();
+  expect(screen.getByText("community.automaticReporter")).toBeTruthy();
+  expect(screen.getByText("Gran Malbec Reserva 2020")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "community.removeContent" })).toBeNull();
+  expect(screen.getByRole("radio", { name: "community.decisionReasons.CATALOG_FIXED" }).props.accessibilityState)
+    .toMatchObject({ checked: true });
+  expect(screen.queryByRole("radio", { name: "community.decisionReasons.AUTHOR_WARNED" })).toBeNull();
+  fireEvent.press(screen.getByRole("radio", { name: "community.outcomes.DISMISSED" }));
+  expect(screen.getByRole("radio", { name: "community.decisionReasons.CATALOG_CORRECT" })).toBeTruthy();
+  fireEvent.press(screen.getByRole("button", { name: "community.reviewContent" }));
+  expect(mockPush).toHaveBeenCalledWith("/(app)/admin/wines");
+});
 const chooseOther = () => fireEvent.press(screen.getByRole("radio", { name: "community.decisionReasons.OTHER" }));
 it("shows compact cases and opens private details only on selection", () => {
   render(<CommunityModerationScreen />);

@@ -37,7 +37,24 @@ export const REPORT_OUTCOME_REASONS = {
   REMOVE: ["COMMUNITY_RULES", "OFFENSIVE", "SPAM", "PERSONAL_DATA", "OTHER"],
 } as const satisfies Record<ReportOutcome, readonly string[]>;
 
-export type ReportReasonCode = (typeof REPORT_OUTCOME_REASONS)[ReportOutcome][number];
+/** Catalog quality reports have no author, so their presets speak about the catalog. */
+export const CATALOG_REPORT_OUTCOME_REASONS = {
+  RESOLVED: ["CATALOG_FIXED", "OTHER"],
+  DISMISSED: ["CATALOG_CORRECT", "DUPLICATE_REPORT", "OTHER"],
+} as const;
+
+export type ReportReasonCode =
+  | (typeof REPORT_OUTCOME_REASONS)[ReportOutcome][number]
+  | (typeof CATALOG_REPORT_OUTCOME_REASONS)[keyof typeof CATALOG_REPORT_OUTCOME_REASONS][number];
+
+/** The presets offered for an outcome; catalog quality reports get their own. */
+export function reportOutcomeReasons(
+  outcome: ReportOutcome,
+  catalogQuality: boolean,
+): readonly ReportReasonCode[] {
+  if (catalogQuality && outcome !== "REMOVE") return CATALOG_REPORT_OUTCOME_REASONS[outcome];
+  return REPORT_OUTCOME_REASONS[outcome];
+}
 
 /** NONE keeps the organizer note optional, as it always was. */
 export const REGISTRATION_REVIEW_REASONS = {

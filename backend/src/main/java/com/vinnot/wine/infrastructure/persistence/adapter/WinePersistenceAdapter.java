@@ -190,6 +190,17 @@ public class WinePersistenceAdapter implements WineRepositoryPort {
     }
 
     @Override
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
+    public List<Wine> findByProducerIdentity(WineLabelSearchCriteria criteria) {
+        try {
+            return searchRepository.findByProducerIdentity(
+                    criteria.identityTerms().getFirst(), criteria.limit());
+        } catch (QueryTimeoutException exception) {
+            throw new WineLabelCatalogSearchTimeoutException(exception);
+        }
+    }
+
+    @Override
     public List<Wine> findAllByIds(Collection<UUID> ids) {
         if (ids.isEmpty()) {
             return List.of();

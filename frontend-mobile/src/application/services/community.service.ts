@@ -93,7 +93,10 @@ export const communityService = {
   unblock: (id: string) => communityClient.unblock(id),
   async moderation(index: number, status: ReportStatus): Promise<CommunityPage<ModerationReport>> {
     return page(await communityClient.moderation(index, status), (raw) => ({
-      ...receipt(raw),
+      id: raw.id,
+      target: raw.target,
+      status: raw.status,
+      createdAt: new Date(raw.createdAt),
       authorId: raw.authorId,
       reason: raw.reason,
       description: raw.description,
@@ -103,6 +106,7 @@ export const communityService = {
       authorUsername: raw.authorUsername ?? null,
       reviewerUsername: raw.reviewerUsername ?? null,
       targetLabel: raw.targetLabel ?? null,
+      relatedTargetLabel: raw.relatedTargetLabel ?? null,
     }));
   },
   async remove(id: string, decision: string): Promise<void> {

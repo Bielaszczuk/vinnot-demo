@@ -35,6 +35,7 @@ public class CreateReportCommandHandler implements CreateReportUseCase {
     @Override
     @Transactional
     public ReportReceipt execute(CreateReportCommand command) {
+        CommunityReport.requireMemberReportable(command.target(), command.reason());
         reports.lockReporter(command.reporterId());
         var existing = reports.findOpen(command.reporterId(), command.target());
         if (existing.isPresent()) {

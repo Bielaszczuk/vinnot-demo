@@ -21,6 +21,7 @@ import type {
   WineDetailsDto,
   WineFilterDto,
   WineReviewDto,
+  WineScanFeedbackVerdictDto,
   WineScanResultDto,
   WineLabelImageAttachmentDto,
   WineSubmissionDetailsDto,
@@ -159,6 +160,7 @@ export const winesClient = {
     imageUri: string,
     observedText: string[],
     signal?: AbortSignal,
+    barcode?: string | null,
   ): Promise<WineScanResultDto> => {
     const formData = new FormData();
     formData.append("image", {
@@ -167,6 +169,7 @@ export const winesClient = {
       type: "image/jpeg",
     } as unknown as Blob);
     observedText.forEach((line) => formData.append("observedText", line));
+    if (barcode) formData.append("barcode", barcode);
 
     return http
       .post<WineScanResultDto>("/wines/scan", formData, {
@@ -184,6 +187,15 @@ export const winesClient = {
         })),
       }));
   },
+
+  sendScanFeedback: (
+    scanId: string,
+    verdict: WineScanFeedbackVerdictDto,
+    wineId: string | null,
+  ): Promise<void> =>
+    http
+      .post<void>(`/wines/scans/${encodeURIComponent(scanId)}/feedback`, { verdict, wineId })
+      .then(() => undefined),
 
   submitWine: (input: WineSubmissionRequestDto): Promise<WineSubmissionResultDto> => {
     const formData = new FormData();

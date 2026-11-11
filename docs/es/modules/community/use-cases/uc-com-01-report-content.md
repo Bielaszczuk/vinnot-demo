@@ -8,7 +8,7 @@
 | Actores | Usuario autenticado |
 | IDs en Lucidchart | [WEB UC-COM-01](https://lucid.app/lucidchart/9f11a16b-bb5a-42fc-a9e8-0852b17bd241/edit), [APK UC-COM-01](https://lucid.app/lucidchart/e095dd25-e8ac-41ba-bf5b-396e1055f217/edit) |
 | Requisitos | [`RF-WEB-COM-01`](../requirements.md), [`RF-WEB-COM-02`](../requirements.md), [`RF-APK-COM-01`](../requirements.md), [`RF-APK-COM-02`](../requirements.md) |
-| Casos de prueba | [`CP-COM-01`](../testing.md), [`CP-COM-02`](../testing.md), [`CP-COM-03`](../testing.md), [`CP-COM-04`](../testing.md), [`CP-COM-05`](../testing.md), [`CP-COM-06`](../testing.md), [`CP-COM-07`](../testing.md), [`CP-COM-08`](../testing.md) |
+| Casos de prueba | [`CP-COM-01`](../testing.md), [`CP-COM-02`](../testing.md), [`CP-COM-03`](../testing.md), [`CP-COM-04`](../testing.md), [`CP-COM-05`](../testing.md), [`CP-COM-06`](../testing.md), [`CP-COM-07`](../testing.md), [`CP-COM-08`](../testing.md), [`CP-COM-75`](../testing.md) |
 
 ## Precondiciones
 
@@ -36,10 +36,12 @@
 - 5d. El contenido ya no es público: la API responde 404 y el cliente avisa que el contenido ya no está disponible.
 - 4a. Se superó el límite de 10 envíos por hora: la API responde 429 y el cliente pide esperar un rato antes de reintentar.
 - 4b. Falla el envío: el cliente conserva el borrador para reintentar.
+- 4c. El pedido indica un vino del catálogo (`WINE`) como objetivo o usa el motivo `CATALOG_QUALITY`: la API responde 422 `REPORT_NOT_ALLOWED` y no guarda nada.
 
 ## Reglas de negocio
 
 - Se puede denunciar a usuarios activos, reseñas y comentarios aprobados de vinos activos, eventos ya publicados y rutas publicadas.
+- Los vinos del catálogo y el motivo de calidad de catálogo quedan reservados para las denuncias que abre Vinnot a partir de los escaneos de etiquetas ([Administración](../../admin/use-cases/uc-adm-07-moderate-reports.md)).
 - La acción no se muestra a quien escribió el contenido ni al organizador del evento.
 - El comprobante no muestra evidencia, notas internas ni otras denuncias.
 - No hay sanciones ni ocultamientos automáticos por cantidad de denuncias; las decide el equipo ([Administración](../../admin/README.md)).
@@ -76,6 +78,6 @@ Diagrama de componentes en Lucidchart: [WEB UC-COM-01](https://lucid.app/lucidch
 
 ## Tests automáticos
 
-- Backend: [`CommunityCommandHandlersTest.java`](../../../../../backend/src/test/java/com/vinnot/community/application/command/handler/CommunityCommandHandlersTest.java), [`RateLimitPolicyResolverTest.java`](../../../../../backend/src/test/java/com/vinnot/shared/infrastructure/security/RateLimitPolicyResolverTest.java), [`CommunityReportTest.java`](../../../../../backend/src/test/java/com/vinnot/community/domain/model/CommunityReportTest.java), [`CommunityHttpPostgresIntegrationTest.java`](../../../../../backend/src/test/java/com/vinnot/community/infrastructure/CommunityHttpPostgresIntegrationTest.java)
+- Backend: [`CommunityCommandHandlersTest.java`](../../../../../backend/src/test/java/com/vinnot/community/application/command/handler/CommunityCommandHandlersTest.java), [`RateLimitPolicyResolverTest.java`](../../../../../backend/src/test/java/com/vinnot/shared/infrastructure/security/RateLimitPolicyResolverTest.java), [`CommunityReportTest.java`](../../../../../backend/src/test/java/com/vinnot/community/domain/model/CommunityReportTest.java), [`CommunityHttpPostgresIntegrationTest.java`](../../../../../backend/src/test/java/com/vinnot/community/infrastructure/CommunityHttpPostgresIntegrationTest.java), [`CatalogQualityReportTest.java`](../../../../../backend/src/test/java/com/vinnot/community/domain/model/CatalogQualityReportTest.java)
 - Web: [`CommunityActions.test.tsx`](../../../../../frontend-react/src/presentation/components/features/community/CommunityActions.test.tsx), [`community.service.test.ts`](../../../../../frontend-react/src/application/services/community.service.test.ts), [`community.client.test.ts`](../../../../../frontend-react/src/infrastructure/api/clients/community.client.test.ts), [`communityErrorMessage.test.ts`](../../../../../frontend-react/src/presentation/feedback/communityErrorMessage.test.ts)
 - App: [`CommunityActions.test.tsx`](../../../../../frontend-mobile/src/presentation/features/community/CommunityActions.test.tsx), [`community.service.test.ts`](../../../../../frontend-mobile/src/application/services/community.service.test.ts)

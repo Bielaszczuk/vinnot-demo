@@ -47,7 +47,7 @@ flowchart LR
 ### Contrato y límites
 
 `community` administra denuncias de `REVIEW`, `COMMENT`, `USER`, `EVENT` y
-`WINE_ROUTE`. El servidor obtiene el autor y una copia acotada del contenido;
+`WINE_ROUTE`, además de las denuncias de calidad de catálogo sobre `WINE` que solo abre Vinnot. El servidor obtiene el autor y una copia acotada del contenido;
 el cliente sólo indica tipo, ID, motivo y descripción. Se aceptan usuarios activos,
 reseñas/comentarios aprobados de vinos activos, eventos que ya fueron publicados y rutas
 publicadas. Los borradores no son denunciables por este circuito público.
@@ -99,7 +99,7 @@ máximo 50 elementos por página.
 | `POST /users/me/taste-quiz/skip` | 204; registra `SKIPPED` solo cuando el usuario todavía no tiene test, así nunca borra un test completado |
 | `PUT /users/me/taste-traits` | Cuerpo `{structure}`: la clave de un rasgo con un puntaje entero de 0 a 100, o con `null` para borrar ese rasgo; los rasgos omitidos no cambian; 204. 400 `INVALID_TASTE_ADJUSTMENT` ante un `structure` faltante o vacío, un rasgo desconocido o un puntaje que no sea un entero de 0 a 100, sin guardar nada (ver [Paladar ajustable](#paladar-ajustable)) |
 | `DELETE /users/me/taste-traits` | 204, idempotente; borra todos los valores manuales del usuario |
-| `GET /admin/community/reports?status=OPEN` | ADMIN/MODERATOR; cola con evidencia privada más `authorUsername`, `reviewerUsername` y `targetLabel` |
+| `GET /admin/community/reports?status=OPEN` | ADMIN/MODERATOR; cola con evidencia privada más `authorUsername`, `reviewerUsername`, `targetLabel`, `relatedTargetId` y `relatedTargetLabel` |
 | `PATCH /admin/community/reports/{id}` | ADMIN/MODERATOR; asignación o decisión documentada |
 | `POST /admin/community/reports/{id}/remove-content` | ADMIN/MODERATOR y `REVIEW_DELETE`; sólo reseña/comentario; motivo obligatorio |
 
@@ -135,6 +135,24 @@ stateDiagram-v2
 El revisor asignado conserva el caso; otro revisor no puede cambiarlo. Los estados
 finales no se reabren. `community_report_actions` conserva cada transición con
 revisor, fecha y decisión. Los comprobantes del denunciante no revelan esas notas.
+
+### Denuncias de calidad de catálogo
+
+Vinnot abre por sí mismo una denuncia de moderación cuando un miembro corrige una
+coincidencia exacta del escaneo de etiquetas, porque el vino coincidente y el que
+eligió el miembro pueden ser duplicados, o uno de ellos puede tener la bodega o la
+imagen equivocada ([UC-WIN-05](../wines/use-cases/uc-win-05-scan-label.md)). El
+módulo de vinos solo conoce su puerto de salida `CatalogQualitySignalPort`; su
+adaptador `CommunityCatalogQualitySignalAdapter` llama al puerto de entrada de
+comunidad `ReportCatalogIssueUseCase`.
+
+| Regla | Detalle |
+|---|---|
+| Forma | `CommunityReport.exactMatchCorrected`: sin denunciante ni autor, objetivo `WINE` (el vino coincidente), motivo `CATALOG_QUALITY`, `related_target_id` el vino elegido, descripción fija en inglés y un extracto `coincidente → elegido` armado con `CommunityTargetPort.describeCatalogWine` (nombre, añada y bodega) |
+| Sin duplicados | `ReportCatalogIssueCommandHandler` omite un par que ya tiene una denuncia abierta o en revisión en cualquier orden, e `insertIfAbsent` se apoya en el índice único parcial `community_report_open_catalog_pair` (`V93`) para descartar duplicados concurrentes |
+| Aislamiento | Corre en su propia transacción (`REQUIRES_NEW`), así que una denuncia fallida nunca revierte el veredicto del escaneo; un vino que ya no existe o está inactivo no genera denuncia |
+| Miembros | `CommunityReport.requireMemberReportable` rechaza en `POST /community/reports` un objetivo `WINE` o el motivo `CATALOG_QUALITY` con 422 `REPORT_NOT_ALLOWED`; `JdbcCommunityTargetAdapter` nunca resuelve un vino como contenido público denunciable por miembros |
+| Moderación | La cola devuelve `relatedTargetId` y `relatedTargetLabel`, y `targetLabel` es el nombre del vino. La moderación resuelve o descarta la denuncia; `remove-content` la rechaza, el notificador de email no tiene a quién avisar y las filas del catálogo solo se corrigen a mano en la administración de vinos |
 
 ### Efecto del bloqueo
 

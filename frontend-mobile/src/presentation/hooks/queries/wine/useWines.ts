@@ -13,6 +13,7 @@ import type {
   WineComparison,
   WineFilter,
   WineLabelScanInput,
+  WineScanFeedbackInput,
   WineLabelImageAttachmentInput,
   WineLabelImageAttachmentResult,
   WineReview,
@@ -203,7 +204,16 @@ export function useScanWineLabel() {
     params: {
       imageUri: input.imageUri,
       observedText: input.observedText,
+      ...(input.barcode ? { barcode: input.barcode } : {}),
     },
+  }));
+}
+
+/** Records the member verdict on a scan result. */
+export function useSendScanFeedback() {
+  return useOperationMutation<null, WineScanFeedbackInput>((input) => ({
+    key: "wine.scanFeedback",
+    params: { scanId: input.scanId, verdict: input.verdict, wineId: input.wineId },
   }));
 }
 

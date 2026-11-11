@@ -127,12 +127,13 @@ The scanner recognizes a wine from a photo of its label. You need to be signed i
 
 1. Tap “Scan” on the home screen or “Scan label” in “Wines”.
 2. Allow camera access.
-3. Frame the label and tap “Take photo”. Use “Flash” if needed.
+3. Frame the label and tap “Take photo”. Use “Flash” if needed. If the bottle's barcode is in view, the app reads it too and shows “Barcode read”; it helps find the wine.
 4. Wait while the app shows “Analyzing...”.
 5. Check the result:
    - “Wine Found!”: tap “View Details” to open its page.
    - “Possible matches”: pick the right wine.
    - No match: search manually or propose the wine (see the next section).
+   - If the right wine is not among the results, tap “Scan the back label”, turn the bottle around and take a photo of the back label. The app adds what it reads to the front photo and checks again. It is offered once per scan.
 6. If the wine is not yours, tap “Not my wine”. To start over, tap “Scan another wine”.
 
 > - If the photo is too dark, has glare, is out of focus or too small, the app tells you and asks for another shot.
@@ -140,6 +141,8 @@ The scanner recognizes a wine from a photo of its label. You need to be signed i
 > - Messages from the scanner, and from a wine opened from it, appear on top of the scanner screen.
 > - You can scan up to 30 labels per hour. If you reach the limit, the app tells you and suggests waiting a few minutes or searching for the wine by name.
 > - If the photo is not a JPG or PNG up to 8 MB, has too much text or the server is busy, the app explains what happened and keeps the photo.
+> - When you open or add a wine from the result, or propose the wine, the app tells Vinnot whether the scan was right. This happens in the background, only once per scan, and never interrupts you. If you pick a different wine from an exact match, the moderation team reviews both wines; the catalog is never changed automatically.
+> - If the label shows a vintage, adding the wine to your cellar from the scan fills in “Vintage” for you. You can change it, and wines already in your cellar keep their own vintage.
 > - If the recognized wine had no image, opening it with “View Details” makes your photo its image. It never replaces an existing image, and picking a suggestion never changes any wine's photo.
 
 Use cases: [UC-WIN-05](../modules/wines/use-cases/uc-win-05-scan-label.md), [UC-WIN-08](../modules/wines/use-cases/uc-win-08-attach-label-photo.md).

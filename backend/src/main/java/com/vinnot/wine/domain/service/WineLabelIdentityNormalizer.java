@@ -3,6 +3,7 @@ package com.vinnot.wine.domain.service;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -146,6 +147,27 @@ public final class WineLabelIdentityNormalizer {
         Set<String> tokens = new LinkedHashSet<>(significantTokens(value));
         tokens.removeAll(PRODUCER_DESIGNATORS);
         return Set.copyOf(tokens);
+    }
+
+    /** The producer's distinctive words in printed order: "Bodega Mevi" becomes "mevi". */
+    public static String producerCore(String value) {
+        return searchTokens(value).stream()
+                .filter(token -> !PRODUCER_DESIGNATORS.contains(token))
+                .collect(Collectors.joining(" "));
+    }
+
+    /**
+     * Whether a line only repeats generic designations or already-known context (grape, region, country,
+     * type), such as "Edición Limitada" or "Estate Grown Viognier".
+     */
+    public static boolean isGenericDesignationOnly(String value, Collection<String> context) {
+        Set<String> tokens = new HashSet<>(significantTokens(value));
+        if (tokens.isEmpty()) {
+            return false;
+        }
+        tokens.removeAll(WineLabelLanguageVocabulary.genericDesignations());
+        context.stream().filter(Objects::nonNull).forEach(known -> tokens.removeAll(significantTokens(known)));
+        return tokens.isEmpty();
     }
 
     public static double textSimilarity(String left, String right) {

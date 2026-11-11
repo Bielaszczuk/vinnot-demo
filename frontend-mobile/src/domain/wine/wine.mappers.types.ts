@@ -195,6 +195,7 @@ export type WineScanResultInput = {
   suggestions?: WineSummaryInput[] | null;
   candidates?: Array<{ wine: WineSummaryInput; score: number }> | null;
   extractedData?: ExtractedLabelDataInput | null;
+  scanId?: string | null;
 };
 
 export type {

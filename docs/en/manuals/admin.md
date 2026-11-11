@@ -241,6 +241,7 @@ Community reports are reviewed in "Community reports", "Reports" tab.
 - You do not see reports you made or reports about your own content.
 - If someone else already took the case, you cannot decide it.
 - The person who reported receives the result. Closed reports are deleted after 90 days.
+- Catalog quality reports come from Vinnot itself when a member corrects an exact label scan match. On the web they show “Vinnot (automatic)” in “Reported by”, the matched wine, “Wine the member chose”, and the buttons “Open the matched wine” and “Open the chosen wine”. They can only be resolved (“The catalog was fixed”) or dismissed (“The catalog was already right” or “Duplicate report”): check both wines and, if one is a duplicate or has the wrong winery or image, fix it by hand in [Wines](#wines). Nobody is emailed when they close. In the app the case shows the same explanation, “Reported by: Vinnot (automatic)” and “Wine the member chose”, and “Review content” opens wine administration.
 - Account measures, such as suspension, are taken by an administrator.
 
 Use case: [UC-ADM-07](../modules/admin/use-cases/uc-adm-07-moderate-reports.md). Community rules: [Community](../modules/community/README.md).

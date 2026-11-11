@@ -548,7 +548,9 @@ Wait exhaustion returns `AI_GENERATION_BUSY`; interruption returns
 Global admission complements single-flight: before each chat/vision attempt
 it acquires a capacity lease and a durable monetary reservation. Defaults are
 three simultaneous attempts and USD 10 per calendar month per DB/environment,
-without an additional daily limit. Valid cached reads bypass this admission.
+without an additional daily limit. With three or more slots the last one is kept
+for label scans, which wait up to 4 s for a slot; profiles and comparisons fail
+fast when the other slots are busy. Valid cached reads bypass this admission.
 Billing, capacity, or ledger failure returns an operational error; it does not
 replace stored results or generate simulated content. Deadlines, prices, error
 codes, and settlement are described in

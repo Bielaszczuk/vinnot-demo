@@ -18,6 +18,8 @@ public final class OpenAiTestFixtures {
         var admission = mock(AiProviderAdmissionPort.class);
         when(admission.acquire(anyString(), any())).thenAnswer(invocation ->
                 new AiProviderAdmissionPort.Permit(UUID.randomUUID(), "test", UUID.randomUUID()));
+        when(admission.acquireInteractive(anyString(), any(), any())).thenAnswer(invocation ->
+                new AiProviderAdmissionPort.Permit(UUID.randomUUID(), "test", UUID.randomUUID()));
         return admission;
     }
 

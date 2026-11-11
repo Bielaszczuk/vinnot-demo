@@ -3,6 +3,7 @@ package com.vinnot.wine.application.service;
 import com.vinnot.shared.application.exception.ExternalServiceUnavailableException;
 import com.vinnot.wine.application.port.out.WineryQueryPort;
 import com.vinnot.wine.application.port.out.WineLabelAliasPort;
+import com.vinnot.wine.application.port.out.WineVisualIndexPort;
 import com.vinnot.wine.domain.model.ExtractedWineLabel;
 import com.vinnot.wine.domain.model.RankedWineLabelCandidate;
 import com.vinnot.wine.domain.model.Wine;
@@ -48,12 +49,23 @@ public class WineLabelCatalogMatcher {
     }
 
     public MatchResult match(ExtractedWineLabel label, WineLabelScanDeadline deadline) {
+        return match(label, deadline, List.of());
+    }
+
+    /**
+     * Ranks the text candidates together with the catalog wines whose label image looks most like the photo. A
+     * visual hint joins the ranking like any retrieved wine and is also returned in {@link MatchResult#visual()},
+     * in similarity order, so a later confirmation step can consider it even when its text scores low.
+     */
+    public MatchResult match(ExtractedWineLabel label, WineLabelScanDeadline deadline,
+            List<WineVisualIndexPort.VisualMatch> visualHints) {
         deadline.remaining();
         if (!label.wineLabel()) {
             return MatchResult.empty();
         }
         ExtractedWineLabel canonicalLabel = canonicalize(label);
         List<Wine> wines = candidateRetriever.retrieve(canonicalLabel, deadline);
+        List<Wine> pool = wines;
         MatchResult result = rank(canonicalLabel, wines);
         if (!wines.isEmpty() && !result.exact()
                 && (result.ranked().isEmpty() || result.ranked().getFirst().score()
@@ -80,11 +92,34 @@ public class WineLabelCatalogMatcher {
                 LOG.debug("Optional wine-label expansion timed out; retaining indexed suggestions");
             }
             if (union.size() > wines.size()) {
-                result = rank(canonicalLabel, List.copyOf(union.values()));
+                pool = List.copyOf(union.values());
+                result = rank(canonicalLabel, pool);
             }
+        }
+        if (!visualHints.isEmpty()) {
+            result = withVisualHints(canonicalLabel, pool, result, visualHints);
         }
         deadline.remaining();
         return result;
+    }
+
+    private MatchResult withVisualHints(ExtractedWineLabel canonicalLabel, List<Wine> pool, MatchResult result,
+            List<WineVisualIndexPort.VisualMatch> visualHints) {
+        Map<UUID, Wine> union = new LinkedHashMap<>();
+        pool.forEach(wine -> union.put(wine.getId(), wine));
+        List<UUID> missing = visualHints.stream().map(WineVisualIndexPort.VisualMatch::wineId)
+                .filter(id -> !union.containsKey(id)).toList();
+        candidateRetriever.retrieveByIds(missing).forEach(wine -> union.putIfAbsent(wine.getId(), wine));
+        MatchResult ranked = union.size() > pool.size() ? rank(canonicalLabel, List.copyOf(union.values())) : result;
+        List<VisualCandidate> visual = visualHints.stream()
+                .filter(hint -> union.containsKey(hint.wineId()))
+                .map(hint -> {
+                    Wine wine = union.get(hint.wineId());
+                    return new VisualCandidate(
+                            new WineLabelCandidate(wine, wineryName(wine, ranked.wineries())), hint.similarity());
+                })
+                .toList();
+        return new MatchResult(ranked.ranked(), ranked.wineries(), ranked.exact(), visual);
     }
 
     private MatchResult rank(ExtractedWineLabel canonicalLabel, List<Wine> wines) {
@@ -175,13 +210,31 @@ public class WineLabelCatalogMatcher {
         return Objects.nonNull(winery) ? winery.name() : null;
     }
 
+    /**
+     * @param visual catalog wines whose label image looks like the photo, most similar first; empty without a
+     *               visual index
+     */
     public record MatchResult(
             List<RankedWineLabelCandidate> ranked,
             Map<UUID, WineryQueryPort.WineryData> wineries,
-            boolean exact
+            boolean exact,
+            List<VisualCandidate> visual
     ) {
+        public MatchResult {
+            visual = List.copyOf(visual);
+        }
+
+        public MatchResult(List<RankedWineLabelCandidate> ranked, Map<UUID, WineryQueryPort.WineryData> wineries,
+                boolean exact) {
+            this(ranked, wineries, exact, List.of());
+        }
+
         private static MatchResult empty() {
             return new MatchResult(List.of(), Map.of(), false);
         }
+    }
+
+    /** A catalog wine found by label image similarity (cosine, -1..1). */
+    public record VisualCandidate(WineLabelCandidate candidate, double similarity) {
     }
 }

@@ -67,7 +67,11 @@ las búsquedas con filtros (ver más abajo); las tablas existentes no cambian. V
 agrega `user_follows` y las columnas de perfil `users.bio` y `users.cellar_visibility`
 (ver `users` y `user_follows` más abajo); es aditiva. V88 (#541) agrega
 `user_taste_quiz` (ver más abajo); es aditiva. V89 (#541) agrega
-`user_taste_adjustments` (ver más abajo); es aditiva. V62 agrega
+`user_taste_adjustments` (ver más abajo); es aditiva. V90 (#544) reemplaza las
+funciones que construyen la búsqueda para que el catálogo se busque sin tildes; V91
+agrega `wine_image_embeddings`, V92 las columnas del veredicto del escaneo y
+`wine_barcode_confirmations`, y V93 las denuncias de calidad de catálogo (ver
+[Escaneo de etiquetas (V90–V93)](#escaneo-de-etiquetas-v90v93)); las cuatro son aditivas. V62 agrega
 `users.password_set` (`boolean NOT NULL`, default `true`): si la contraseña guardada
 la eligió su titular. El relleno lo deja en `false` cuando la primera identidad social
 se guardó junto con la cuenta, o se vinculó a una cuenta local que todavía no había
@@ -537,6 +541,9 @@ sequenceDiagram
 La búsqueda full-text usa GIN sobre `tsvector`; la similitud parcial usa GIN
 trigram sobre `search_text`. Ver [Rendimiento de consultas](query-performance.md).
 
+Desde V90 ambos read models de búsqueda guardan el texto sin tildes y en minúsculas
+(ver [Escaneo de etiquetas (V90–V93)](#escaneo-de-etiquetas-v90v93)).
+
 ### `wine_catalog_filter_search`, `wine_grape_search` y `wine_grape_keys`
 
 V86 agrega dos read models para las búsquedas con filtros, también uno a uno o uno a
@@ -555,6 +562,62 @@ refresca ambos; renombrar una bodega refresca el texto de búsqueda de sus vinos
 claves foráneas se agregaron `NOT VALID` porque las filas se cargaron desde `wines`
 con la tabla bloqueada; se aplican a cada fila nueva. Ver
 [Rendimiento de consultas](query-performance.md#texto-con-filtros).
+
+### Escaneo de etiquetas (V90–V93)
+
+V90 (#544) crea `catalog_search_unaccent(text)`, un envoltorio SQL `IMMUTABLE` y
+`PARALLEL SAFE` que llama a `unaccent` con el diccionario fijo `public.unaccent`, y
+reemplaza `build_wine_catalog_search_vector` y `build_wine_catalog_search_text` para
+que `wine_catalog_search` y `wine_catalog_filter_search` guarden el texto sin tildes
+y en minúsculas. La migración solo reemplaza funciones y no bloquea tablas; las filas
+escritas antes las reescribe `CatalogSearchAccentNormalizer` después del arranque en
+lotes confirmados (`app.wine-label.search-normalization.batch-size`, 5000 por
+defecto), y mientras tanto la búsqueda encuentra ambas formas.
+
+`wine_image_embeddings` (V91) guarda un embedding de imagen por vino del catálogo
+cuya imagen de etiqueta aloja Vinnot:
+
+| Columna | Tipo y regla |
+|---|---|
+| `wine_id` | `uuid` clave primaria, referencia a `wines` con `ON DELETE CASCADE` |
+| `image_url` | `text NOT NULL`; la imagen que produjo el vector, para volver a procesarla si cambia |
+| `model` | `varchar(80) NOT NULL`; un modelo distinto vuelve a procesar la imagen |
+| `dimensions` | `smallint NOT NULL`; CHECK `dimensions > 0 AND octet_length(embedding) = dimensions` |
+| `scale` | `real NOT NULL`; valor = byte × scale |
+| `embedding` | `bytea NOT NULL`; el vector cuantizado a un byte con signo por dimensión |
+| `embedded_at` | `timestamptz NOT NULL`, default `now()` |
+
+V91 agrega también `idx_wines_hosted_label_image`, un índice parcial sobre
+`wines (id)` para las imágenes bajo `https://images.vinnot.com/` o
+`/api/uploads/wine-labels/`, así el relleno encuentra las imágenes pendientes sin
+leer todo el catálogo.
+
+V92 agrega a `wine_label_scans` las columnas opcionales `barcode` (`varchar(14)`),
+`feedback` (`varchar(20)`, CHECK `CONFIRMED`, `CORRECTED` o `NOT_IN_CATALOG`),
+`feedback_wine_id` (referencia a `wines` con `ON DELETE SET NULL`) y `feedback_at`
+(`timestamptz`), más el índice `idx_wine_label_scans_feedback_wine`. Un escaneo
+respondido por códigos confirmados no guarda el código. También crea
+`wine_barcode_confirmations`:
+
+| Columna | Tipo y regla |
+|---|---|
+| `barcode` | `varchar(14) NOT NULL` |
+| `user_id` | `uuid NOT NULL`, referencia a `users` con `ON DELETE CASCADE` |
+| `wine_id` | `uuid NOT NULL`, referencia a `wines` con `ON DELETE CASCADE` |
+| `confirmed_at` | `timestamptz NOT NULL`, default `now()` |
+
+La clave primaria `(barcode, user_id)` mantiene una confirmación por miembro y código
+(un upsert, vale la última); `idx_wine_barcode_confirmations_wine` e
+`idx_wine_barcode_confirmations_user` evitan que borrar un vino o un miembro recorra
+la tabla. Solo la escriben los veredictos `CONFIRMED`.
+
+V93 amplía los CHECK de `community_reports` con el tipo de objetivo `WINE` y el
+motivo `CATALOG_QUALITY`, agrega la columna opcional `related_target_id uuid` y crea
+el índice único parcial `community_report_open_catalog_pair` sobre
+`(LEAST(target_id, related_target_id), GREATEST(target_id, related_target_id))` con
+`reason = 'CATALOG_QUALITY'` y `status IN ('OPEN','IN_REVIEW')`. Estas denuncias
+tienen `reporter_id` en `NULL`; ver
+[Denuncias de calidad de catálogo](../../modules/community/architecture.md#denuncias-de-calidad-de-catálogo).
 
 ## Comunidad y cava
 

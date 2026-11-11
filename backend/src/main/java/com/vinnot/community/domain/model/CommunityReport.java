@@ -6,7 +6,10 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
-/** Private moderation evidence. Only receipt projections may be returned to reporters. */
+/**
+ * Private moderation evidence. Only receipt projections may be returned to reporters. A member files a report about
+ * public content; Vinnot itself files catalog quality reports, which have no reporter and may name a related wine.
+ */
 public record CommunityReport(
         UUID id,
         UUID reporterId,
@@ -19,8 +22,11 @@ public record CommunityReport(
         UUID reviewerId,
         String decision,
         Instant createdAt,
-        Instant updatedAt) {
+        Instant updatedAt,
+        UUID relatedTargetId) {
     private static final int MAX_TEXT_LENGTH = 2000;
+    static final String EXACT_MATCH_CORRECTED =
+            "Scan exact match corrected by a member: possible duplicate, wrong winery or wrong image";
 
     public enum Reason {
         SPAM,
@@ -30,7 +36,9 @@ public record CommunityReport(
         VIOLENCE,
         PRIVACY,
         MISINFORMATION,
-        OTHER
+        OTHER,
+        /** Filed only by Vinnot about a catalog wine; members cannot choose it. */
+        CATALOG_QUALITY
     }
 
     public enum Status {
@@ -49,8 +57,7 @@ public record CommunityReport(
             String excerpt,
             Instant now) {
         Objects.requireNonNull(reporter);
-        Objects.requireNonNull(target);
-        Objects.requireNonNull(reason);
+        requireMemberReportable(target, reason);
         if (reporter.equals(author)) {
             throw new BusinessRuleViolationException(
                     "SELF_REPORT", "You cannot report your own content");
@@ -68,14 +75,57 @@ public record CommunityReport(
                 author,
                 reason,
                 text,
-                Objects.isNull(excerpt)
-                        ? ""
-                        : excerpt.substring(0, Math.min(MAX_TEXT_LENGTH, excerpt.length())),
+                bounded(excerpt),
                 Status.OPEN,
                 null,
                 null,
                 now,
-                now);
+                now,
+                null);
+    }
+
+    /** Wines and the catalog quality reason are reserved for reports Vinnot files itself. */
+    public static void requireMemberReportable(ContentTarget target, Reason reason) {
+        Objects.requireNonNull(target);
+        Objects.requireNonNull(reason);
+        if (target.type() == ContentTarget.Type.WINE || reason == Reason.CATALOG_QUALITY) {
+            throw new BusinessRuleViolationException(
+                    "REPORT_NOT_ALLOWED", "Members cannot file this kind of report");
+        }
+    }
+
+    /**
+     * A member corrected an exact label scan match: the matched wine and the wine they picked may be duplicates, or
+     * one of them may have the wrong winery or image. The report has no reporter and changes no catalog data.
+     */
+    public static CommunityReport exactMatchCorrected(
+            UUID matchedWineId, UUID chosenWineId, String excerpt, Instant now) {
+        Objects.requireNonNull(matchedWineId);
+        Objects.requireNonNull(chosenWineId);
+        if (matchedWineId.equals(chosenWineId)) {
+            throw new BusinessRuleViolationException(
+                    "CATALOG_QUALITY_SAME_WINE", "A catalog quality report needs two different wines");
+        }
+        return new CommunityReport(
+                UUID.randomUUID(),
+                null,
+                new ContentTarget(ContentTarget.Type.WINE, matchedWineId),
+                null,
+                Reason.CATALOG_QUALITY,
+                EXACT_MATCH_CORRECTED,
+                bounded(excerpt),
+                Status.OPEN,
+                null,
+                null,
+                now,
+                now,
+                chosenWineId);
+    }
+
+    private static String bounded(String excerpt) {
+        return Objects.isNull(excerpt)
+                ? ""
+                : excerpt.substring(0, Math.min(MAX_TEXT_LENGTH, excerpt.length()));
     }
 
     public CommunityReport review(UUID reviewer, Status next, String notes, Instant now) {
@@ -111,6 +161,7 @@ public record CommunityReport(
                 reviewer,
                 text,
                 createdAt,
-                now);
+                now,
+                relatedTargetId);
     }
 }

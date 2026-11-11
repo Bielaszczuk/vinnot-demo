@@ -8,7 +8,7 @@
 | Actors | Signed-in user |
 | Lucidchart IDs | [WEB UC-COM-01](https://lucid.app/lucidchart/9f11a16b-bb5a-42fc-a9e8-0852b17bd241/edit), [APK UC-COM-01](https://lucid.app/lucidchart/e095dd25-e8ac-41ba-bf5b-396e1055f217/edit) |
 | Requirements | [`RF-WEB-COM-01`](../requirements.md), [`RF-WEB-COM-02`](../requirements.md), [`RF-APK-COM-01`](../requirements.md), [`RF-APK-COM-02`](../requirements.md) |
-| Test cases | [`CP-COM-01`](../testing.md), [`CP-COM-02`](../testing.md), [`CP-COM-03`](../testing.md), [`CP-COM-04`](../testing.md), [`CP-COM-05`](../testing.md), [`CP-COM-06`](../testing.md), [`CP-COM-07`](../testing.md), [`CP-COM-08`](../testing.md) |
+| Test cases | [`CP-COM-01`](../testing.md), [`CP-COM-02`](../testing.md), [`CP-COM-03`](../testing.md), [`CP-COM-04`](../testing.md), [`CP-COM-05`](../testing.md), [`CP-COM-06`](../testing.md), [`CP-COM-07`](../testing.md), [`CP-COM-08`](../testing.md), [`CP-COM-75`](../testing.md) |
 
 ## Preconditions
 
@@ -36,10 +36,12 @@
 - 5d. The content is no longer public: the API answers 404 and the client says that the content is no longer available.
 - 4a. The limit of 10 submissions per hour was exceeded: the API answers 429 and the client asks to wait a while before retrying.
 - 4b. Sending fails: the client keeps the draft to retry.
+- 4c. The request names a catalog wine (`WINE`) as the target or uses the `CATALOG_QUALITY` reason: the API answers 422 `REPORT_NOT_ALLOWED` and stores nothing.
 
 ## Business rules
 
 - Active users, approved reviews and comments on active wines, events already published and published routes can be reported.
+- Catalog wines and the catalog quality reason are reserved for the reports Vinnot files itself from label scans ([Administration](../../admin/use-cases/uc-adm-07-moderate-reports.md)).
 - The action is not shown to the content's author or to the event's organizer.
 - The receipt does not show evidence, internal notes or other reports.
 - There are no automatic sanctions or hiding by number of reports; the team decides ([Administration](../../admin/README.md)).
@@ -76,6 +78,6 @@ Component diagram in Lucidchart: [WEB UC-COM-01](https://lucid.app/lucidchart/9f
 
 ## Automated tests
 
-- Backend: [`CommunityCommandHandlersTest.java`](../../../../../backend/src/test/java/com/vinnot/community/application/command/handler/CommunityCommandHandlersTest.java), [`RateLimitPolicyResolverTest.java`](../../../../../backend/src/test/java/com/vinnot/shared/infrastructure/security/RateLimitPolicyResolverTest.java), [`CommunityReportTest.java`](../../../../../backend/src/test/java/com/vinnot/community/domain/model/CommunityReportTest.java), [`CommunityHttpPostgresIntegrationTest.java`](../../../../../backend/src/test/java/com/vinnot/community/infrastructure/CommunityHttpPostgresIntegrationTest.java)
+- Backend: [`CommunityCommandHandlersTest.java`](../../../../../backend/src/test/java/com/vinnot/community/application/command/handler/CommunityCommandHandlersTest.java), [`RateLimitPolicyResolverTest.java`](../../../../../backend/src/test/java/com/vinnot/shared/infrastructure/security/RateLimitPolicyResolverTest.java), [`CommunityReportTest.java`](../../../../../backend/src/test/java/com/vinnot/community/domain/model/CommunityReportTest.java), [`CommunityHttpPostgresIntegrationTest.java`](../../../../../backend/src/test/java/com/vinnot/community/infrastructure/CommunityHttpPostgresIntegrationTest.java), [`CatalogQualityReportTest.java`](../../../../../backend/src/test/java/com/vinnot/community/domain/model/CatalogQualityReportTest.java)
 - Web: [`CommunityActions.test.tsx`](../../../../../frontend-react/src/presentation/components/features/community/CommunityActions.test.tsx), [`community.service.test.ts`](../../../../../frontend-react/src/application/services/community.service.test.ts), [`community.client.test.ts`](../../../../../frontend-react/src/infrastructure/api/clients/community.client.test.ts), [`communityErrorMessage.test.ts`](../../../../../frontend-react/src/presentation/feedback/communityErrorMessage.test.ts)
 - App: [`CommunityActions.test.tsx`](../../../../../frontend-mobile/src/presentation/features/community/CommunityActions.test.tsx), [`community.service.test.ts`](../../../../../frontend-mobile/src/application/services/community.service.test.ts)

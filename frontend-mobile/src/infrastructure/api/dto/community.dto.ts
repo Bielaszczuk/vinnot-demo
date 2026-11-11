@@ -18,9 +18,10 @@ export interface ReportRequestDto {
     | "OTHER";
   description: string;
 }
-export interface ModerationReportDto extends ReportReceiptDto {
+export interface ModerationReportDto extends Omit<ReportReceiptDto, "target"> {
+  target: { type: ReportReceiptDto["target"]["type"] | "WINE"; id: string };
   authorId: string | null;
-  reason: ReportRequestDto["reason"];
+  reason: ReportRequestDto["reason"] | "CATALOG_QUALITY";
   description: string;
   excerpt: string;
   reviewerId: string | null;
@@ -30,6 +31,8 @@ export interface ModerationReportDto extends ReportReceiptDto {
   reviewerUsername?: string | null;
   /** Wine name (review, comment), event title, route name or username. */
   targetLabel?: string | null;
+  /** Catalog quality reports (#544): the wine the member chose; absent from older APIs. */
+  relatedTargetLabel?: string | null;
 }
 export interface BlockedUserDto {
   userId: string;

@@ -18,6 +18,8 @@ const report: ModerationReport = {
   authorUsername: null,
   reviewerUsername: null,
   targetLabel: null,
+  relatedTargetId: null,
+  relatedTargetLabel: null,
 };
 const state = vi.hoisted(() => ({
   reports: {
@@ -80,6 +82,64 @@ it("hides each name the server could not resolve and never falls back to ids", (
   expect(screen.queryByText("community.aboutLabel")).toBeNull();
   expect(screen.queryByText("community.reviewedByLabel")).toBeNull();
   expect(screen.queryByText(/5e0b1c3d|6f1c2a4e|7a2d3b5f/)).toBeNull();
+});
+
+describe("catalog quality reports", () => {
+  const catalog: ModerationReport = {
+    ...report,
+    status: "OPEN",
+    target: { type: "WINE", id: "matched-wine" },
+    authorId: null,
+    reviewerId: null,
+    reason: "CATALOG_QUALITY",
+    description: "Scan exact match corrected by a member: possible duplicate, wrong winery or wrong image",
+    excerpt: "Malbec 2020 (Bodega A) → Malbec 2020",
+    targetLabel: "Malbec",
+    relatedTargetId: "chosen-wine",
+    relatedTargetLabel: "Malbec Reserva",
+  };
+  beforeEach(() => {
+    state.reports.data.items = [{ ...catalog }];
+  });
+
+  it("names the automatic reporter, the reason and both wines in the moderator's language", () => {
+    renderPage();
+    expect(
+      screen.getByRole("heading", { name: "community.targets.WINE · community.reasons.CATALOG_QUALITY" }),
+    ).toBeVisible();
+    expect(screen.getByText("community.reportedByLabel")).toBeVisible();
+    expect(screen.getByText("community.automaticReporter")).toBeVisible();
+    expect(screen.getByText("community.targets.WINE · Malbec")).toBeVisible();
+    expect(screen.getByText("community.relatedWineLabel")).toBeVisible();
+    expect(screen.getByText("Malbec Reserva")).toBeVisible();
+    expect(screen.getByText("Malbec 2020 (Bodega A) → Malbec 2020")).toBeVisible();
+    expect(screen.getByText("community.catalogQualityDescription")).toBeVisible();
+    expect(screen.queryByText(/Scan exact match corrected/)).toBeNull();
+  });
+
+  it("links to both wines", () => {
+    renderPage();
+    expect(screen.getByRole("link", { name: "community.openMatchedWine" })).toHaveAttribute("href", "/wines/matched-wine");
+    expect(screen.getByRole("link", { name: "community.openChosenWine" })).toHaveAttribute("href", "/wines/chosen-wine");
+  });
+
+  it("decides the report but never offers removing the wine", () => {
+    renderPage();
+    const outcomes = screen.getByRole("radiogroup", { name: "community.outcomeLabel" });
+    expect(within(outcomes).getAllByRole("radio").map((radio) => radio.getAttribute("value"))).toEqual(["RESOLVED", "DISMISSED"]);
+    fireEvent.click(screen.getByRole("button", { name: "community.resolve" }));
+    expect(state.decide.mutate).toHaveBeenCalledWith({
+      id: "case-1", status: "RESOLVED", decision: "community.decisionReasons.RESOLVED.CATALOG_FIXED",
+    });
+    expect(screen.queryByRole("radio", { name: "community.decisionReasons.RESOLVED.AUTHOR_WARNED" })).toBeNull();
+  });
+
+  it("does not call a member report automatic", () => {
+    state.reports.data.items = [{ ...report }];
+    renderPage();
+    expect(screen.queryByText("community.automaticReporter")).toBeNull();
+    expect(screen.queryByRole("link", { name: "community.openChosenWine" })).toBeNull();
+  });
 });
 
 describe("report decisions", () => {

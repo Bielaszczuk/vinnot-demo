@@ -19,9 +19,10 @@ public class AiGenerationConfiguration {
             @Value("${ai.admission.lease-duration:2m}") Duration leaseDuration,
             @Value("${ai.spending.monthly-limit-usd:10}") BigDecimal monthlyLimit,
             @Value("${ai.spending.daily-limit-usd:0}") BigDecimal dailyLimit,
-            @Value("${ai.spending.paid-calls-enabled:true}") boolean paidCallsEnabled) {
+            @Value("${ai.spending.paid-calls-enabled:true}") boolean paidCallsEnabled,
+            @Value("${ai.admission.interactive-wait:4s}") Duration interactiveWait) {
         return new AiProviderAdmissionPolicy(maximumConcurrent, leaseDuration,
-                monthlyLimit, dailyLimit, paidCallsEnabled);
+                monthlyLimit, dailyLimit, paidCallsEnabled, interactiveWait);
     }
 
     @Bean

@@ -6,11 +6,13 @@ import com.vinnot.community.domain.model.ContentTarget;
 
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * A report as moderators see it: every report field plus the names behind its ids. A name is null
- * when its user or content was deleted or is missing.
+ * when its user or content was deleted or is missing. A catalog quality report has no reporter and names the other
+ * wine of the pair in {@code relatedTargetId} and {@code relatedTargetLabel}.
  */
 public record ModerationReport(
         UUID id,
@@ -27,7 +29,9 @@ public record ModerationReport(
         Instant updatedAt,
         String authorUsername,
         String reviewerUsername,
-        String targetLabel) {
+        String targetLabel,
+        UUID relatedTargetId,
+        String relatedTargetLabel) {
     public static ModerationReport from(CommunityReport report, ModerationNames names) {
         return new ModerationReport(
                 report.id(),
@@ -44,7 +48,15 @@ public record ModerationReport(
                 report.updatedAt(),
                 username(names, report.authorId()),
                 username(names, report.reviewerId()),
-                names.targetLabels().get(report.target()));
+                names.targetLabels().get(report.target()),
+                report.relatedTargetId(),
+                relatedTarget(report).map(names.targetLabels()::get).orElse(null));
+    }
+
+    /** The other wine of a catalog quality report, the only kind of report with a related target. */
+    public static Optional<ContentTarget> relatedTarget(CommunityReport report) {
+        return Optional.ofNullable(report.relatedTargetId())
+                .map(id -> new ContentTarget(ContentTarget.Type.WINE, id));
     }
 
     private static String username(ModerationNames names, UUID user) {

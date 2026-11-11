@@ -27,6 +27,7 @@ public class JdbcCommunityTargetAdapter implements CommunityTargetPort {
             UNION ALL SELECT 'EVENT',id,title FROM events WHERE id = ANY(?)
             UNION ALL SELECT 'WINE_ROUTE',id,name FROM wine_routes WHERE id = ANY(?)
             UNION ALL SELECT 'USER',id,username FROM users WHERE id = ANY(?)
+            UNION ALL SELECT 'WINE',id,name FROM wines WHERE id = ANY(?)
             """;
     /** Bind order of the {@link #NAMES} arrays. */
     private static final List<ContentTarget.Type> NAME_ORDER =
@@ -35,7 +36,8 @@ public class JdbcCommunityTargetAdapter implements CommunityTargetPort {
                     ContentTarget.Type.COMMENT,
                     ContentTarget.Type.EVENT,
                     ContentTarget.Type.WINE_ROUTE,
-                    ContentTarget.Type.USER);
+                    ContentTarget.Type.USER,
+                    ContentTarget.Type.WINE);
     private final JdbcTemplate jdbc;
     @Override
     public Optional<TargetDetails> findPublic(ContentTarget target) {
@@ -58,7 +60,12 @@ public class JdbcCommunityTargetAdapter implements CommunityTargetPort {
             case WINE_ROUTE ->
                     "SELECT created_by AS author_id,concat_ws(' ',name,description) AS"
                         + " excerpt FROM wine_routes WHERE id=? AND status='PUBLISHED'";
+            // Catalog wines are reported only by Vinnot itself, never through the member flow.
+            case WINE -> null;
         };
+        if (Objects.isNull(sql)) {
+            return Optional.empty();
+        }
         return jdbc
                 .query(
                         sql,
@@ -67,6 +74,19 @@ public class JdbcCommunityTargetAdapter implements CommunityTargetPort {
                                         r.getObject("author_id", UUID.class),
                                         r.getString("excerpt")),
                         target.id())
+                .stream()
+                .findFirst();
+    }
+
+    @Override
+    public Optional<String> describeCatalogWine(UUID wineId) {
+        return jdbc
+                .queryForList(
+                        "SELECT concat_ws(' ',w.name,w.vintage::text) || coalesce(' (' || y.name || ')','')"
+                                + " FROM wines w LEFT JOIN wineries y ON y.id=w.winery_id"
+                                + " WHERE w.id=? AND w.is_active=true",
+                        String.class,
+                        wineId)
                 .stream()
                 .findFirst();
     }

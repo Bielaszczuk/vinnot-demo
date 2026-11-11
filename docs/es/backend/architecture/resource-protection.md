@@ -130,11 +130,12 @@ de cámara. El submuestreo ocurre antes de reservar el raster completo y la
 imagen persistida conserva un lado mayor máximo de 1600 píxeles.
 
 El procesamiento pesado comparte un semáforo por instancia de
-`WineLabelUploadValidator`, sin cola de espera: dos operaciones por defecto.
+`WineLabelUploadValidator`: dos operaciones por defecto. Un pedido espera hasta
+2 segundos un permiso, porque decodificar lleva una fracción de segundo.
 `IMAGE_PROCESSING_MAX_CONCURRENT` admite valores de 1 a 8. El permiso cubre
 decodificación, análisis/normalización y liberación de buffers; siempre se
-libera al completar o fallar. Sin capacidad se responde 503 con
-`IMAGE_PROCESSING_BUSY`. No se convierte la saturación en «vino no encontrado».
+libera al completar o fallar. Si no se libera un permiso en esa espera, se
+responde 503 con `IMAGE_PROCESSING_BUSY`. No se convierte la saturación en «vino no encontrado».
 
 ## Timeouts de transporte
 
@@ -198,7 +199,8 @@ sequenceDiagram
 
 | Variable | Default | Semántica |
 |---|---:|---|
-| `AI_MAXIMUM_CONCURRENT_REQUESTS` | 3 | intentos pagos simultáneos entre réplicas que comparten DB; rango 1–20 |
+| `AI_MAXIMUM_CONCURRENT_REQUESTS` | 3 | intentos pagos simultáneos entre réplicas que comparten DB; rango 1–20; con 3 o más, el último cupo queda para los escaneos de etiquetas interactivos |
+| `AI_INTERACTIVE_WAIT` | 4s | espera máxima de un pedido interactivo (escaneo de etiqueta) por un cupo libre |
 | `AI_MONTHLY_LIMIT_USD` | 10 | ventana calendario mensual UTC |
 | `AI_DAILY_LIMIT_USD` | 0 | ventana diaria UTC opcional; 0 desactiva sólo este límite adicional |
 | `AI_PAID_CALLS_ENABLED` | true | pausa nuevas llamadas pagas sin invalidar caché |
@@ -213,7 +215,11 @@ sequenceDiagram
 | `AI_IMAGES_TIMEOUT` | 110s | llamada de imagen completa con reintentos; como máximo 115 s para no pasar la concesión de 2 minutos |
 | `AI_IMAGES_MAX_ATTEMPTS` | 2 | intentos de imagen; solo 429 y 5xx se reintentan, nunca un timeout ni una imagen rechazada |
 
-No hay cola para conseguir capacidad: sin cupo se rechaza inmediatamente.
+El trabajo en segundo plano (perfiles, comparaciones, refresco) no tiene cola: sin
+cupo se rechaza inmediatamente. Con tres o más cupos, el último queda reservado
+para pedidos interactivos: un escaneo de etiqueta lo prueba primero y después
+consulta todos los cupos hasta `AI_INTERACTIVE_WAIT` antes de responder 503
+`AI_CAPACITY_EXCEEDED`.
 Las leases `provider-capacity:<slot>` duran dos minutos, por encima del máximo
 de 60 segundos de una operación OpenAI. Son distintas del single-flight por
 vino/par, que conserva su espera finita para reutilizar una generación en curso.

@@ -81,6 +81,36 @@ describe("community application boundary", () => {
     vi.mocked(communityClient.block).mockRejectedValue(new Error("offline"));
     await expect(communityService.block("author")).rejects.toThrow("offline");
   });
+  it("maps a catalog quality report with both wines and no reporter", async () => {
+    vi.mocked(communityClient.moderation).mockResolvedValue({
+      content: [
+        {
+          ...raw,
+          target: { type: "WINE", id: "matched" },
+          authorId: null,
+          reason: "CATALOG_QUALITY",
+          description: "Scan exact match corrected by a member",
+          excerpt: "Malbec 2020 (Bodega A) → Malbec 2020",
+          reviewerId: null,
+          decision: null,
+          authorUsername: null,
+          reviewerUsername: null,
+          targetLabel: "Malbec",
+          relatedTargetId: "chosen",
+          relatedTargetLabel: "Malbec Reserva",
+        },
+      ],
+      totalItems: 1,
+      totalPages: 1,
+    });
+    expect((await communityService.moderation(0, "OPEN")).items[0]).toMatchObject({
+      target: { type: "WINE", id: "matched" },
+      reason: "CATALOG_QUALITY",
+      targetLabel: "Malbec",
+      relatedTargetId: "chosen",
+      relatedTargetLabel: "Malbec Reserva",
+    });
+  });
   it("maps moderation evidence, preserves pagination, trims decisions and propagates conflicts", async () => {
     const legacy = {
       ...raw,
@@ -116,6 +146,8 @@ describe("community application boundary", () => {
       authorUsername: "ana",
       reviewerUsername: null,
       targetLabel: "Malbec",
+      relatedTargetId: null,
+      relatedTargetLabel: null,
     });
     expect(communityClient.moderation).toHaveBeenCalledWith(0, "OPEN");
     // An older API without names still maps to explicit nulls.

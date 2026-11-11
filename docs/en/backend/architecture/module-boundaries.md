@@ -112,6 +112,7 @@ flowchart TB
     USER -.->|«use»| LEGAL
     USER -.->|«use»| NOTIFICATION
     USER -.->|«use»| REVIEW
+    WINE -.->|«use»| COMMUNITY
     WINE -.->|«use»| NOTIFICATION
     WINE -.->|«use»| REGION
     WINE -.->|«use»| USER
@@ -120,7 +121,7 @@ flowchart TB
     WINERY -.->|«use»| REGION
 ```
 
-[View the full “Package diagram” diagram](https://images.vinnot.com/docs/diagrams/v1/en/backend-architecture-module-boundaries-24a854e7ceb4.svg)
+[View the full “Package diagram” diagram](https://images.vinnot.com/docs/diagrams/v1/en/backend-architecture-module-boundaries-3bddfabbd5f5.svg)
 
 `shared` is left out to keep the diagram readable: almost every module uses it
 for its primitives, errors, pagination, security and outbox, and its reference

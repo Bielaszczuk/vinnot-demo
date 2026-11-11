@@ -12,16 +12,21 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 /** Distributed, fail-fast admission using the same lease port as generation coordination. */
 @Service
 public class AiProviderAdmissionService implements AiProviderAdmissionPort {
 
     private static final Logger LOG = LoggerFactory.getLogger(AiProviderAdmissionService.class);
+    private static final Duration INTERACTIVE_POLL = Duration.ofMillis(200);
     private final AiGenerationLeasePort leases;
     private final AiSpendingLedgerPort ledger;
     private final AiProviderAdmissionPolicy policy;
@@ -43,22 +48,76 @@ public class AiProviderAdmissionService implements AiProviderAdmissionPort {
 
     @Override
     public Permit acquire(String model, BigDecimal maximumCostUsd) {
-        if (!policy.paidCallsEnabled()) {
-            throw unavailable("AI_PAID_CALLS_PAUSED", "New AI requests are temporarily paused", null);
+        requirePaidCalls();
+        return tryAcquire(backgroundSlotOrder(), model, maximumCostUsd)
+                .orElseThrow(AiProviderAdmissionService::capacityExceeded);
+    }
+
+    @Override
+    public Permit acquireInteractive(String model, BigDecimal maximumCostUsd, Duration wait) {
+        requirePaidCalls();
+        Duration allowed = wait.compareTo(policy.interactiveWait()) < 0 ? wait : policy.interactiveWait();
+        long until = System.nanoTime() + Math.max(0, allowed.toNanos());
+        List<Integer> slots = interactiveSlotOrder();
+        while (true) {
+            Optional<Permit> permit = tryAcquire(slots, model, maximumCostUsd);
+            if (permit.isPresent()) {
+                return permit.get();
+            }
+            long left = until - System.nanoTime();
+            if (left <= 0 || !pause(Math.min(left, INTERACTIVE_POLL.toNanos()))) {
+                throw capacityExceeded();
+            }
         }
+    }
+
+    private Optional<Permit> tryAcquire(List<Integer> slots, String model, BigDecimal maximumCostUsd) {
         try {
-            for (int slot = 0; slot < policy.maximumConcurrentRequests(); slot++) {
+            for (int slot : slots) {
                 var lease = leases.tryAcquire("provider-capacity:" + slot, policy.leaseDuration());
                 if (lease.isPresent()) {
-                    return reserve(lease.get(), model, maximumCostUsd);
+                    return Optional.of(reserve(lease.get(), model, maximumCostUsd));
                 }
             }
+            return Optional.empty();
         } catch (AiSpendingLedgerPort.BudgetExceededException exception) {
             throw unavailable("AI_BUDGET_EXHAUSTED", "The AI budget has been reached", exception);
         } catch (RuntimeException exception) {
             throw unavailable("AI_ADMISSION_UNAVAILABLE", "AI admission is temporarily unavailable", exception);
         }
-        throw unavailable("AI_CAPACITY_EXCEEDED", "AI is busy. Please try again shortly", null);
+    }
+
+    private List<Integer> backgroundSlotOrder() {
+        return IntStream.range(0, policy.backgroundSlots()).boxed().toList();
+    }
+
+    /** The kept slot first, so a scan leaves the shared slots to background work when it can. */
+    private List<Integer> interactiveSlotOrder() {
+        List<Integer> slots = new ArrayList<>();
+        IntStream.range(policy.backgroundSlots(), policy.maximumConcurrentRequests()).forEach(slots::add);
+        slots.addAll(backgroundSlotOrder());
+        return List.copyOf(slots);
+    }
+
+    private void requirePaidCalls() {
+        if (!policy.paidCallsEnabled()) {
+            throw unavailable("AI_PAID_CALLS_PAUSED", "New AI requests are temporarily paused", null);
+        }
+    }
+
+    private static boolean pause(long nanos) {
+        try {
+            TimeUnit.NANOSECONDS.sleep(nanos);
+            return true;
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }
+
+    private static ExternalServiceUnavailableException capacityExceeded() {
+        return new ExternalServiceUnavailableException("AI_CAPACITY_EXCEEDED", "AI is busy. Please try again shortly",
+                null);
     }
 
     private Permit reserve(AiGenerationLeasePort.Lease lease, String model, BigDecimal maximumCostUsd) {

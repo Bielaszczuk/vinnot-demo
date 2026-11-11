@@ -47,6 +47,27 @@ class WineLabelUploadValidatorTest {
     }
 
     @Test
+    void waitsBrieflyForASlotFreedByAnotherDecoding() throws Exception {
+        var limited = new WineLabelUploadValidator(1);
+        var slots = (Semaphore) ReflectionTestUtils.getField(limited, "processingSlots");
+        byte[] bytes = jpeg(720, 960);
+        slots.acquire();
+        var release = new Thread(() -> {
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+            }
+            slots.release();
+        });
+        release.start();
+
+        assertThat(limited.sanitizeCatalogImage(bytes, "image/jpeg").bytes()).isNotEmpty();
+        release.join();
+        assertThat(slots.availablePermits()).isEqualTo(1);
+    }
+
+    @Test
     void boundsActualMultipartStreamEvenIfDeclaredSizeIsSmaller() {
         var file = new MockMultipartFile("image", "label.jpg", "image/jpeg", new byte[8 * 1024 * 1024 + 1]) {
             @Override

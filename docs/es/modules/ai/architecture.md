@@ -561,7 +561,9 @@ Al agotar la espera se devuelve `AI_GENERATION_BUSY`; una interrupción produce
 La admisión global complementa al single-flight: antes de cada intento de
 chat/visión adquiere una lease de capacidad y una reserva monetaria durable.
 El default es tres intentos simultáneos y USD 10 mensuales por DB/entorno, sin
-límite diario adicional. Una lectura válida de caché evita esa admisión.
+límite diario adicional. Con tres o más cupos, el último queda para los escaneos
+de etiquetas, que esperan hasta 4 s un cupo; los perfiles y las comparaciones
+fallan enseguida si los demás cupos están ocupados. Una lectura válida de caché evita esa admisión.
 Una interrupción de facturación, capacidad o registro devuelve error operativo;
 no reemplaza resultados guardados ni genera contenido simulado.
 Los plazos, precios, códigos y conciliación se describen en

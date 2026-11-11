@@ -8,7 +8,7 @@ import {
 import { DEFAULT_PUBLICATION_REJECTION_REASON } from "@/domain/community/community.types";
 import {
   MAX_REPORT_DECISION_LENGTH,
-  REPORT_OUTCOME_REASONS,
+  reportOutcomeReasons,
   resolveReasonText,
   type ReportOutcome,
   type ReportReasonCode,
@@ -106,7 +106,7 @@ export function useModerationViewModel() {
   const [selected, setSelected] = useState<ModerationReport | null>(null);
   // The outcome comes first; its preset reasons follow and free text exists only under OTHER.
   const [outcome, setOutcome] = useState<ReportOutcome>("RESOLVED");
-  const [reasonCode, setReasonCode] = useState<ReportReasonCode>(REPORT_OUTCOME_REASONS.RESOLVED[0]);
+  const [reasonCode, setReasonCode] = useState<ReportReasonCode>(reportOutcomeReasons("RESOLVED", false)[0] ?? "OTHER");
   const [note, setNote] = useState("");
   const [error, setError] = useState(false);
   const [working, setWorking] = useState(false);
@@ -123,15 +123,16 @@ export function useModerationViewModel() {
     (code) => t(`community.decisionReasons.${code}`),
     MAX_REPORT_DECISION_LENGTH,
   );
-  function resetDecision(next: ReportOutcome = "RESOLVED") {
+  const reasons = reportOutcomeReasons(outcome, selected?.reason === "CATALOG_QUALITY");
+  function resetDecision(next: ReportOutcome = "RESOLVED", item: ModerationReport | null = selected) {
     setOutcome(next);
-    setReasonCode(REPORT_OUTCOME_REASONS[next][0]);
+    setReasonCode(reportOutcomeReasons(next, item?.reason === "CATALOG_QUALITY")[0] ?? "OTHER");
     setNote("");
   }
   function select(item: ModerationReport) {
     if (busy) return;
     setSelected(item);
-    resetDecision();
+    resetDecision("RESOLVED", item);
     setError(false);
   }
   function close() {
@@ -186,6 +187,7 @@ export function useModerationViewModel() {
     outcome,
     chooseOutcome,
     reasonCode,
+    reasons,
     chooseReason,
     note,
     setNote,

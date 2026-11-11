@@ -18,6 +18,11 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 class OpenAiClientContractTest {
 
@@ -80,6 +85,43 @@ class OpenAiClientContractTest {
                 .contains("json_schema")
                 .contains("\"detail\":\"low\"")
                 .contains("data:image/jpeg;base64,AQID");
+    }
+
+    @Test
+    void visionWaitsBrieflyForACapacitySlotAndCanUseReasoningModels() throws IOException {
+        AtomicReference<String> requestBody = new AtomicReference<>();
+        server = HttpServer.create(new InetSocketAddress(0), 0);
+        server.createContext("/v1/chat/completions", exchange -> {
+            requestBody.set(new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+            byte[] response = "{\"choices\":[{\"message\":{\"content\":\"{\\\"candidate\\\":1}\"}}]}"
+                    .getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, response.length);
+            exchange.getResponseBody().write(response);
+            exchange.close();
+        });
+        server.start();
+        var admission = OpenAiTestFixtures.admission();
+        OpenAiClient client = new OpenAiClient(
+                new ObjectMapper(), "http://localhost:" + server.getAddress().getPort()
+                        + "/v1/chat/completions", Duration.ofSeconds(10), Duration.ofSeconds(30),
+                admission, OpenAiTestFixtures.pricing(), new OperationalTelemetry(new SimpleMeterRegistry()));
+        ReflectionTestUtils.setField(client, "apiKey", "contract-key");
+        ReflectionTestUtils.setField(client, "visionModel", "vision-contract-model");
+        ReflectionTestUtils.setField(client, "visionReasoningEffort", "low");
+        ReflectionTestUtils.setField(client, "maxAttempts", 1);
+
+        Map<String, Object> result = client.structuredCompletionWithImage(new AiImageCompletionRequest(
+                "Pick the candidate", new byte[] {1, 2, 3}, "image/jpeg", 0.0, 80, "choice",
+                Map.of("type", "object"), AiImageCompletionRequest.ImageDetail.HIGH, Duration.ofSeconds(8), 1));
+
+        assertThat(result).containsEntry("candidate", 1);
+        assertThat(requestBody.get()).contains("\"reasoning_effort\":\"low\"")
+                .contains("\"max_completion_tokens\":80").doesNotContain("\"max_tokens\"")
+                .doesNotContain("temperature");
+        verify(admission).acquireInteractive(eq("vision-contract-model"), any(), argThat(wait ->
+                wait.compareTo(Duration.ofSeconds(5)) <= 0 && wait.compareTo(Duration.ofSeconds(4)) > 0));
+        verify(admission, never()).acquire(any(), any());
     }
 
     @Test

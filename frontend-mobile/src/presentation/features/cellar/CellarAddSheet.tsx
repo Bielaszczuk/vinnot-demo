@@ -36,6 +36,8 @@ interface CellarAddSheetProps {
   visible: boolean;
   entry?: CellarEntry | null;
   initialWine?: WineSummary | null;
+  /** Vintage read on a scanned label; it prefills only a new entry, never an edited one. */
+  initialVintage?: number | null;
   onClose: () => void;
 }
 
@@ -46,7 +48,13 @@ interface FormValues {
   vintage: number | null;
 }
 
-export function CellarAddSheet({ visible, entry, initialWine, onClose }: CellarAddSheetProps) {
+export function CellarAddSheet({
+  visible,
+  entry,
+  initialWine,
+  initialVintage,
+  onClose,
+}: CellarAddSheetProps) {
   const { t, i18n } = useTranslation();
   // Prices are typed the way the app language writes numbers ("12,50" in es-AR).
   const numberLocale = i18n?.language ?? "es-AR";
@@ -83,12 +91,12 @@ export function CellarAddSheet({ visible, entry, initialWine, onClose }: CellarA
       rating: entry?.rating ?? null,
       purchasePrice: formatPurchasePriceInput(entry?.purchasePrice, numberLocale),
       notes: entry?.notes ?? "",
-      vintage: entry?.vintage ?? null,
+      vintage: entry ? (entry.vintage ?? null) : (initialVintage ?? null),
     });
     chooseWine(initialWine ?? null);
     updateSearch("");
     sheetRef.current?.present();
-  }, [entry, initialWine, numberLocale, reset, visible]);
+  }, [entry, initialVintage, initialWine, numberLocale, reset, visible]);
 
   const onSubmit = (values: FormValues) => {
     const price = parsePurchasePrice(values.purchasePrice, numberLocale);

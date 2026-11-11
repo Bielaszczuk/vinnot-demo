@@ -110,17 +110,18 @@ flowchart LR
   SDK ([`OpenAiClient.java`](../../../../backend/src/main/java/com/vinnot/shared/infrastructure/ai/OpenAiClient.java)).
 - **Models:** `gpt-6-luna` for text, `gpt-4o-mini` for vision and `omni-moderation-latest`
   for moderation, on the `priority` service tier ([`application.yml`](../../../../backend/src/main/resources/application.yml)).
-- **Keys:** `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_VISION_MODEL`, `OPENAI_MODERATION_MODEL`,
+- **Keys:** `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_VISION_MODEL`, `OPENAI_VISION_REASONING_EFFORT`, `OPENAI_MODERATION_MODEL`,
   `OPENAI_SERVICE_TIER`, `OPENAI_INPUT_PER_MILLION_USD`, `OPENAI_OUTPUT_PER_MILLION_USD`,
   `AI_PROVIDER`, `AI_ENABLED`, `AI_MONTHLY_LIMIT_USD`, `AI_DAILY_LIMIT_USD`,
-  `AI_MAXIMUM_CONCURRENT_REQUESTS`, `AI_PROFILE_REFRESH_ENABLED`, `AI_PROFILE_REFRESH_INTERVAL`,
+  `AI_MAXIMUM_CONCURRENT_REQUESTS`, `AI_INTERACTIVE_WAIT`, `AI_PROFILE_REFRESH_ENABLED`, `AI_PROFILE_REFRESH_INTERVAL`,
   `AI_PROFILE_REFRESH_PROFILES_PER_RUN`, `AI_PROFILE_REFRESH_BUDGET_SHARE`.
 - **Illustrations:** `/v1/images/edits` with `gpt-image-1`, off by default
   ([`OpenAiImageClient.java`](../../../../backend/src/main/java/com/vinnot/shared/infrastructure/ai/OpenAiImageClient.java)); keys `AI_IMAGES_ENABLED`, `AI_IMAGES_MODEL`,
   `AI_IMAGES_QUALITY`, `AI_IMAGES_SIZE`, `AI_IMAGES_MAX_COST_USD`, `AI_IMAGES_TIMEOUT`,
   `AI_IMAGES_MAX_ATTEMPTS`, `AI_IMAGES_INITIAL_BACKOFF_MS` and `OPENAI_IMAGES_URL`. Every image
   reserves a flat cost against the same monthly cap; without AI the pillar vignette is used.
-- **Limits:** 3 concurrent calls and a monthly USD cap reserved before each call; each person
+- **Limits:** 3 concurrent calls (the last one kept for label scans, which wait up to 4 s for a
+  slot) and a monthly USD cap reserved before each call; each person
   can generate 20 per hour.
 - **When it fails:** 10 s connect timeout, 30 s read timeout and up to 2 attempts. Without
   capacity or budget headroom, the API answers 503. With another provider configured, label
@@ -165,6 +166,21 @@ flowchart LR
   `EXPO_PUBLIC_GOOGLE_MAPS_IOS_API_KEY`; in production the iOS key is empty
   ([`app.config.ts`](../../../../frontend-mobile/app.config.ts)).
 - **More:** [Google Maps: credentials and usage](environments-and-secrets.md#google-maps-credentials-and-usage).
+
+## Google Gemini
+
+- **What for:** image embeddings for visual label search: the backend compares a scanned photo
+  with the catalog label images Vinnot hosts ([Wines](../../modules/wines/architecture.md#label-scan-accuracy)).
+- **Integration:** own HTTP calls to the Gemini API (`generativelanguage.googleapis.com/v1beta`),
+  with no SDK and the `x-goog-api-key` header
+  ([`GeminiImageEmbeddingAdapter.java`](../../../../backend/src/main/java/com/vinnot/wine/infrastructure/visual/GeminiImageEmbeddingAdapter.java)).
+- **Model:** `gemini-embedding-2` at 768 dimensions; vectors are stored as int8 in
+  `wine_image_embeddings` and kept in memory.
+- **Keys:** `GEMINI_API_KEY` (optional), `GEMINI_BASE_URL`, `GEMINI_EMBEDDING_MODEL`,
+  `GEMINI_EMBEDDING_DIMENSIONS`, `GEMINI_CONNECT_TIMEOUT`, `GEMINI_TIMEOUT`, and the
+  `WINE_LABEL_VISUAL_INDEX_*` settings.
+- **When it fails:** 3 s connect and 8 s request timeouts. Without a key, or when a call fails,
+  scans use text retrieval only and never report an error for it.
 
 ## Amazon SES
 

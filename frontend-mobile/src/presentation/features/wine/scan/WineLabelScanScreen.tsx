@@ -17,6 +17,7 @@ import {
   Zap,
   ZapOff,
   RotateCcw,
+  ScanBarcode,
   Search,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
@@ -109,9 +110,17 @@ export function WineLabelScanScreen() {
 
   const result = viewModel.scanMutation.data;
   const navigateToWine = (selectedWine: WineSummary, options?: WineDetailRouteOptions) => {
+    viewModel.reportWineChosen(selectedWine);
     viewModel.attachCapturedImageIfMissing(selectedWine);
     resetScannerOnFocus.current = true;
-    router.push(createScannedWineDetailRoute(selectedWine.id, returnTo, options));
+    const scannedVintage = viewModel.scannedVintage;
+    router.push(
+      createScannedWineDetailRoute(
+        selectedWine.id,
+        returnTo,
+        scannedVintage != null ? { ...options, scannedVintage } : options,
+      ),
+    );
   };
   const openWineReviews = (selectedWine: WineSummary) => navigateToWine(selectedWine, { tab: "reviews" });
 
@@ -131,10 +140,22 @@ export function WineLabelScanScreen() {
         <>
           <View style={styles.heading}>
             <Text style={styles.title}>
-              {t(addWineIntent ? "scan.addWineHeadline" : "scan.headline")}
+              {t(
+                viewModel.isBackLabelScan
+                  ? "scan.backLabelHeadline"
+                  : addWineIntent
+                    ? "scan.addWineHeadline"
+                    : "scan.headline",
+              )}
             </Text>
             <Text style={styles.subtitle}>
-              {t(addWineIntent ? "scan.addWineCaptureHint" : "scan.captureHint")}
+              {t(
+                viewModel.isBackLabelScan
+                  ? "scan.backLabelHint"
+                  : addWineIntent
+                    ? "scan.addWineCaptureHint"
+                    : "scan.captureHint",
+              )}
             </Text>
           </View>
           <View
@@ -148,6 +169,7 @@ export function WineLabelScanScreen() {
                 ref={viewModel.cameraRef}
                 torchEnabled={viewModel.torchEnabled}
                 captureRegion={WINE_LABEL_CAPTURE_REGION}
+                onBarcodeDetected={viewModel.handleBarcodeDetected}
               />
               <View style={styles.cameraOverlay} pointerEvents="none">
                 <View style={[styles.scanFrame, captureFrameStyle]} />
@@ -201,6 +223,17 @@ export function WineLabelScanScreen() {
               />
             </View>
           </View>
+          {viewModel.barcodeDetected && (
+            <View style={styles.barcodeHint} accessibilityLiveRegion="polite">
+              <ScanBarcode size={16} color={lightTokens.success} />
+              <Text style={styles.barcodeHintText}>{t("scan.barcodeDetected")}</Text>
+            </View>
+          )}
+          {viewModel.isBackLabelScan && (
+            <Button fullWidth size="lg" variant="ghost" onPress={viewModel.cancelBackLabelScan}>
+              {t("scan.backLabelCancel")}
+            </Button>
+          )}
           {addWineIntent && (
             <View style={styles.withoutPhoto}>
               <Text style={styles.withoutPhotoHint}>{t("scan.addWithoutPhotoHint")}</Text>
@@ -335,6 +368,21 @@ export function WineLabelScanScreen() {
             </View>
           )}
 
+          {viewModel.canScanBackLabel && (
+            <View style={styles.backLabelOffer}>
+              <Text style={styles.sectionDescription}>{t("scan.scanBackLabelDescription")}</Text>
+              <Button
+                fullWidth
+                size="lg"
+                variant="secondary"
+                leftIcon={<Camera size={18} color={wine[700]} />}
+                onPress={viewModel.startBackLabelScan}
+              >
+                {t("scan.scanBackLabel")}
+              </Button>
+            </View>
+          )}
+
           <Button
             fullWidth
             size="lg"
@@ -416,6 +464,12 @@ export function WineLabelScanScreen() {
           extractedData={withFallbackWineName(result?.extractedData ?? null, searchedName)}
           onCancel={() => viewModel.setMode(viewModel.capturedUri ? "manual-search" : "camera")}
           onComplete={(submission) => {
+            // A duplicate proposal found the wine in the catalog after all.
+            if (submission.status === "DUPLICATE" && submission.wine) {
+              viewModel.reportWineChosen(submission.wine);
+            } else {
+              viewModel.reportNotInCatalog();
+            }
             if (submission.wine) {
               navigateToWine(submission.wine);
             } else if (submission.status === "NEEDS_REVIEW") {
@@ -451,6 +505,14 @@ const styles = StyleSheet.create({
   title: { ...textStyles.headingLarge, color: lightTokens.textPrimary },
   subtitle: { ...textStyles.bodyMedium, color: lightTokens.textSecondary },
   withoutPhoto: { gap: spacing[2] },
+  barcodeHint: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing[2],
+  },
+  barcodeHintText: { ...textStyles.labelMedium, color: lightTokens.success },
+  backLabelOffer: { gap: spacing[2] },
   withoutPhotoHint: { ...textStyles.bodySmall, color: lightTokens.textSecondary, textAlign: "center" },
   cameraShell: {
     overflow: "hidden",

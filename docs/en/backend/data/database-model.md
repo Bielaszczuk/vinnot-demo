@@ -62,7 +62,11 @@ with filters (see below); existing tables are unchanged. V87 (#541) adds
 `user_follows` and the profile columns `users.bio` and `users.cellar_visibility`
 (see `users` and `user_follows` below); it is additive. V88 (#541) adds
 `user_taste_quiz` (see below); it is additive. V89 (#541) adds
-`user_taste_adjustments` (see below); it is additive. V62 adds
+`user_taste_adjustments` (see below); it is additive. V90 (#544) replaces the search
+build functions so the catalog is searched without accents; V91 adds
+`wine_image_embeddings`, V92 the scan feedback columns and
+`wine_barcode_confirmations`, and V93 the catalog quality reports (see
+[Label scanning (V90–V93)](#label-scanning-v90v93)); all four are additive. V62 adds
 `users.password_set` (`boolean NOT NULL`, default `true`): whether the stored
 password was chosen by its owner. The backfill sets it to `false` when the first
 social identity was saved together with the account, or was linked to a local
@@ -518,6 +522,9 @@ sequenceDiagram
 Full-text search uses GIN over `tsvector`; partial similarity uses trigram GIN
 over `search_text`. See [Query performance](query-performance.md).
 
+Since V90 both search read models store unaccented, lower-cased text (see
+[Label scanning (V90–V93)](#label-scanning-v90v93)).
+
 ### `wine_catalog_filter_search`, `wine_grape_search` and `wine_grape_keys`
 
 V86 adds two read models for searches with filters, also one-to-one or one-to-many
@@ -536,6 +543,61 @@ grapes, refreshes both; a winery rename refreshes the search text of its wines. 
 foreign keys were added `NOT VALID` because the rows were loaded from `wines` under
 lock; they are enforced for every new row. See
 [Query performance](query-performance.md#text-with-filters).
+
+### Label scanning (V90–V93)
+
+V90 (#544) creates `catalog_search_unaccent(text)`, an `IMMUTABLE`, `PARALLEL SAFE`
+SQL wrapper that calls `unaccent` with the fixed `public.unaccent` dictionary, and
+replaces `build_wine_catalog_search_vector` and `build_wine_catalog_search_text` so
+that `wine_catalog_search` and `wine_catalog_filter_search` store unaccented,
+lower-cased text. The migration only replaces functions and takes no table lock;
+rows written before it are rewritten after startup by `CatalogSearchAccentNormalizer`
+in committed batches (`app.wine-label.search-normalization.batch-size`, 5000 by
+default), and until then searches match both forms.
+
+`wine_image_embeddings` (V91) keeps one image embedding per catalog wine whose label
+image Vinnot hosts:
+
+| Column | Type and rule |
+|---|---|
+| `wine_id` | `uuid` primary key, references `wines` with `ON DELETE CASCADE` |
+| `image_url` | `text NOT NULL`; the image that produced the vector, so a changed image is embedded again |
+| `model` | `varchar(80) NOT NULL`; a changed model is embedded again |
+| `dimensions` | `smallint NOT NULL`; CHECK `dimensions > 0 AND octet_length(embedding) = dimensions` |
+| `scale` | `real NOT NULL`; value = byte × scale |
+| `embedding` | `bytea NOT NULL`; the vector quantized to one signed byte per dimension |
+| `embedded_at` | `timestamptz NOT NULL`, default `now()` |
+
+V91 also adds `idx_wines_hosted_label_image`, a partial index on `wines (id)` for
+images under `https://images.vinnot.com/` or `/api/uploads/wine-labels/`, so the
+backfill finds pending images without reading the whole catalog.
+
+V92 adds to `wine_label_scans` the nullable columns `barcode` (`varchar(14)`),
+`feedback` (`varchar(20)`, CHECK `CONFIRMED`, `CORRECTED` or `NOT_IN_CATALOG`),
+`feedback_wine_id` (references `wines` with `ON DELETE SET NULL`) and `feedback_at`
+(`timestamptz`), plus the index `idx_wine_label_scans_feedback_wine`. A scan answered
+from confirmed barcodes stores no barcode. It also creates
+`wine_barcode_confirmations`:
+
+| Column | Type and rule |
+|---|---|
+| `barcode` | `varchar(14) NOT NULL` |
+| `user_id` | `uuid NOT NULL`, references `users` with `ON DELETE CASCADE` |
+| `wine_id` | `uuid NOT NULL`, references `wines` with `ON DELETE CASCADE` |
+| `confirmed_at` | `timestamptz NOT NULL`, default `now()` |
+
+The primary key `(barcode, user_id)` keeps one confirmation per member and barcode
+(an upsert, the latest wins); `idx_wine_barcode_confirmations_wine` and
+`idx_wine_barcode_confirmations_user` keep wine and member deletes from scanning the
+table. Only `CONFIRMED` verdicts write it.
+
+V93 widens the `community_reports` CHECKs with the `WINE` target type and the
+`CATALOG_QUALITY` reason, adds the nullable `related_target_id uuid` and creates the
+partial unique index `community_report_open_catalog_pair` on
+`(LEAST(target_id, related_target_id), GREATEST(target_id, related_target_id))` where
+`reason = 'CATALOG_QUALITY'` and `status IN ('OPEN','IN_REVIEW')`. These reports have
+a `NULL` `reporter_id`; see
+[Catalog quality reports](../../modules/community/architecture.md#catalog-quality-reports).
 
 ## Community and cellar
 

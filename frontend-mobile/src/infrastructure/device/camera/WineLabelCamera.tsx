@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useRef } from "react";
 import { StyleSheet, View } from "react-native";
-import { CameraView, useCameraPermissions } from "expo-camera";
+import { CameraView, useCameraPermissions, type BarcodeSettings } from "expo-camera";
 import type { ImageDimensions, NormalizedImageRegion } from "@/shared/image/imageGeometry";
 import { prepareWineLabelImage } from "./wineLabelImageProcessor";
 import { analyzeWineLabelImageQuality } from "./wineLabelImageQualityAnalyzer";
@@ -16,10 +16,17 @@ export interface WineLabelCameraHandle {
 interface WineLabelCameraProps {
   torchEnabled: boolean;
   captureRegion: NormalizedImageRegion;
+  /** Receives the raw data of every EAN/UPC code the preview sees. */
+  onBarcodeDetected?: (data: string) => void;
 }
 
+/** Retail codes printed on wine bottles. */
+const WINE_BARCODE_SETTINGS: BarcodeSettings = {
+  barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e"],
+};
+
 export const WineLabelCamera = forwardRef<WineLabelCameraHandle, WineLabelCameraProps>(
-  ({ torchEnabled, captureRegion }, ref) => {
+  ({ torchEnabled, captureRegion, onBarcodeDetected }, ref) => {
     const cameraRef = useRef<CameraView | null>(null);
     const previewDimensionsRef = useRef<ImageDimensions | null>(null);
 
@@ -66,6 +73,10 @@ export const WineLabelCamera = forwardRef<WineLabelCameraHandle, WineLabelCamera
           style={StyleSheet.absoluteFill}
           facing="back"
           enableTorch={torchEnabled}
+          barcodeScannerSettings={WINE_BARCODE_SETTINGS}
+          onBarcodeScanned={
+            onBarcodeDetected ? ({ data }) => onBarcodeDetected(data) : undefined
+          }
           onLayout={({ nativeEvent }) => {
             previewDimensionsRef.current = {
               width: nativeEvent.layout.width,

@@ -22,6 +22,22 @@ import java.util.UUID;
 
 class RemoveReportedContentCommandHandlerTest {
     @Test
+    void aCatalogQualityReportCannotRemoveTheWine() {
+        var reports = mock(CommunityReportRepositoryPort.class);
+        var removal = mock(ReportedContentRemovalPort.class);
+        var notifier = mock(ReportOutcomeNotifier.class);
+        var report = CommunityReport.exactMatchCorrected(UUID.randomUUID(), UUID.randomUUID(), "", Instant.now());
+        when(reports.findForUpdate(report.id())).thenReturn(Optional.of(report));
+
+        assertThatThrownBy(() -> new RemoveReportedContentCommandHandler(reports, removal, notifier).execute(
+                new ReviewReportCommand(report.id(), UUID.randomUUID(), CommunityReport.Status.RESOLVED, "Remove")))
+                .isInstanceOf(BusinessRuleViolationException.class)
+                .hasMessageContaining("dedicated administration flow");
+        verifyNoInteractions(removal, notifier);
+        verify(reports, never()).save(any());
+    }
+
+    @Test
     void validatesBeforeRemovalAndPropagatesFailureBeforeResolution() {
         var reports = mock(CommunityReportRepositoryPort.class);
         var removal = mock(ReportedContentRemovalPort.class);

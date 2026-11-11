@@ -24,6 +24,7 @@ import {
 } from "@/application/services/users.service";
 import { wineriesService } from "@/application/services/wineries.service";
 import { winesService } from "@/application/services/wines.service";
+import type { WineScanFeedbackVerdict } from "@/domain/wine/wine.types";
 import { pointsService } from "@/application/services/points.service";
 import { parseBadgeTier } from "@/domain/points/badgeTiers";
 import type { MutationOperationHandler, MutationOperationKey, MutationRequest } from "./types";
@@ -133,7 +134,16 @@ const mutationHandlers: Record<MutationOperationKey, MutationOperationHandler> =
       observedText: Array.isArray(params?.observedText)
         ? params.observedText.filter((line): line is string => typeof line === "string")
         : [],
+      barcode: typeof params?.barcode === "string" ? params.barcode : null,
     }, signal),
+  "wine.scanFeedback": async (params) => {
+    await winesService.sendScanFeedback({
+      scanId: String(params?.scanId),
+      verdict: params?.verdict as WineScanFeedbackVerdict,
+      wineId: typeof params?.wineId === "string" ? params.wineId : null,
+    });
+    return null;
+  },
   "wine.submit": (params) =>
     winesService.submitWine(getPayload<Parameters<typeof winesService.submitWine>[0]>(params)),
   "wine.labelImage.attach": (params) =>

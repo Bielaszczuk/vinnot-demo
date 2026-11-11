@@ -2999,7 +2999,13 @@
     "addWineHeadline": "Agregá tu vino",
     "addWithoutPhoto": "Cargar sin foto",
     "addWithoutPhotoHint": "¿No tenés el vino a mano?",
-    "addWineCaptureHint": "Sacale una foto a la etiqueta. Si ya está en Vinnot te lo mostramos; si no, completás los datos y lo sumamos."
+    "addWineCaptureHint": "Sacale una foto a la etiqueta. Si ya está en Vinnot te lo mostramos; si no, completás los datos y lo sumamos.",
+    "scanBackLabel": "Escanear la contraetiqueta",
+    "scanBackLabelDescription": "¿No es ninguno de estos? La contraetiqueta suele tener la bodega y el código de barras, y nos ayuda a encontrarlo.",
+    "backLabelHeadline": "Escaneá la contraetiqueta",
+    "backLabelHint": "Da vuelta la botella y encuadrá la etiqueta de atrás. Vamos a sumar lo que leamos a la foto del frente.",
+    "backLabelCancel": "Volver al resultado",
+    "barcodeDetected": "Leímos el código de barras"
   },
   "search": "Buscar",
   "type": "Tipo",
@@ -3065,7 +3071,8 @@
       "VIOLENCE": "Violencia o amenazas",
       "PRIVACY": "Privacidad",
       "MISINFORMATION": "Información engañosa",
-      "OTHER": "Otro"
+      "OTHER": "Otro",
+      "CATALOG_QUALITY": "Calidad del catálogo"
     },
     "statuses": {
       "OPEN": "Recibida",
@@ -3078,7 +3085,8 @@
       "COMMENT": "Comentario",
       "USER": "Usuario",
       "EVENT": "Evento",
-      "WINE_ROUTE": "Ruta"
+      "WINE_ROUTE": "Ruta",
+      "WINE": "Vino"
     },
     "removeContent": "Retirar contenido y resolver",
     "removeConfirm": "Esta acción elimina la reseña o comentario y cierra la denuncia. Registrá primero el motivo; no se puede deshacer.",
@@ -3176,8 +3184,14 @@
       "OFFENSIVE": "Contenido ofensivo o discriminatorio",
       "SPAM": "Spam o publicidad",
       "PERSONAL_DATA": "Expone datos personales",
-      "OTHER": "Otro"
-    }
+      "OTHER": "Otro",
+      "CATALOG_FIXED": "Se corrigió el catálogo",
+      "CATALOG_CORRECT": "El catálogo estaba bien"
+    },
+    "catalogQualityDescription": "Un miembro corrigió una coincidencia exacta del escaneo: puede ser un vino duplicado, una bodega equivocada o una imagen incorrecta.",
+    "automaticReporter": "Vinnot (automático)",
+    "reportedByLabel": "Reportado por",
+    "chosenWineLabel": "Vino elegido por el miembro"
   },
   "media": {
     "cover": "Foto de portada",

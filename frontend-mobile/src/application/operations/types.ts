@@ -107,6 +107,7 @@ export const mutationOperationKeys = [
   "wine.aiProfile.generate",
   "wine.aiProfile.regenerate",
   "wine.scan",
+  "wine.scanFeedback",
   "wine.submit",
   "wine.labelImage.attach",
   "event.register",
@@ -305,6 +306,8 @@ export function mutationTags(
   if (key.startsWith("social.")) return ["Social"];
   // Recognition is read-only; it must not refetch every mounted catalog query.
   if (key === "wine.scan" || key === "partner.event.detail") return [];
+  // Feedback only records what the member chose; no cached data changes.
+  if (key === "wine.scanFeedback") return [];
   if (key.startsWith("wine.aiProfile."))
     return [resourceTag("WineProfiles", params.id), ...catalogTags("Wines", params.id)];
   if (key === "admin.notifications.push.toggle") return [{ type: "Admin", id: "notifications.push" }];

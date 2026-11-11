@@ -181,6 +181,11 @@ web o mobile. La web recibe una clave diferente mediante
 JavaScript, Geocoding y Embed. El campo operativo `GOOGLE_MAPS_WEB_API_KEY` permite
 custodiar ese valor separado; no lo convierte en secreto una vez compilada la web.
 
+`GEMINI_API_KEY` es una credencial opcional del backend en el secreto de runtime para los
+embeddings de Google (búsqueda visual de etiquetas). Se restringe a la Generative Language
+API y al servidor; nunca se incorpora a builds web o mobile. Sin ella, el backend arranca
+normalmente y los escaneos usan solo la búsqueda por texto.
+
 Las restricciones de aplicación deben corresponder al consumidor: dominio para
 web, IP para servidor y aplicación/firma para SDKs nativos. Antes de conectar una
 clave nativa a un servicio REST se comprueba tanto el caso permitido como el

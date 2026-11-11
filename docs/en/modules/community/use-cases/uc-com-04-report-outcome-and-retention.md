@@ -8,7 +8,7 @@
 | Actors | Moderator or administrator, System (scheduled job), Email service |
 | Lucidchart IDs | None |
 | Requirements | None |
-| Test cases | [`CP-COM-19`](../testing.md), [`CP-COM-20`](../testing.md), [`CP-COM-21`](../testing.md) |
+| Test cases | [`CP-COM-19`](../testing.md), [`CP-COM-20`](../testing.md), [`CP-COM-21`](../testing.md), [`CP-COM-76`](../testing.md) |
 
 ## Preconditions
 
@@ -28,6 +28,7 @@
 ## Alternative flows
 
 - 2a. The same outcome was already notified: the notice key prevents a second email.
+- 2b. The report is a catalog quality report filed by Vinnot: it has no reporter, so no outcome email is sent.
 - 4a. More than 500 are due: the rest are deleted in the following runs.
 
 ## Business rules

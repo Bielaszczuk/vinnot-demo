@@ -178,6 +178,11 @@ web or mobile builds. The web receives a different key through
 JavaScript, Geocoding and Embed. The operational `GOOGLE_MAPS_WEB_API_KEY` field
 stores that value separately; it does not make it secret once the web is built.
 
+`GEMINI_API_KEY` is an optional backend credential in the runtime secret for Google
+embeddings (visual label search). Restrict it to the Generative Language API and the
+server; it is never included in web or mobile builds. Without it the backend starts
+normally and scans use text retrieval only.
+
 Application restrictions must match the consumer: domain for web, IP for server,
 and application/signature for native SDKs. Before connecting a native key to a
 REST service, verify both permitted access and rejection of an incorrect app

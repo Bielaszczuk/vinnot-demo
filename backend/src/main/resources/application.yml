@@ -169,6 +169,27 @@ app:
       detail: ${WINE_LABEL_RECOGNITION_DETAIL:HIGH}
       max-tokens: ${WINE_LABEL_RECOGNITION_MAX_TOKENS:500}
       max-attempts: ${WINE_LABEL_RECOGNITION_MAX_ATTEMPTS:1}
+    visual-index:
+      # Compares a scanned photo with every catalog label image Vinnot hosts (Google embeddings, see
+      # services.google.gemini). Off without GEMINI_API_KEY; scans then use text retrieval only.
+      enabled: ${WINE_LABEL_VISUAL_INDEX_ENABLED:true}
+      backfill-batch: ${WINE_LABEL_VISUAL_INDEX_BACKFILL_BATCH:200}
+      backfill-delay-ms: ${WINE_LABEL_VISUAL_INDEX_BACKFILL_DELAY_MS:60000}
+      initial-delay-ms: ${WINE_LABEL_VISUAL_INDEX_INITIAL_DELAY_MS:30000}
+      image-timeout: ${WINE_LABEL_VISUAL_INDEX_IMAGE_TIMEOUT:10s}
+      # Cosine similarity a catalog label needs to count as a visual candidate.
+      min-similarity: ${WINE_LABEL_VISUAL_INDEX_MIN_SIMILARITY:0.6}
+      search-threads: ${WINE_LABEL_VISUAL_INDEX_SEARCH_THREADS:2}
+      search-queue: ${WINE_LABEL_VISUAL_INDEX_SEARCH_QUEUE:4}
+    verification:
+      # The vision model picks the scanned product among the best text and image candidates (OpenAI only).
+      enabled: ${WINE_LABEL_VERIFICATION_ENABLED:true}
+      min-confidence: ${WINE_LABEL_VERIFICATION_MIN_CONFIDENCE:0.85}
+    search-normalization:
+      # Rewrites catalog search rows indexed with accents before V90, in small committed batches.
+      enabled: ${CATALOG_SEARCH_NORMALIZATION_ENABLED:true}
+      batch-size: ${CATALOG_SEARCH_NORMALIZATION_BATCH_SIZE:5000}
+      pause: ${CATALOG_SEARCH_NORMALIZATION_PAUSE:200ms}
     aliases:
       wineries: {}
       grapes:
@@ -494,6 +515,13 @@ services:
     call-timeout: ${AWS_API_CALL_TIMEOUT:15s}
     attempt-timeout: ${AWS_API_ATTEMPT_TIMEOUT:12s}
   google:
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta}
+      embedding-model: ${GEMINI_EMBEDDING_MODEL:gemini-embedding-2}
+      embedding-dimensions: ${GEMINI_EMBEDDING_DIMENSIONS:768}
+      connect-timeout: ${GEMINI_CONNECT_TIMEOUT:3s}
+      timeout: ${GEMINI_TIMEOUT:8s}
     maps:
       api-key: ${GOOGLE_MAPS_API_KEY:}
       connect-timeout: ${GOOGLE_MAPS_CONNECT_TIMEOUT:3s}
@@ -510,6 +538,8 @@ services:
     # Fast (priority) processing keeps a full bilingual profile around 10 s instead of ~20 s.
     service-tier: ${OPENAI_SERVICE_TIER:priority}
     vision-model: ${OPENAI_VISION_MODEL:gpt-4o-mini}
+    # Set only for a reasoning vision model; empty keeps the classic request shape the default model needs.
+    vision-reasoning-effort: ${OPENAI_VISION_REASONING_EFFORT:}
     pricing:
       models: ${OPENAI_PRICED_MODELS:gpt-6-luna,gpt-4o-mini,gpt-4o-mini-2024-07-18}
       # One conservative price pair: the most expensive accepted tier of the priced models
@@ -528,8 +558,11 @@ ai:
   provider: ${AI_PROVIDER:openai}
   enabled: ${AI_ENABLED:true}
   admission:
+    # With 3 or more slots, the last one is kept for label scans, which also wait up to interactive-wait for a free
+    # slot; background work (profiles, comparisons) uses the others and fails fast when they are busy.
     maximum-concurrent: ${AI_MAXIMUM_CONCURRENT_REQUESTS:3}
     lease-duration: 2m
+    interactive-wait: ${AI_INTERACTIVE_WAIT:4s}
   spending:
     monthly-limit-usd: ${AI_MONTHLY_LIMIT_USD:10}
     daily-limit-usd: ${AI_DAILY_LIMIT_USD:0}

@@ -127,12 +127,13 @@ El escáner reconoce un vino a partir de una foto de su etiqueta. Necesitas sesi
 
 1. Toca «Escanear» en el inicio o «Escanear etiqueta» en «Vinos».
 2. Permite el acceso a la cámara.
-3. Encuadra la etiqueta dentro del marco y toca «Tomar foto». Si hace falta, usa «Flash».
+3. Encuadra la etiqueta dentro del marco y toca «Tomar foto». Si hace falta, usa «Flash». Si el código de barras de la botella está a la vista, la app también lo lee y muestra «Leímos el código de barras»; ayuda a encontrar el vino.
 4. Espera mientras la app muestra «Analizando...».
 5. Revisa el resultado:
    - «¡Vino encontrado!»: toca «Ver detalles» para abrir su ficha.
    - «Posibles coincidencias»: elige el vino que corresponde.
    - Sin coincidencias: busca a mano o propón el vino (ver la sección siguiente).
+   - Si el vino correcto no está entre los resultados, toca «Escanear la contraetiqueta», gira la botella y saca una foto de la contraetiqueta. La app suma lo que lee a la foto del frente y vuelve a buscar. Se ofrece una vez por escaneo.
 6. Si el vino no es el tuyo, toca «No es mi vino». Para empezar otra vez, toca «Escanear otro vino».
 
 > - Si la foto quedó oscura, con reflejos, desenfocada o muy chica, la app te lo indica y te pide otra toma.
@@ -140,6 +141,8 @@ El escáner reconoce un vino a partir de una foto de su etiqueta. Necesitas sesi
 > - Los mensajes del escáner, y de un vino abierto desde él, aparecen encima de la pantalla del escáner.
 > - Puedes escanear hasta 30 etiquetas por hora. Si llegas al límite, la app te lo dice y te sugiere esperar unos minutos o buscar el vino por su nombre.
 > - Si la foto no es JPG o PNG de hasta 8 MB, tiene demasiado texto o el servidor está ocupado, la app te explica qué pasó y conserva la foto.
+> - Cuando abres o agregas un vino desde el resultado, o propones el vino, la app le avisa a Vinnot si el escaneo acertó. Ocurre en segundo plano, una sola vez por escaneo, y nunca te interrumpe. Si eliges un vino distinto de una coincidencia exacta, el equipo de moderación revisa ambos vinos; el catálogo nunca cambia automáticamente.
+> - Si la etiqueta muestra la añada, al agregar el vino a tu cava desde el escaneo «Añada» ya viene completa. Puedes cambiarla, y los vinos que ya están en tu cava conservan su añada.
 > - Si el vino reconocido no tenía imagen, al abrirlo con «Ver detalles» tu foto pasa a ser su imagen. Nunca reemplaza una imagen existente y elegir una sugerencia no cambia la foto de ningún vino.
 
 Casos de uso: [UC-WIN-05](../modules/wines/use-cases/uc-win-05-scan-label.md), [UC-WIN-08](../modules/wines/use-cases/uc-win-08-attach-label-photo.md).

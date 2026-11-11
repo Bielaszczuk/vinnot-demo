@@ -153,6 +153,12 @@ describe("wine.mappers", () => {
     expect(mapped.extractedData?.confidence).toBe(0.92);
   });
 
+  it("maps the recorded scan id and treats a missing one as not recorded", () => {
+    expect(mapWineScanResult({ confidence: 0.4, scanId: "scan-1" }).scanId).toBe("scan-1");
+    expect(mapWineScanResult({ confidence: 0.4, scanId: null }).scanId).toBeNull();
+    expect(mapWineScanResult({ confidence: 0.4 }).scanId).toBeNull();
+  });
+
   it("maps review identity, counters and comments with safe defaults", () => {
     const review = mapWineReview({
       id: "review-1",

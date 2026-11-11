@@ -11,6 +11,7 @@ import org.springframework.dao.QueryTimeoutException;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -58,6 +59,19 @@ class WinePersistenceAdapterTest {
                 .thenThrow(new QueryTimeoutException("timeout"));
 
         assertThatThrownBy(() -> adapter.findByCommercialIdentity(criteria))
+                .isInstanceOf(WineLabelCatalogSearchTimeoutException.class)
+                .hasCauseInstanceOf(QueryTimeoutException.class);
+    }
+
+    @Test
+    void readsTheProducerCatalogAndTranslatesItsTimeout() {
+        var producer = new WineLabelSearchCriteria(List.of("mevi"), null, null, null, 150);
+        when(searchRepository.findByProducerIdentity("mevi", 150)).thenReturn(List.of());
+        assertThat(adapter.findByProducerIdentity(producer)).isEmpty();
+
+        when(searchRepository.findByProducerIdentity("mevi", 150))
+                .thenThrow(new QueryTimeoutException("timeout"));
+        assertThatThrownBy(() -> adapter.findByProducerIdentity(producer))
                 .isInstanceOf(WineLabelCatalogSearchTimeoutException.class)
                 .hasCauseInstanceOf(QueryTimeoutException.class);
     }

@@ -9,6 +9,7 @@ import {
   HOME_ROUTE,
   openWineBrowseTab,
   opensWineReviewsTab,
+  readScannedVintage,
   resolveWineScanReturnRoute,
   WINE_BROWSE_ROUTE,
 } from "../wineNavigation";
@@ -79,6 +80,28 @@ describe("wine navigation", () => {
       pathname: "/(app)/(tabs)/wines/[id]",
       params: { id: "wine-1", scanReturnTo: HOME_ROUTE, tab: "reviews" },
     });
+  });
+
+  it("carries a plausible vintage read on the label to the scanned wine", () => {
+    const year = new Date().getFullYear();
+    expect(createScannedWineDetailRoute("wine-1", HOME_ROUTE, { scannedVintage: 2019 })).toEqual({
+      pathname: "/(app)/(tabs)/wines/[id]",
+      params: { id: "wine-1", scanReturnTo: HOME_ROUTE, scannedVintage: "2019" },
+    });
+    for (const scannedVintage of [null, 1850, year + 1, 2019.5]) {
+      expect(createScannedWineDetailRoute("wine-1", HOME_ROUTE, { scannedVintage })).toEqual({
+        pathname: "/(app)/(tabs)/wines/[id]",
+        params: { id: "wine-1", scanReturnTo: HOME_ROUTE },
+      });
+    }
+  });
+
+  it("reads only a plausible scanned vintage back from the route", () => {
+    expect(readScannedVintage("2019")).toBe(2019);
+    expect(readScannedVintage(["2018", "2019"])).toBe(2018);
+    for (const value of [undefined, "", "abc", "1850", "2019.5", "20190", String(new Date().getFullYear() + 1)]) {
+      expect(readScannedVintage(value)).toBeNull();
+    }
   });
 
   it("recognises only the reviews parameter", () => {

@@ -112,6 +112,7 @@ flowchart TB
     USER -.->|«use»| LEGAL
     USER -.->|«use»| NOTIFICATION
     USER -.->|«use»| REVIEW
+    WINE -.->|«use»| COMMUNITY
     WINE -.->|«use»| NOTIFICATION
     WINE -.->|«use»| REGION
     WINE -.->|«use»| USER
@@ -120,7 +121,7 @@ flowchart TB
     WINERY -.->|«use»| REGION
 ```
 
-[Ver diagrama de «Diagrama de paquetes» completo](https://images.vinnot.com/docs/diagrams/v1/es/backend-architecture-module-boundaries-bebb31f94689.svg)
+[Ver diagrama de «Diagrama de paquetes» completo](https://images.vinnot.com/docs/diagrams/v1/es/backend-architecture-module-boundaries-4975a4ead12a.svg)
 
 `shared` no aparece para no saturar el diagrama: casi todos los módulos lo usan
 por sus primitivas, errores, paginación, seguridad y outbox, y su adaptador de

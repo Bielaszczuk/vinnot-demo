@@ -2539,7 +2539,8 @@
       "VIOLENCE": "Violencia o amenazas",
       "PRIVACY": "Privacidad",
       "MISINFORMATION": "Información engañosa",
-      "OTHER": "Otro"
+      "OTHER": "Otro",
+      "CATALOG_QUALITY": "Calidad del catálogo"
     },
     "statuses": {
       "OPEN": "Recibida",
@@ -2552,7 +2553,8 @@
       "COMMENT": "Comentario",
       "USER": "Usuario",
       "EVENT": "Evento",
-      "WINE_ROUTE": "Ruta"
+      "WINE_ROUTE": "Ruta",
+      "WINE": "Vino"
     },
     "removeContent": "Retirar contenido y resolver",
     "removeConfirm": "Esta acción elimina la reseña o comentario y cierra la denuncia con el motivo elegido. No se puede deshacer.",
@@ -2641,13 +2643,15 @@
         "AUTHOR_WARNED": "Se advirtió al autor",
         "CONTENT_FIXED": "El autor corrigió el contenido",
         "ACCOUNT_ACTION": "Se tomaron medidas sobre la cuenta",
-        "OTHER": "Otro"
+        "OTHER": "Otro",
+        "CATALOG_FIXED": "Se corrigió el catálogo"
       },
       "DISMISSED": {
         "NO_VIOLATION": "No infringe las normas de la comunidad",
         "DUPLICATE_REPORT": "Denuncia duplicada",
         "INSUFFICIENT_EVIDENCE": "No hay pruebas suficientes",
-        "OTHER": "Otro"
+        "OTHER": "Otro",
+        "CATALOG_CORRECT": "El catálogo estaba bien"
       },
       "REMOVE_CONTENT": {
         "COMMUNITY_RULES": "Infringe las normas de la comunidad",
@@ -2662,7 +2666,13 @@
       "conflict": "Usted participa en este caso; otro moderador debe revisarlo.",
       "decisionRequired": "Elija o escriba el motivo de la decisión (hasta 2000 caracteres).",
       "removalTarget": "Este contenido se gestiona desde su propia sección de administración."
-    }
+    },
+    "reportedByLabel": "Reportado por",
+    "automaticReporter": "Vinnot (automático)",
+    "relatedWineLabel": "Vino elegido por el miembro",
+    "catalogQualityDescription": "Un miembro corrigió una coincidencia exacta del escaneo: puede ser un vino duplicado, con la bodega equivocada o con la imagen equivocada. Revisá ambos vinos y corregí el catálogo a mano si hace falta.",
+    "openMatchedWine": "Abrir el vino reconocido",
+    "openChosenWine": "Abrir el vino elegido"
   },
   "discovery": {
     "locating": "Buscando tu ubicación…",

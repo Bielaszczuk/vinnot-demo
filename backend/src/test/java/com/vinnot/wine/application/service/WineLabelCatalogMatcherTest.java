@@ -1,5 +1,6 @@
 package com.vinnot.wine.application.service;
 
+import com.vinnot.wine.application.port.out.WineVisualIndexPort;
 import com.vinnot.wine.application.port.out.WineryQueryPort;
 import com.vinnot.wine.domain.model.ExtractedWineLabel;
 import com.vinnot.wine.domain.model.RankedWineLabelCandidate;
@@ -321,6 +322,47 @@ class WineLabelCatalogMatcherTest {
         matcher.match(label);
 
         verify(wineryQueryPort).findAllByIds(List.of());
+    }
+
+    @Test
+    void visualHintsJoinTheRankingAndAreReturnedInSimilarityOrder() {
+        UUID wineryId = UUID.randomUUID();
+        UUID otherWineryId = UUID.randomUUID();
+        Wine reserva = wine("Reserva Malbec", wineryId, "Malbec");
+        Wine lookalike = wine("Gran Cuvee", otherWineryId, "Cabernet Sauvignon");
+        ExtractedWineLabel label = label("Casa Sur", "Reserva Malbec", "Malbec",
+                "Casa Sur Reserva Malbec", List.of("CASA SUR", "RESERVA MALBEC"));
+        when(candidateRetriever.retrieve(eq(label), any())).thenReturn(List.of(reserva));
+        when(candidateRetriever.retrieveByIds(List.of(lookalike.getId()))).thenReturn(List.of(lookalike));
+        when(wineryQueryPort.findAllByIds(any())).thenReturn(List.of(
+                winery(wineryId, "Casa Sur"), winery(otherWineryId, "Bodega Norte")));
+
+        WineLabelCatalogMatcher.MatchResult result = matcher.match(label,
+                new WineLabelScanDeadline(Duration.ofSeconds(10)), List.of(
+                        new WineVisualIndexPort.VisualMatch(lookalike.getId(), 0.91),
+                        new WineVisualIndexPort.VisualMatch(reserva.getId(), 0.72)));
+
+        assertThat(result.ranked().getFirst().candidate().wine()).isSameAs(reserva);
+        assertThat(result.visual()).extracting(visual -> visual.candidate().id())
+                .containsExactly(lookalike.getId(), reserva.getId());
+        assertThat(result.visual()).extracting(WineLabelCatalogMatcher.VisualCandidate::similarity)
+                .containsExactly(0.91, 0.72);
+        assertThat(result.visual().getFirst().candidate().wineryName()).isEqualTo("Bodega Norte");
+    }
+
+    @Test
+    void withoutVisualHintsNothingIsLookedUpById() {
+        UUID wineryId = UUID.randomUUID();
+        Wine reserva = wine("Reserva Malbec", wineryId, "Malbec");
+        ExtractedWineLabel label = label("Casa Sur", "Reserva Malbec", "Malbec",
+                "Casa Sur Reserva Malbec", List.of("CASA SUR", "RESERVA MALBEC"));
+        when(candidateRetriever.retrieve(eq(label), any())).thenReturn(List.of(reserva));
+        when(wineryQueryPort.findAllByIds(List.of(wineryId))).thenReturn(List.of(winery(wineryId, "Casa Sur")));
+
+        WineLabelCatalogMatcher.MatchResult result = matcher.match(label);
+
+        assertThat(result.visual()).isEmpty();
+        verify(candidateRetriever, never()).retrieveByIds(any());
     }
 
     private Wine wine(String name, UUID wineryId, String grape) {

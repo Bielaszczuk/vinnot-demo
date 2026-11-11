@@ -10,7 +10,9 @@ public record ContentTarget(Type type, UUID id) {
         COMMENT,
         USER,
         EVENT,
-        WINE_ROUTE
+        WINE_ROUTE,
+        /** A catalog wine; only Vinnot's own catalog quality reports target it. */
+        WINE
     }
 
     public ContentTarget {

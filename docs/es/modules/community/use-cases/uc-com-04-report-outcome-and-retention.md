@@ -8,7 +8,7 @@
 | Actores | Moderador o administrador, Sistema (tarea programada), Servicio de email |
 | IDs en Lucidchart | Ninguno |
 | Requisitos | Ninguno |
-| Casos de prueba | [`CP-COM-19`](../testing.md), [`CP-COM-20`](../testing.md), [`CP-COM-21`](../testing.md) |
+| Casos de prueba | [`CP-COM-19`](../testing.md), [`CP-COM-20`](../testing.md), [`CP-COM-21`](../testing.md), [`CP-COM-76`](../testing.md) |
 
 ## Precondiciones
 
@@ -28,6 +28,7 @@
 ## Flujos alternativos
 
 - 2a. El mismo resultado ya se avisó: la clave del aviso evita un segundo email.
+- 2b. La denuncia es de calidad de catálogo y la abrió Vinnot: no tiene denunciante, así que no se envía email de resultado.
 - 4a. Hay más de 500 vencidas: el resto se elimina en las ejecuciones siguientes.
 
 ## Reglas de negocio

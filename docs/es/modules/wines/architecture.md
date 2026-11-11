@@ -173,15 +173,15 @@ El escaneo es una funcionalidad de mobile. Web presenta una invitación a descar
 | Capa | Responsabilidad y componente |
 |---|---|
 | HTTP | WineLabelScanController, WineLabelUploadValidator, WineLabelObservedTextValidator |
-| Aplicación | ScanWineLabelCommandHandler, WineLabelScanPolicy, WineLabelCatalogMatcher, WineLabelCandidateRetriever |
-| Dominio | ExtractedWineLabel, WineLabelMatchScorer, WineLabelIdentityNormalizer, RankedWineLabelCandidate |
-| Puertos | WineLabelRecognitionPort, WineRepositoryPort, WineryQueryPort, WineLabelAliasPort, WineLabelMetricsPort |
-| Adapters | OpenAiWineLabelRecognitionAdapter, WineSearchNativeRepository, ConfiguredWineLabelAliasAdapter, MicrometerWineLabelMetricsAdapter |
+| Aplicación | ScanWineLabelCommandHandler, WineLabelScanPolicy, WineLabelCatalogMatcher, WineLabelCandidateRetriever, WineLabelCandidateVerifier, WineVisualIndexService, WineLabelScanRecorder |
+| Dominio | ExtractedWineLabel, WineLabelMatchScorer, WineLabelIdentityNormalizer, RankedWineLabelCandidate, WineLabelPickEvidence |
+| Puertos | WineLabelRecognitionPort, WineRepositoryPort, WineryQueryPort, WineLabelAliasPort, WineLabelMetricsPort, WineLabelCandidateVerificationPort, WineVisualIndexPort, WineBarcodeConfirmationPort, CatalogQualitySignalPort |
+| Adapters | OpenAiWineLabelRecognitionAdapter, WineSearchNativeRepository, ConfiguredWineLabelAliasAdapter, MicrometerWineLabelMetricsAdapter, OpenAiWineLabelCandidateVerificationAdapter, GeminiImageEmbeddingAdapter, InMemoryWineVisualIndex |
 
 #### Contrato multipart y validación
 
 `POST /api/wines/scan`: Bearer JWT, `multipart/form-data`, `image` obligatorio,
-`observedText` opcional como lista de líneas.
+`observedText` opcional como lista de líneas y `barcode` opcional.
 
 | Control | Contrato de entrada |
 |---|---|
@@ -190,6 +190,7 @@ El escaneo es una funcionalidad de mobile. Web presenta una invitación a descar
 | Dimensiones | lado corto >= 320 y largo >= 720 píxeles; máximo 24 millones de píxeles, comprobados en cabecera antes de decodificar |
 | Calidad | luminancia media 12..248; energía de bordes >= 1,5 |
 | observedText | hasta 24 líneas, 120 caracteres/línea, 2000 caracteres normalizados totales |
+| barcode | 8, 12, 13 o 14 dígitos ASCII con dígito verificador GS1 módulo 10 válido (EAN-8, UPC-A, EAN-13, GTIN-14); si no, 400 `INVALID_LABEL_BARCODE`; se valida antes que la imagen |
 
 OCR normaliza espacios, omite null/vacíos y deduplica sin distinguir mayúsculas. Es evidencia no confiable, no una orden para seleccionar un ID. La validación de scan devuelve los bytes originales; validateAndSanitizeForPersistence, usada por submission/label-image, genera JPEG RGB nuevo de hasta 1600 píxeles de lado largo sin reutilizar metadata del archivo. Son dos operaciones distintas.
 
@@ -199,20 +200,27 @@ La lectura usa `ImageReader`: primero obtiene dimensiones, luego decodifica una 
 
 ```mermaid
 flowchart TD
-    HTTP["image + observedText opcional"] --> VALIDATE["Validación HTTP"]
-    VALIDATE --> OCR{"observedText presente"}
+    HTTP["image + observedText opcional + barcode opcional"] --> VALIDATE["Validación HTTP"]
+    VALIDATE --> BARCODE{"código confirmado por miembros"}
+    BARCODE -->|sí| RETURN
+    BARCODE -->|no| OCR{"observedText presente"}
     OCR -->|sí| LOCAL["Matching LOCAL_CATALOG"]
     LOCAL --> EXACT{"match.exact"}
     EXACT -->|sí| RETURN["Proyectar respuesta"]
     EXACT -->|no| VISION["VISUAL_RECOGNITION"]
     OCR -->|no| VISION
     VISION --> MERGE["Combinar texto local y del proveedor"]
-    MERGE --> CATALOG["Matching ENRICHED_CATALOG"]
-    CATALOG --> RETURN
+    VISION -.->|en paralelo| VISUAL["Búsqueda en el índice visual"]
+    MERGE --> CATALOG["Matching ENRICHED_CATALOG + candidatas visuales"]
+    VISUAL --> CATALOG
+    CATALOG --> VERIFY{"exacta"}
+    VERIFY -->|sí| RETURN
+    VERIFY -->|no| PICK["Confirmación entre candidatas"]
+    PICK --> RETURN
     VISION -->|proveedor no disponible| ERROR["503 LABEL_RECOGNITION_UNAVAILABLE"]
 ```
 
-[Ver diagrama de «Orquestación» completo](https://images.vinnot.com/docs/diagrams/v1/es/modules-wines-architecture-79a53f596b26.svg)
+[Ver diagrama de «Orquestación» completo](https://images.vinnot.com/docs/diagrams/v1/es/modules-wines-architecture-94a9bf6aae7f.svg)
 
 El paso local construye ExtractedWineLabel con observedText y la añada sólo cuando existe una única línea de año plausible. El scorer puede corroborar productor y producto del candidato únicamente cuando todos sus tokens significativos están literalmente presentes en OCR y no queda texto significativo sin explicar por identidad, uvas observadas u origen del candidato. Esta corroboración es evidencia de matching, no enriquecimiento del catálogo. Texto parcial, otra línea comercial o una cepa incompatible impiden esa promoción. La salida anticipada sigue requiriendo match.exact, con los mismos umbrales y control de ambigüedad. La fiabilidad estructurada es 1,0 con dos términos distintos, 0,75 con uno y 0,55 sin términos. Si falta evidencia se utiliza reconocimiento visual y se combinan las líneas locales/remotas sin perder orden ni duplicar texto.
 
@@ -300,6 +308,8 @@ La consolidación de filas equivalentes exige discriminadores comerciales idént
 | POSSIBLE_MATCHES | `wine=null`; hasta tres sugerencias y sus candidates |
 | NO_MATCH | `wine=null`; listas vacías, confidence=0 |
 
+Toda respuesta trae además `scanId`, el id del escaneo registrado sobre el que el miembro puede enviar su veredicto, o `null` si no se registró.
+
 extractedData acompaña la respuesta. Las sugerencias exponen confidence como máximo 0,89 aunque el score de ranking sea mayor; no son porcentajes estadísticos calibrados de certeza. La decisión exacta se toma en backend, no mediante un umbral inventado por la UI.
 
 La imagen temporal durante búsqueda manual pertenece al cliente. Para crear vino se envía otra vez con los datos a /wines/submissions. Para completar una imagen ausente se usa /wines/{id}/label-image: exige match.exact y que el ID seleccionado sea el primer candidato, además de moderación aprobada. Una sugerencia o selección manual no autoriza publicar la foto automáticamente. Reconocimiento/moderación/upload ocurren fuera de la transacción de publicación. Cada upload recibe un identificador de objeto único; `WineLabelImagePublicationService` bloquea la fila brevemente, conserva cualquier imagen concurrente y verifica que la revisión del vino siga siendo la evaluada antes de guardar. Los objetos perdedores quedan cubiertos por reconciliación durable de almacenamiento, sin borrar el objeto ganador.
@@ -374,6 +384,44 @@ Verificar validación multipart, normalización para persistencia, extracción c
 Fuentes bajo `backend/src/main/java/com/vinnot/wine/`: `application/command/handler/ScanWineLabelCommandHandler.java`, `AttachWineLabelImageCommandHandler.java`; `application/service/WineLabelCatalogMatcher.java`, `WineLabelCandidateRetriever.java`, `WineLabelScanPolicy.java`; `domain/service/WineLabelMatchScorer.java`; `infrastructure/web/WineLabelUploadValidator.java`; `infrastructure/ai/OpenAiWineLabelRecognitionAdapter.java`.
 
 [Submissions](submissions.md) · [SQL](../../backend/data/query-performance.md) · [Flujo mobile](architecture.md) · [Observabilidad](../../backend/architecture/observability.md).
+
+#### Precisión del escaneo de etiquetas
+
+El escaneo combina cuatro señales independientes; cada una vuelve al comportamiento anterior cuando no está disponible.
+
+| Señal | Cómo funciona | Componentes |
+|---|---|---|
+| Texto sin tildes | `V90` agrega `catalog_search_unaccent`, un envoltorio `IMMUTABLE` de `unaccent` con diccionario fijo, y hace que las funciones que construyen los dos modelos de lectura de búsqueda guarden el texto sin tildes y en minúsculas. Las consultas se normalizan igual, así que «SEPTIMA» encuentra «Séptima» en el escaneo, el catálogo público y la administración. Las filas escritas antes de `V90` se reescriben después del arranque en lotes confirmados (5000 filas, pausa de 200 ms) en `catalogMaintenanceTaskScheduler`; mientras tanto, la búsqueda encuentra ambas formas. | `WineSearchNativeRepository`, `CatalogSearchAccentNormalizer` |
+| Recuperación por productor | El productor leído en la etiqueta también trae los vinos de esa bodega; una línea genérica sola («Reserva», «Malbec», «Estate») nunca se usa como identidad del vino. | `WineLabelCandidateRetriever`, `WineLabelLanguageVocabulary`, `WineLabelIdentityNormalizer` |
+| Búsqueda visual | Cada vino del catálogo cuya imagen de etiqueta aloja Vinnot tiene un embedding de Google Gemini (`gemini-embedding-2`, 768 dimensiones) guardado como int8 en `wine_image_embeddings` (`V91`). El backend carga en un índice en memoria todos los vectores del modelo activo y compara la foto escaneada por similitud coseno (al menos 0,6), en paralelo con el reconocimiento de OpenAI y en un pool acotado (2 hilos, cola de 4); el escaneo la espera como máximo 1,5 s. Hasta 10 coincidencias visuales se suman a las candidatas y, si el texto no encuentra nada, pasan a ser sugerencias. Un planificador carga el índice 30 s después del arranque y genera embeddings de hasta 200 imágenes pendientes cada 60 s. Sin `GEMINI_API_KEY` la señal queda apagada. | `WineVisualIndexService`, `GeminiImageEmbeddingAdapter`, `InMemoryWineVisualIndex`, `JdbcWineImageEmbeddingRepository`, `CatalogImageSourceAdapter`, `WineVisualIndexScheduler` |
+| Confirmación entre candidatas | Sin coincidencia exacta y con al menos 3 s disponibles, el modelo de visión recibe la foto con las 5 mejores candidatas de texto y hasta 3 visuales, lee el productor y el producto impresos y elige una o ninguna (como máximo 8 s). La elección pasa a ser exacta solo con confianza de al menos 0,85 y si `WineLabelPickEvidence` encuentra cada palabra del producto leído en la candidata, cada palabra del nombre de la candidata en el texto de la etiqueta y un productor que coincide. | `WineLabelCandidateVerifier`, `WineLabelPickEvidence`, `OpenAiWineLabelCandidateVerificationAdapter` |
+
+**Capacidad de IA.** `ai.admission.maximum-concurrent` (3 por defecto) acota las llamadas al proveedor. Con tres o más cupos, el último queda reservado para pedidos interactivos: un escaneo de etiqueta prueba primero el cupo reservado y después espera hasta `ai.admission.interactive-wait` (4 s) cualquier cupo antes de responder 503 `AI_CAPACITY_EXCEEDED`, mientras los perfiles y las comparaciones usan los demás cupos y fallan enseguida. La decodificación de imágenes espera hasta 2 s un cupo de procesamiento antes de responder 503 `IMAGE_PROCESSING_BUSY`. `services.openai.vision-reasoning-effort` (vacío por defecto) permite que el pedido de visión use un modelo de razonamiento con la forma `max_completion_tokens`.
+
+**Códigos de barras y veredictos.** `POST /wines/scan` acepta un `barcode` opcional (8, 12, 13 o 14 dígitos con dígito verificador GS1 módulo 10 válido; si no, 400 `INVALID_LABEL_BARCODE`) y devuelve el `scanId` del escaneo registrado (`null` si no se registró). Antes de cualquier llamada a IA, un código confirmado para un vino activo por al menos dos miembros, y por más miembros que cualquier otro vino, responde `EXACT_MATCH` con confianza 1,0; ese escaneo no suma punto de escaneo ni guarda el código. `POST /wines/scans/{scanId}/feedback` guarda el último veredicto del miembro (`CONFIRMED`, `CORRECTED` o `NOT_IN_CATALOG`) sobre su propio escaneo y responde 204. `CONFIRMED` solo vale para la coincidencia exacta del escaneo y es el único que confirma el código que leyó el escaneo (una confirmación por miembro y código en `wine_barcode_confirmations`, `V92`): una corrección es solo la palabra del miembro. Un `CORRECTED` sobre una coincidencia exacta llama a `CatalogQualitySignalPort`, que el módulo de comunidad convierte en una denuncia de calidad de catálogo; una señal fallida nunca hace fallar el veredicto y las filas del catálogo nunca se editan automáticamente.
+
+| Capa | Componentes |
+|---|---|
+| HTTP | `WineLabelScanController`, `WineLabelBarcodeValidator`, `WineLabelScanFeedbackRequest`, `WineLabelScanExceptionHandler` (404 para `SCAN_NOT_FOUND` y `WINE_NOT_FOUND`) |
+| Aplicación | `SubmitWineLabelScanFeedbackCommandHandler`, `WineLabelScanRecorder` |
+| Dominio | `WineLabelScanVerdict` |
+| Puertos | `WineLabelScanHistoryPort`, `WineBarcodeConfirmationPort`, `CatalogQualitySignalPort`, `WineImageEmbeddingPort`, `WineImageEmbeddingRepositoryPort`, `WineVisualIndexPort`, `CatalogImageSourcePort`, `WineLabelCandidateVerificationPort` |
+| Adaptadores | `JdbcWineLabelScanHistory`, `JdbcWineBarcodeConfirmations`, `CommunityCatalogQualitySignalAdapter` |
+
+| Propiedad | Valor por defecto | Efecto |
+|---|---|---|
+| `app.wine-label.visual-index.enabled` | `true` | Enciende el planificador del índice visual; sin clave de Gemini no hace nada |
+| `app.wine-label.visual-index.min-similarity` | `0.6` | Similitud coseno que necesita una etiqueta del catálogo para contar como candidata visual |
+| `app.wine-label.visual-index.backfill-batch` / `backfill-delay-ms` / `initial-delay-ms` | `200` / `60000` / `30000` | Tamaño y frecuencia del relleno |
+| `app.wine-label.visual-index.image-timeout` | `10s` | Tiempo máximo de descarga de cada imagen del catálogo |
+| `app.wine-label.visual-index.search-threads` / `search-queue` | `2` / `4` | Pool que genera los embeddings de las fotos escaneadas |
+| `app.wine-label.verification.enabled` / `min-confidence` | `true` / `0.85` | Confirmación entre candidatas con el modelo de visión |
+| `app.wine-label.search-normalization.enabled` / `batch-size` / `pause` | `true` / `5000` / `200ms` | Reescritura de las filas de búsqueda anteriores a `V90` |
+| `services.google.gemini.api-key` | vacío (`GEMINI_API_KEY`) | Habilita los embeddings de Google |
+| `services.google.gemini.embedding-model` / `embedding-dimensions` | `gemini-embedding-2` / `768` | Modelo de embeddings; un cambio vuelve a procesar las imágenes |
+| `services.google.gemini.connect-timeout` / `timeout` | `3s` / `8s` | Tiempos máximos HTTP de Gemini |
+| `ai.admission.interactive-wait` | `4s` | Espera máxima de un escaneo por un cupo de IA |
+| `services.openai.vision-reasoning-effort` (`OPENAI_VISION_REASONING_EFFORT`) | vacío | Esfuerzo de razonamiento del modelo de visión; solo para un modelo de visión con razonamiento |
 
 ## Web
 
@@ -820,7 +868,10 @@ no debe impedir el reconocimiento visual por exceder los límites del request.
 
 Si el OCR local permite una coincidencia de catálogo exacta y no ambigua, el
 backend termina por fast path. De lo contrario usa el puerto visual. El provider
-extrae evidencia estructurada y texto observado; no elige el vino final.
+extrae evidencia estructurada y texto observado; si la búsqueda en el catálogo no
+es exacta, el modelo de visión puede elegir entre las candidatas preseleccionadas,
+y el backend acepta esa elección solo si las palabras leídas en la etiqueta la
+respaldan (ver [Precisión del escaneo de etiquetas](#precisión-del-escaneo-de-etiquetas)).
 
 #### Pipeline backend
 
@@ -864,7 +915,8 @@ regiones pueden ampliarse sin modificar la pantalla.
 `POST /api/wines/scan` usa `multipart/form-data`:
 
 - `image`: JPEG transitorio;
-- `observedText`: parámetro repetible opcional.
+- `observedText`: parámetro repetible opcional;
+- `barcode`: código EAN o UPC opcional leído por la cámara.
 
 Outcomes:
 
@@ -872,10 +924,37 @@ Outcomes:
 - `POSSIBLE_MATCHES`: candidatos y scores presentables.
 - `NO_MATCH`: sin candidato seguro.
 
+Cada respuesta trae `scanId`; el veredicto va a `POST /api/wines/scans/{scanId}/feedback`.
+
 La configuración por defecto permite 12 s para reconocimiento visual, un intento
 y hasta 500 tokens, limitado también por el presupuesto restante del pipeline de
 18 s. Mobile mantiene 22 s de timeout HTTP para incluir upload, catálogo y red.
 Estos límites no son tiempos mínimos de espera ni acreditan el objetivo de rapidez.
+
+#### Veredicto, contraetiqueta, código de barras y añada
+
+- **Código de barras.** `WineLabelCamera` habilita el lector de códigos de
+  `CameraView` para EAN-13, EAN-8, UPC-A y UPC-E mientras se encuadra.
+  `normalizeLabelBarcode` conserva el último código de 8, 12, 13 o 14 dígitos con
+  dígito verificador GS1 válido; la pantalla muestra «Leímos el código de barras»
+  y el escaneo lo envía como `barcode`.
+- **Veredicto.** `useWineLabelScanViewModel` envía como máximo un veredicto por
+  `scanId` mediante la operación `wine.scanFeedback`, sin esperar el resultado:
+  `CONFIRMED` cuando la persona abre o agrega la coincidencia exacta, `CORRECTED`
+  cuando abre otra sugerencia, un resultado de la búsqueda manual o un duplicado
+  encontrado por una propuesta, y `NOT_IN_CATALOG` cuando propone el vino. Los
+  errores nunca llegan a la persona.
+- **Contraetiqueta.** Sin coincidencia exacta, el resultado ofrece una vez
+  «Escanear la contraetiqueta». La captura siguiente se lee como contraetiqueta:
+  `mergeObservedLabelText` combina ambas lecturas para que cada lado conserve al
+  menos la mitad de las 24 líneas, la foto de atrás se libera y se vuelve a enviar
+  la foto del frente con el texto combinado.
+- **Añada.** `plausibleScannedVintage` conserva una añada leída en la etiqueta
+  entre 1900 y el año actual; `createScannedWineDetailRoute` la pasa como
+  `scannedVintage` y el detalle del vino se la da a `CellarAddSheet` como añada
+  inicial de una entrada nueva, nunca de una editada.
+
+Estos cambios son solo JavaScript y se publican por OTA.
 
 #### Búsqueda manual y submission
 

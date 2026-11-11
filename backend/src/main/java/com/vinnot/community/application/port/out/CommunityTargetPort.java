@@ -17,10 +17,16 @@ public interface CommunityTargetPort {
      */
     ModerationNames describe(Set<ContentTarget> targets, Set<UUID> users);
 
+    /**
+     * Names an active catalog wine for moderators, such as {@code Malbec 2020 (Bodega A)}; empty when the wine no longer
+     * exists or was deactivated.
+     */
+    Optional<String> describeCatalogWine(UUID wineId);
+
     record TargetDetails(UUID authorId, String excerpt) { }
 
     /**
-     * @param targetLabels wine name for a review or comment, event title, route name, or username
+     * @param targetLabels wine name for a review, comment or wine, event title, route name, or username
      * @param usernames    username per user id
      */
     record ModerationNames(Map<ContentTarget, String> targetLabels, Map<UUID, String> usernames) {

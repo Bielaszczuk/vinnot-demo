@@ -370,7 +370,11 @@ export interface WineScanResultDto {
   suggestions?: WineSummaryDto[] | null;
   candidates?: Array<{ wine: WineSummaryDto; score: number }> | null;
   extractedData?: ExtractedLabelDataDto | null;
+  /** Identifies the recorded scan for feedback; null when it was not recorded. */
+  scanId?: string | null;
 }
+
+export type WineScanFeedbackVerdictDto = "CONFIRMED" | "CORRECTED" | "NOT_IN_CATALOG";
 
 export interface WineSubmissionResultDto {
   submissionId: string;

@@ -143,7 +143,8 @@ del ciclo está en [identidad](authentication-and-identity.md).
 | `PATCH` | `/wines/{id}` | `WINE_UPDATE` | Actualización parcial |
 | `DELETE` | `/wines/{id}` | `WINE_DELETE` | Borrado físico por `deleteById`; relaciones siguen las foreign keys de Flyway |
 | `PATCH` | `/wines/{id}/toggle-featured` | `WINE_UPDATE` | Alterna destacado |
-| `POST` | `/wines/scan` | Usuario, multipart | Reconoce etiqueta y rankea catálogo |
+| `POST` | `/wines/scan` | Usuario, multipart | Reconoce etiqueta y rankea catálogo; `barcode` opcional; devuelve `scanId` |
+| `POST` | `/wines/scans/{scanId}/feedback` | Usuario, JSON | Guarda el veredicto sobre uno de los escaneos propios; 204 |
 | `POST` | `/wines/{id}/label-image` | Usuario, multipart | Completa imagen ausente tras validar identidad/seguridad |
 
 Los criterios efectivos de búsqueda son texto, tipo, país, región, bodega y uva.
@@ -152,6 +153,13 @@ limita size a 20 y ventana a 500. El read model combina vino/bodega y usa
 containment primero cuando hay palabras de hasta tres caracteres. Véase
 [búsqueda](../../modules/wines/architecture.md) y
 [escaneo backend](../../modules/wines/architecture.md).
+
+Contrato del escaneo de etiquetas ([UC-WIN-05](../../modules/wines/use-cases/uc-win-05-scan-label.md)):
+
+| Operación | Contrato | Errores |
+|---|---|---|
+| `POST /wines/scan` | Partes `image`, `observedText` repetible y `barcode` opcional (8, 12, 13 o 14 dígitos con dígito verificador GS1 válido). Un código confirmado para un vino activo por al menos dos miembros, y por más miembros que cualquier otro vino, responde `EXACT_MATCH` sin IA. La respuesta `{outcome, confidence, wine, suggestions, candidates, extractedData, scanId}` trae `scanId` (`null` si el escaneo no se registró) | 400 `INVALID_LABEL_BARCODE`, `INVALID_LABEL_IMAGE`, `INVALID_LABEL_TEXT`; 429; 503 `IMAGE_PROCESSING_BUSY` (tras esperar hasta 2 s), `AI_CAPACITY_EXCEEDED` (tras esperar hasta 4 s), `LABEL_SCAN_TIMEOUT`, `LABEL_RECOGNITION_UNAVAILABLE` |
+| `POST /wines/scans/{scanId}/feedback` | Cuerpo `{"verdict": "CONFIRMED" \| "CORRECTED" \| "NOT_IN_CATALOG", "wineId": "<uuid o null>"}`. `wineId` es obligatorio para `CONFIRMED` y `CORRECTED` y debe ser `null` para `NOT_IN_CATALOG`; `CONFIRMED` debe nombrar la coincidencia exacta del escaneo. Enviarlo de nuevo reemplaza el veredicto anterior. Solo `CONFIRMED` registra la confirmación del código de barras; `CORRECTED` sobre una coincidencia exacta abre una denuncia de calidad de catálogo | 400 `INVALID_SCAN_FEEDBACK`; 404 `SCAN_NOT_FOUND` (escaneo inexistente o de otro miembro), `WINE_NOT_FOUND` (vino inexistente o inactivo) |
 
 ## Propuestas de vinos — `/wines/submissions`
 
@@ -214,7 +222,7 @@ está bloqueada o inactiva; se carga en lote por página.
 
 | Método | Ruta | Acceso | Propósito |
 |---|---|---|---|
-| `POST` | `/community/reports` | Usuario | Crea denuncia y devuelve comprobante privado |
+| `POST` | `/community/reports` | Usuario | Crea denuncia y devuelve comprobante privado; un objetivo `WINE` o el motivo `CATALOG_QUALITY` responden 422 `REPORT_NOT_ALLOWED` |
 | `GET` | `/community/reports/mine` | Usuario | Casos del denunciante sin evidencia privada |
 | `GET` | `/community/overview` | Usuario | Resumen de actividad propia |
 | `GET` | `/community/blocks` | Usuario | Bloqueos realizados por el usuario |
@@ -345,7 +353,7 @@ ownership y conflicto de interés siguen aplicándose dentro del caso de uso.
 | `/admin/notifications/announcements` | `GET` historial (cada envío con su audiencia, `countryId` incluido), `POST` envío (202; un `requestId` UUID opcional en el cuerpo lo vuelve idempotente, una repetición devuelve el primer envío; `audience.countryId` opcional), `POST /preview`, `POST /test`, `GET /reach?kind&email&push[&language&regionId&countryId&role]` |
 | `/admin/app-versions` | `GET` la versión mínima de la app para `IOS` y `ANDROID` (siempre las dos, en ese orden: `platform`, `minimumVersion`, `updatedAt`, email en `updatedBy`, cada uno `null` hasta el primer valor) y los 20 `recentChanges` más recientes, del más nuevo al más viejo; `PUT /{platform}` `{minimumVersion}` fija `major.minor.patch` o lo borra con `null`, exige `X-Admin-Reauthentication` y devuelve el mismo cuerpo; una plataforma desconocida responde 400 `NOT_AN_APP_PLATFORM` y una versión inválida 400 `INVALID_APP_VERSION`; guardar el mismo valor no registra cambios |
 | `/admin/reviews` | `GET` lista (el autor suma `badgeTier`), `GET /{id}`, `DELETE /{id}` |
-| `/admin/community/reports` | `GET` cola (cada caso suma `authorUsername`, `reviewerUsername` y `targetLabel`, que pueden ser `null`), `GET /overview`, `PATCH /{id}`, `POST /{id}/remove-content` |
+| `/admin/community/reports` | `GET` cola (cada caso suma `authorUsername`, `reviewerUsername`, `targetLabel`, `relatedTargetId` y `relatedTargetLabel`, que pueden ser `null`; las denuncias de calidad de catálogo no tienen denunciante y nombran el otro vino en `relatedTargetId`), `GET /overview`, `PATCH /{id}`, `POST /{id}/remove-content` |
 | `/admin/review-publications` | `GET` pendientes (cada elemento suma `authorUsername` y `wineName`, que pueden ser `null`), `POST /{type}/{id}` decisión con revisión esperada y, si es un rechazo, un `reasonCode` predefinido |
 | `/admin/wine-submissions` | `GET` lista, `GET /{id}`, `GET /{id}/image`, `PATCH /{id}/decision` |
 | `/admin/social-posts` | Solo `ADMIN` (#489, #492, #497, #510). `GET ?status=&from=&to=&page=0&size=20` cola de publicaciones sociales ordenada por `scheduledFor` (todos los filtros opcionales), `GET /{id}`, `POST /plan` planifica los próximos 14 días y responde `{created, from, to}`, `POST /{id}/approve`, `POST /{id}/reject` `{reason}` opcional, `PUT /{id}` reemplaza el texto de un idioma `{language: es\|en, hook, slides: [{title, body}], caption, hashtags, altText, cta}` (400 `INVALID_POST_COPY` si rompe un límite, 400 `INVALID_POST_LANGUAGE` sin idioma válido), `POST /{id}/regenerate`, `POST /{id}/illustration` pide una nueva ilustración (202), `POST /{id}/publications/{network}/retry` vuelve a publicar en una red fallida (`network` sin distinguir mayúsculas: `instagram`, `facebook`, `threads`, `tiktok`; 202 con la publicación; 409 `INVALID_PUBLICATION_TRANSITION` si esa red no está `FAILED`, 409 `INVALID_POST_TRANSITION` si las placas no están listas, 409 `SOCIAL_PUBLISHING_OFF` con la publicación o la red apagadas, 400 `INVALID_REQUEST` con una red desconocida, 404 sin publicación en esa red); una acción que no corresponde al estado responde 409 `INVALID_POST_TRANSITION` (también editar, regenerar, rechazar o pedir ilustración en una `SCHEDULED` o `PUBLISHED`). `GET /wine-days?year=` calendario del año con `date` resuelta. `GET /pillars` pilares en orden de rotación `{code, nameEs, nameEn, weight, active, autoApprove, performance: {measuredPosts, views, interactions, factor}}` (`factor` 1.0 es neutro); `PUT /pillars/{code}/auto-approve` y `PUT /pillars/{code}/active` con `{enabled: boolean}` responden 200 con el pilar, 400 sin `enabled`, 404 con un código desconocido y, al apagar el último pilar rotativo activo, 409 `LAST_ROTATING_PILLAR`. Cada publicación: `{id, status, scheduledFor, pillar, wineDay, copies: {es, en}, generation, review, media, publishing, publications, createdAt, updatedAt}`; `review` suma `automatic` (aprobada por su pilar, sin revisor, `reason = AUTO_APPROVED`); `media` es `{status: PENDING\|READY\|FAILED, source: AI\|FALLBACK, error, illustrationReason, heroUrl, slides: {es, en}, updatedAt}` con `{instagram[], tiktok[], renderedFor}` por idioma, o `null`; `publishing` es `{startedAt, finishedAt, error}` o `null` hasta empezar; `publications[]` es `{network, status: QUEUED\|PUBLISHING\|PUBLISHED\|DRAFT_SENT\|FAILED, externalId, permalink, attempts, error, publishedAt, metrics}` con `metrics` `{views, reach, likes, comments, saves, shares, follows}` (un valor nulo es una métrica que la red no da) o `null` antes de la primera lectura |

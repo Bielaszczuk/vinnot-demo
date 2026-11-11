@@ -68,8 +68,10 @@ class WineSearchNativeRepositoryTest {
                 .doesNotContain("w.name % CAST(:searchText AS TEXT)");
         assertThat(sqlCaptor.getAllValues().get(1))
                 .contains("WITH candidate_scores AS")
-                .contains("catalog.search_text LIKE CAST(:containedWord0 AS TEXT)")
-                .contains("catalog.search_text LIKE CAST(:containedWord1 AS TEXT)")
+                .contains("(catalog.search_text LIKE public.catalog_search_unaccent(CAST(:containedWord0 AS TEXT)) "
+                        + "OR catalog.search_text LIKE CAST(:containedWord0 AS TEXT))")
+                .contains("(catalog.search_text LIKE public.catalog_search_unaccent(CAST(:containedWord1 AS TEXT)) "
+                        + "OR catalog.search_text LIKE CAST(:containedWord1 AS TEXT))")
                 .doesNotContain(
                         "ORDER BY relevance DESC, w.id ASC LIMIT :candidateLimit")
                 .doesNotContain("catalog.search_vector @@")
@@ -113,7 +115,8 @@ class WineSearchNativeRepositoryTest {
         verify(entityManager, times(3)).createNativeQuery(
                 sqlCaptor.capture(), eq(WineJpaEntity.class));
         assertThat(sqlCaptor.getAllValues().get(0))
-                .contains("catalog.search_text LIKE CAST(:containedWord0 AS TEXT)")
+                .contains("(catalog.search_text LIKE public.catalog_search_unaccent(CAST(:containedWord0 AS TEXT)) "
+                        + "OR catalog.search_text LIKE CAST(:containedWord0 AS TEXT))")
                 .doesNotContain("catalog.search_vector @@");
         assertThat(sqlCaptor.getAllValues().get(1))
                 .contains("catalog.search_vector @@")
@@ -202,7 +205,9 @@ class WineSearchNativeRepositoryTest {
         assertThat(sqlCaptor.getValue())
                 .contains("WITH candidate_scores AS")
                 .contains("FROM wine_catalog_search catalog")
-                .contains("catalog.search_vector @@ plainto_tsquery('simple',")
+                .contains("catalog.search_vector @@ (plainto_tsquery('simple', public.catalog_search_unaccent("
+                        + "CAST(:indexedIdentity0Tokens AS TEXT))) || plainto_tsquery('simple', "
+                        + "CAST(:indexedIdentity0Tokens AS TEXT)))")
                 .contains("wy.name % CAST(:indexedIdentity0 AS TEXT)")
                 .contains("MAX(identity_score)")
                 .contains("ORDER BY identity_score DESC")
@@ -210,7 +215,7 @@ class WineSearchNativeRepositoryTest {
                 .contains(
                         "ORDER BY identity_score DESC, w.id ASC "
                                 + "LIMIT :indexedBranchLimit")
-                .contains("CAST(:indexedIdentity0Tokens AS TEXT)), 2)")
+                .contains("CAST(:indexedIdentity0Tokens AS TEXT))), 2)")
                 .contains("ORDER BY similarity(wy.name, CAST(:indexedIdentity0 AS TEXT)) DESC, w.id ASC")
                 .doesNotContain("ILIKE");
         verify(query).setParameter("indexedIdentity0", "Bad Brothers");
@@ -250,7 +255,8 @@ class WineSearchNativeRepositoryTest {
                 + "CONCAT('%', CAST(:grapeVariety AS VARCHAR), '%')";
         assertThat(sqlCaptor.getAllValues().get(0))
                 .contains("FROM wine_catalog_filter_search catalog WHERE catalog.is_active = true "
-                        + "AND catalog.search_vector @@ to_tsquery('simple', CAST(:searchTsQuery AS TEXT)) AND "
+                        + "AND catalog.search_vector @@ (to_tsquery('simple', public.catalog_search_unaccent(CAST(:searchTsQuery AS TEXT))) "
+                        + "|| to_tsquery('simple', CAST(:searchTsQuery AS TEXT))) AND "
                         + filters + " LIMIT :candidateLimit")
                 .contains("LOWER(catalog.name) = LOWER(CAST(:searchText AS TEXT))")
                 .contains("(SELECT catalog.wine_id, catalog.name, 2.0 + ts_rank_cd(")
@@ -262,7 +268,8 @@ class WineSearchNativeRepositoryTest {
         verify(prefixQuery).setParameter("pageLimit", 21);
         assertThat(sqlCaptor.getAllValues().get(1))
                 .contains("FROM wine_catalog_filter_search catalog WHERE catalog.is_active = true AND "
-                        + "catalog.search_text LIKE CAST(:containedWord0 AS TEXT) AND " + filters);
+                        + "(catalog.search_text LIKE public.catalog_search_unaccent(CAST(:containedWord0 AS TEXT)) "
+                        + "OR catalog.search_text LIKE CAST(:containedWord0 AS TEXT)) AND " + filters);
         assertThat(sqlCaptor.getAllValues().get(2))
                 .contains("catalog.name % CAST(:searchText AS TEXT) AND " + filters)
                 .contains("ORDER BY relevance DESC, catalog.wine_id ASC LIMIT :candidateLimit")

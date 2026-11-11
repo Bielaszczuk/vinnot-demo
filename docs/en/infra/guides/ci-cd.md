@@ -250,6 +250,20 @@ Weekly/manual sweeps resolve the Android graph and build the image from scratch,
 and only seed those caches. The production `prepare` build uses `docker build
 --pull` with no cache.
 
+Operating system packages do not depend on the Ubuntu servers answering at that moment.
+`backend/docker/apt-install.sh` installs Ubuntu packages from the official archive
+(`archive.ubuntu.com` and `security.ubuntu.com`) first and, when it does not answer, from
+mirrors on other domains (kernel.org, MIT, Leaseweb, RWTH Aachen). It uses the first
+three that answer, and apt verifies everything against the Ubuntu archive key, so a
+mirror cannot change the packages. When nothing answers, it retries three times with a
+growing wait and ends with `APT failed after 3 attempts`. It is used by:
+
+- The Backend job, for the WebP encoder. The `.deb` packages are cached with
+  `actions/cache` per runner architecture and image (`ImageOS` and `ImageVersion`); with
+  the cache they install with no network.
+- The runtime stage of the backend `Dockerfile`, so an outage of `ubuntu.com` DNS does
+  not fail the image scan, the dev deploy or the production `prepare`.
+
 ## Maintenance
 
 Linux uses `ubuntu-24.04`; JavaScript Actions use Node 24 and full commit SHAs.

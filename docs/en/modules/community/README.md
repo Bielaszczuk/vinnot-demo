@@ -17,6 +17,7 @@ the team reviews reports from [Administration](../admin/README.md).
 |---|---|
 | Signed-in user | Follows members, opens public profiles, reads suggestions and the following feed, reports content, blocks and unblocks accounts and reads their activity |
 | Moderator or administrator | Reviews reports and removes content (from Administration) |
+| Vinnot (automatic) | Files a catalog quality report when a member corrects an exact label scan match ([Wines](../wines/use-cases/uc-win-05-scan-label.md)) |
 | Email service | Tells the outcome of a report and the removal of content |
 | Push service | Tells a member that someone started following them |
 
@@ -27,6 +28,7 @@ the team reviews reports from [Administration](../admin/README.md).
 | Access | Reports and blocks need a session; the identity comes from the token | [`CommunityController.java`](../../../../backend/src/main/java/com/vinnot/community/infrastructure/web/CommunityController.java) |
 | What can be reported | Active users, approved reviews and comments on active wines, events already published and published routes | [`JdbcCommunityTargetAdapter.java`](../../../../backend/src/main/java/com/vinnot/community/infrastructure/persistence/JdbcCommunityTargetAdapter.java) |
 | Reasons | Spam, harassment, hate, sexual content, violence, privacy, misinformation or other; “Other” needs a description of up to 2000 characters | [`CommunityReport.java`](../../../../backend/src/main/java/com/vinnot/community/domain/model/CommunityReport.java) |
+| Catalog quality | Only Vinnot files reports about a catalog wine: target `WINE`, reason `CATALOG_QUALITY`, no reporter and the other wine in `related_target_id`; one open report per wine pair in either order; moderators resolve or dismiss them and fix the catalog by hand, never automatically. Members get 422 `REPORT_NOT_ALLOWED` | [`ReportCatalogIssueCommandHandler.java`](../../../../backend/src/main/java/com/vinnot/community/application/command/handler/ReportCatalogIssueCommandHandler.java) |
 | No duplicates | One open report per person and content; repeating it returns the same receipt | [`CreateReportCommandHandler.java`](../../../../backend/src/main/java/com/vinnot/community/application/command/handler/CreateReportCommandHandler.java) |
 | Limits | 10 new reports per day and 10 submissions per hour under their own `report` policy, separate from support requests | [`RateLimitPolicyResolver.java`](../../../../backend/src/main/java/com/vinnot/shared/infrastructure/security/RateLimitPolicyResolver.java) |
 | Block | Works both ways: hides reviews, comments and profile, stops likes, comments and notices, and ends the follows in both directions | [`ChangeUserBlockCommandHandler.java`](../../../../backend/src/main/java/com/vinnot/community/application/command/handler/ChangeUserBlockCommandHandler.java) |
@@ -68,7 +70,7 @@ stateDiagram-v2
 
 ## Data
 
-Tables created in `V24`; `V25` indexes closed reports for purging. `V87`, `V88` and `V89` add the social layer and the taste profile (see below).
+Tables created in `V24`; `V25` indexes closed reports for purging. `V87`, `V88` and `V89` add the social layer and the taste profile, and `V93` the catalog quality reports (see below).
 
 ```mermaid
 erDiagram
@@ -100,6 +102,7 @@ erDiagram
         varchar decision
         timestamptz created_at
         timestamptz updated_at
+        uuid related_target_id
     }
     community_report_actions {
         bigint id PK
@@ -134,7 +137,7 @@ erDiagram
     }
 ```
 
-[View the full “Community · Data” diagram](https://images.vinnot.com/docs/diagrams/v1/en/modules-community-readme-f97857bcc022.svg)
+[View the full “Community · Data” diagram](https://images.vinnot.com/docs/diagrams/v1/en/modules-community-readme-8aefcb8c504c.svg)
 
 Reported content is identified by type and ID without a foreign key, so the case
 is kept even if the content is deleted. Deleting an account removes its blocks
@@ -163,3 +166,11 @@ pending. See [Taste quiz](architecture.md#taste-quiz).
 `trait` `ACIDITY`, `BODY`, `TANNIN` or `SWEETNESS`, `score` from 0 to 100 and
 `updated_at`. No row means the trait shows its computed value. See
 [Adjustable palate](architecture.md#adjustable-palate).
+
+`V93` adds the catalog quality reports to `community_reports`: the `WINE` target
+type, the `CATALOG_QUALITY` reason, the nullable `related_target_id` column (the
+wine the member picked) and the partial unique index
+`community_report_open_catalog_pair` on
+`(LEAST(target_id, related_target_id), GREATEST(target_id, related_target_id))`
+for `CATALOG_QUALITY` reports in `OPEN` or `IN_REVIEW`, so a wine pair has at most
+one open report. See [Catalog quality reports](architecture.md#catalog-quality-reports).

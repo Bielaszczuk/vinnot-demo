@@ -53,6 +53,8 @@ public class OpenAiClient implements AiCompletionService {
     private static final int MAX_RESPONSE_BYTES = 1024 * 1024;
     private static final int MAX_REQUEST_BYTES = 12 * 1024 * 1024;
     private static final Duration MAX_OPERATION_TIMEOUT = Duration.ofSeconds(60);
+    /** Time an interactive request keeps for the provider call itself after waiting for a slot. */
+    private static final Duration MIN_PROVIDER_CALL = Duration.ofSeconds(3);
     private static final Set<String> BILLING_ERRORS = Set.of("insufficient_quota", "credit_balance_exhausted",
             "billing_hard_limit_reached", "organization_spend_limit_exceeded", "project_spend_limit_exceeded");
     private final HttpClient httpClient;
@@ -76,6 +78,10 @@ public class OpenAiClient implements AiCompletionService {
     /** Processing tier for text completions; "priority" trades a higher price for faster output. */
     @Value("${services.openai.service-tier:default}")
     private String serviceTier = "default";
+    /** Same as reasoning-effort, for the vision model used by label scans. */
+    @Value("${services.openai.vision-reasoning-effort:}")
+    private String visionReasoningEffort = "";
+
     /** Set for reasoning models, which take reasoning_effort and max_completion_tokens instead of sampling knobs. */
     @Value("${services.openai.reasoning-effort:}")
     private String reasoningEffort = "";
@@ -139,23 +145,37 @@ public class OpenAiClient implements AiCompletionService {
     public Map<String, Object> structuredCompletionWithImage(AiImageCompletionRequest request) {
         requireTimeout(request.timeout());
         return executeWithRetry("vision", visionModel, request.maxTokens(), request.maxAttempts(),
-                request.timeout(), () -> {
+                request.timeout(), true, () -> {
                     // Encoding occurs only after an execution permit and budget have been acquired.
                     String dataUri = "data:" + request.contentType() + ";base64,"
                             + Base64.getEncoder().encodeToString(request.imageBytes());
-                    return Map.of("model", visionModel, "service_tier", "default",
-                            "messages", List.of(Map.of("role", "user", "content", List.of(
-                                    Map.of("type", "text", "text", request.prompt()),
-                                    Map.of("type", "image_url", "image_url", Map.of("url", dataUri,
-                                            "detail", request.detail().name().toLowerCase(Locale.ROOT)))))),
-                            "temperature", request.temperature(), "max_tokens", request.maxTokens(),
-                            "response_format", Map.of("type", "json_schema", "json_schema", Map.of(
-                                    "name", request.schemaName(), "strict", true, "schema", request.jsonSchema())));
+                    Map<String, Object> body = new LinkedHashMap<>();
+                    body.put("model", visionModel);
+                    body.put("service_tier", "default");
+                    body.put("messages", List.of(Map.of("role", "user", "content", List.of(
+                            Map.of("type", "text", "text", request.prompt()),
+                            Map.of("type", "image_url", "image_url", Map.of("url", dataUri,
+                                    "detail", request.detail().name().toLowerCase(Locale.ROOT)))))));
+                    if (Objects.isNull(visionReasoningEffort) || visionReasoningEffort.isBlank()) {
+                        body.put("temperature", request.temperature());
+                        body.put("max_tokens", request.maxTokens());
+                    } else {
+                        body.put("reasoning_effort", visionReasoningEffort);
+                        body.put("max_completion_tokens", request.maxTokens());
+                    }
+                    body.put("response_format", Map.of("type", "json_schema", "json_schema", Map.of(
+                            "name", request.schemaName(), "strict", true, "schema", request.jsonSchema())));
+                    return body;
                 });
     }
 
     private Map<String, Object> executeWithRetry(String operation, String requestedModel, int tokens,
             int configuredAttempts, Duration timeout, Supplier<Map<String, Object>> request) {
+        return executeWithRetry(operation, requestedModel, tokens, configuredAttempts, timeout, false, request);
+    }
+
+    private Map<String, Object> executeWithRetry(String operation, String requestedModel, int tokens,
+            int configuredAttempts, Duration timeout, boolean interactive, Supplier<Map<String, Object>> request) {
         BigDecimal maximumCost = pricing.maximumCost(requestedModel, tokens);
         int attempts = Math.max(1, Math.min(configuredAttempts, MAX_ATTEMPTS));
         long deadline = System.nanoTime() + timeout.toNanos();
@@ -164,7 +184,7 @@ public class OpenAiClient implements AiCompletionService {
                 return Map.of();
             }
             try {
-                return executeAttempt(requestedModel, tokens, maximumCost, deadline, request);
+                return executeAttempt(requestedModel, tokens, maximumCost, deadline, interactive, request);
             } catch (ExternalServiceUnavailableException exception) {
                 AiOutcome outcome = switch (exception.getCode()) {
                     case "AI_BUDGET_EXHAUSTED" -> AiOutcome.BUDGET_EXHAUSTED;
@@ -191,8 +211,12 @@ public class OpenAiClient implements AiCompletionService {
     }
 
     private Map<String, Object> executeAttempt(String requestedModel, int outputTokens, BigDecimal maximumCost, long deadline,
-            Supplier<Map<String, Object>> requestBody) throws Exception {
-        var permit = admission.acquire(requestedModel, maximumCost);
+            boolean interactive, Supplier<Map<String, Object>> requestBody) throws Exception {
+        // A request someone waits on may queue briefly, but never so long that the call itself cannot finish.
+        var permit = interactive
+                ? admission.acquireInteractive(requestedModel, maximumCost,
+                        Duration.ofNanos(Math.max(0, deadline - System.nanoTime())).minus(MIN_PROVIDER_CALL))
+                : admission.acquire(requestedModel, maximumCost);
         Optional<BigDecimal> observed = Optional.of(BigDecimal.ZERO);
         try {
             byte[] requestJson = objectMapper.writeValueAsBytes(requestBody.get());

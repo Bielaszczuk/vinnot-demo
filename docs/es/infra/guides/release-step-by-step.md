@@ -399,6 +399,33 @@ partir de todo el catálogo (#531). Hay que planificarla:
   en pocos minutos. Hasta entonces, las páginas por uva leen algunas páginas más; no
   hace falta nada más.
 
+#### Escaneo de etiquetas: V90–V93
+
+`V90__accent_insensitive_catalog_search.sql`, `V91__wine_image_embeddings.sql`,
+`V92__label_scan_feedback_and_barcodes.sql` y `V93__catalog_quality_reports.sql` (#544)
+son cortas: V90 solo reemplaza funciones de búsqueda, V91 y V92 crean tablas chicas y un
+índice y agregan columnas opcionales, y V93 amplía dos CHECK y agrega una columna
+opcional y un índice parcial en `community_reports`. Ninguna reescribe filas del
+catálogo.
+
+El trabajo pesado lo hace el backend nuevo después de arrancar, en el planificador de
+mantenimiento del catálogo, y no necesita ventana:
+
+- Unos 60 s después del arranque, `CatalogSearchAccentNormalizer` reescribe las filas de
+  búsqueda indexadas con tildes antes de V90 en lotes de 5000 con pausas de 200 ms, y
+  vuelve a revisar cada hora. El log muestra `Rewrote <n> catalog search row(s) without
+  accents`. Hasta que termina, la búsqueda encuentra tanto la forma con tildes como la
+  forma sin tildes.
+- Unos 30 s después del arranque, y luego cada minuto, el índice visual carga sus
+  vectores (`Loaded <n> label image vector(s) into the visual index`) y genera embeddings
+  de hasta 200 imágenes de etiquetas alojadas (`Embedded <n> catalog label image(s) for
+  visual search`). Una falla registra `Visual index refresh failed: <tipo>` y los
+  escaneos siguen solo con la búsqueda por texto.
+
+Los logs se leen con `docker logs --since 30m vinnot-prod-backend`, enviado por 7.1.
+El índice visual necesita el `GEMINI_API_KEY` opcional en `vinnot/prod/backend` (7.5);
+sin él, el backend arranca normalmente y el índice visual queda apagado.
+
 ### 7.4 Registrar los archivos del servidor
 
 Después de instalar los archivos (7.2) y, si hay migraciones, después de 7.3. Comando
@@ -434,7 +461,10 @@ Orden:
 1. Cambiar el valor en la consola de AWS (región `us-east-1`): **Secrets Manager ›
    `vinnot/prod/backend` › Retrieve secret value › Edit**. Hay que actualizar todas las
    variables que lee `infra/aws-low-cost/compose.production.yml`; por ejemplo, el tope
-   mensual de IA usa `PROD_AI_MONTHLY_LIMIT_USD` y `AI_MONTHLY_LIMIT_USD`.
+   mensual de IA usa `PROD_AI_MONTHLY_LIMIT_USD` y `AI_MONTHLY_LIMIT_USD`. Cada entrada del
+   secreto también llega al backend por `runtime.env`: las claves opcionales como
+   `GEMINI_API_KEY` (embeddings de Google para la búsqueda visual de etiquetas) solo hay
+   que agregarlas ahí.
 2. `prepare` (6.1) del release que acompaña el cambio.
 3. Refrescar el archivo y registrar su hash con este script, enviado por 7.1:
 

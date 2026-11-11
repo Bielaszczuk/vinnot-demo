@@ -1,4 +1,5 @@
 import type { Href, ImperativeRouter } from "expo-router";
+import { plausibleScannedVintage } from "@/domain/wine/labelScan";
 import { firstRouteParam } from "./routeParams";
 
 export const HOME_ROUTE = "/(app)/(tabs)/home";
@@ -62,15 +63,32 @@ export function createAddWineRoute(returnTo: WineScanReturnRoute, wineName?: str
   };
 }
 
+export interface ScannedWineDetailRouteOptions extends WineDetailRouteOptions {
+  /** Vintage read on the label; it prefills a new cellar entry when it is a plausible year. */
+  scannedVintage?: number | null;
+}
+
 export function createScannedWineDetailRoute(
   wineId: string,
   scanReturnTo: WineScanReturnRoute,
-  options?: WineDetailRouteOptions,
+  options?: ScannedWineDetailRouteOptions,
 ): Href {
+  const scannedVintage = plausibleScannedVintage(options?.scannedVintage);
   return {
     pathname: "/(app)/(tabs)/wines/[id]",
-    params: { id: wineId, scanReturnTo, ...wineDetailTabParams(options) },
+    params: {
+      id: wineId,
+      scanReturnTo,
+      ...wineDetailTabParams(options),
+      ...(scannedVintage !== null ? { scannedVintage: String(scannedVintage) } : {}),
+    },
   };
+}
+
+/** The scanned vintage a wine detail received, or null when it is missing or implausible. */
+export function readScannedVintage(param: string | string[] | undefined): number | null {
+  const value = firstRouteParam(param);
+  return value && /^\d{4}$/u.test(value) ? plausibleScannedVintage(Number(value)) : null;
 }
 
 /** The scanner is a full-screen modal, so a wine opened from it stays inside that modal. */

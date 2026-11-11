@@ -24,6 +24,8 @@ import {
 interface CameraViewportProps extends RefAttributes<WineLabelCameraHandle> {
   torchEnabled: boolean;
   captureRegion: NormalizedImageRegion;
+  /** Receives the raw data of every EAN/UPC code the preview sees. */
+  onBarcodeDetected?: (data: string) => void;
 }
 
 interface WineLabelCameraContextValue {

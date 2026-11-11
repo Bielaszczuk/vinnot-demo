@@ -82,7 +82,8 @@ class CommunityQueryHandlersTest {
                         reviewer,
                         "checking",
                         now,
-                        now);
+                        now,
+                        null);
         var orphan =
                 new CommunityReport(
                         UUID.randomUUID(),
@@ -96,7 +97,8 @@ class CommunityQueryHandlersTest {
                         null,
                         null,
                         now,
-                        now);
+                        now,
+                        null);
         when(reports.findForModeration(
                         eq(moderator), eq(CommunityReport.Status.IN_REVIEW), any()))
                 .thenReturn(PageResult.of(List.of(reviewed, orphan), 0, 20, 2));
@@ -131,6 +133,33 @@ class CommunityQueryHandlersTest {
         assertThat(second.reviewerUsername()).isNull();
         assertThat(second.targetLabel()).isNull();
         assertThat(page.totalElements()).isEqualTo(2);
+    }
+
+    @Test
+    void aCatalogQualityReportNamesBothWinesAndTheAutomaticReporter() {
+        var reports = mock(CommunityReportRepositoryPort.class);
+        var targets = mock(CommunityTargetPort.class);
+        var handler =
+                new GetCommunityQueryHandler(reports, mock(UserBlockRepositoryPort.class), targets);
+        UUID moderator = UUID.randomUUID(), matched = UUID.randomUUID(), chosen = UUID.randomUUID();
+        var report = CommunityReport.exactMatchCorrected(matched, chosen, "Matched: A | Chosen: B", Instant.now());
+        var matchedWine = new ContentTarget(ContentTarget.Type.WINE, matched);
+        var chosenWine = new ContentTarget(ContentTarget.Type.WINE, chosen);
+        when(reports.findForModeration(eq(moderator), eq(CommunityReport.Status.OPEN), any()))
+                .thenReturn(PageResult.of(List.of(report), 0, 20, 1));
+        when(targets.describe(any(), any()))
+                .thenReturn(new CommunityTargetPort.ModerationNames(
+                        Map.of(matchedWine, "Malbec A", chosenWine, "Malbec B"), Map.of()));
+
+        var row = handler.moderation(moderator, CommunityReport.Status.OPEN, 0, 20).content().get(0);
+
+        verify(targets).describe(Set.of(matchedWine, chosenWine), Set.of());
+        assertThat(row.reporterId()).isNull();
+        assertThat(row.reason()).isEqualTo(CommunityReport.Reason.CATALOG_QUALITY);
+        assertThat(row.target()).isEqualTo(matchedWine);
+        assertThat(row.targetLabel()).isEqualTo("Malbec A");
+        assertThat(row.relatedTargetId()).isEqualTo(chosen);
+        assertThat(row.relatedTargetLabel()).isEqualTo("Malbec B");
     }
 
     @Test

@@ -9,18 +9,25 @@ import java.util.UUID;
 
 /**
  * Application intent for one label scan. The image is never stored; the scan of a signed-in member ({@code userId})
- * is recorded with its outcome (#455).
+ * is recorded with its outcome (#455). {@code barcode} is the validated EAN/UPC the member read from the bottle, or
+ * {@code null} (#544).
  */
 public record ScanWineLabelCommand(
         byte[] imageBytes,
         String contentType,
         List<String> observedText,
-        UUID userId
+        UUID userId,
+        String barcode
 ) implements Command<WineLabelScanResponse> {
 
     /** A scan nobody is recorded for. */
     public ScanWineLabelCommand(byte[] imageBytes, String contentType, List<String> observedText) {
-        this(imageBytes, contentType, observedText, null);
+        this(imageBytes, contentType, observedText, null, null);
+    }
+
+    /** A member's scan without a barcode. */
+    public ScanWineLabelCommand(byte[] imageBytes, String contentType, List<String> observedText, UUID userId) {
+        this(imageBytes, contentType, observedText, userId, null);
     }
 
     public ScanWineLabelCommand {

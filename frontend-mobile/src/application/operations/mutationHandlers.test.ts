@@ -8,7 +8,12 @@ jest.mock("@/application/services/admin.service", () => ({
   adminService: { banUser: jest.fn() },
 }));
 jest.mock("@/application/services/wines.service", () => ({
-  winesService: { createReview: jest.fn(), updateReview: jest.fn() },
+  winesService: {
+    createReview: jest.fn(),
+    updateReview: jest.fn(),
+    scanLabel: jest.fn(),
+    sendScanFeedback: jest.fn(),
+  },
 }));
 jest.mock("@/application/services/cellar.service", () => ({
   cellarService: { addWine: jest.fn() },
@@ -91,6 +96,50 @@ describe("review and cellar vintage mutations", () => {
 
     expect(cellarService.addWine).toHaveBeenCalledWith({
       wineId: "wine-1", rating: null, purchasePrice: null, notes: null, vintage: 2015,
+    });
+  });
+});
+
+describe("label scan mutations", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("passes a barcode read next to the label, and none when absent", async () => {
+    const scanLabel = winesService.scanLabel as jest.MockedFunction<typeof winesService.scanLabel>;
+    await executeMutationOperation({
+      key: "wine.scan",
+      params: { imageUri: "file:///label.jpg", observedText: ["CATENA", 3], barcode: "7791234567898" },
+    });
+    expect(scanLabel).toHaveBeenLastCalledWith(
+      { imageUri: "file:///label.jpg", observedText: ["CATENA"], barcode: "7791234567898" },
+      undefined,
+    );
+    await executeMutationOperation({
+      key: "wine.scan",
+      params: { imageUri: "file:///label.jpg", observedText: [] },
+    });
+    expect(scanLabel).toHaveBeenLastCalledWith(
+      { imageUri: "file:///label.jpg", observedText: [], barcode: null },
+      undefined,
+    );
+  });
+
+  it("sends the scan verdict with its chosen wine", async () => {
+    const sendScanFeedback = winesService.sendScanFeedback as jest.MockedFunction<
+      typeof winesService.sendScanFeedback
+    >;
+    sendScanFeedback.mockResolvedValue(undefined);
+    await expect(
+      executeMutationOperation({
+        key: "wine.scanFeedback",
+        params: { scanId: "scan-1", verdict: "CONFIRMED", wineId: "wine-1" },
+      }),
+    ).resolves.toBeNull();
+    expect(sendScanFeedback).toHaveBeenCalledWith({
+      scanId: "scan-1",
+      verdict: "CONFIRMED",
+      wineId: "wine-1",
     });
   });
 });

@@ -20,7 +20,8 @@ en el catálogo. El alta y la edición de vinos por el equipo están en
 |---|---|
 | Usuario autenticado | Busca, filtra y abre vinos; en la app escanea etiquetas y propone vinos |
 | Servicio de ubicación | Sugiere el país del dispositivo como filtro inicial |
-| Proveedor de reconocimiento | OpenAI lee la etiqueta cuando el texto del dispositivo no alcanza |
+| Proveedor de reconocimiento | OpenAI lee la etiqueta cuando el texto del dispositivo no alcanza y elige entre las candidatas del escaneo |
+| Proveedor de embeddings de imagen | Google Gemini convierte en vectores las imágenes de etiquetas del catálogo y la foto escaneada para la búsqueda visual |
 | Servicio de email | Avisa a quien propuso un vino cada cambio de estado |
 
 ## Reglas de negocio
@@ -30,10 +31,12 @@ en el catálogo. El alta y la edición de vinos por el equipo están en
 | Acceso | El catálogo, el detalle, las uvas y los tipos de referencia requieren sesión | [`SecurityConfig.java`](../../../../backend/src/main/java/com/vinnot/shared/infrastructure/config/SecurityConfig.java) |
 | Vinos visibles | El catálogo muestra solo vinos activos; el detalle de un vino inactivo solo lo ven el equipo de catálogo y quien lo creó | [`ResourceReader.java`](../../../../backend/src/main/java/com/vinnot/shared/domain/valueobject/ResourceReader.java) |
 | Paginación | Páginas de hasta 20 y solo los primeros 500 resultados | [`PublicWineCatalogAccessPolicy.java`](../../../../backend/src/main/java/com/vinnot/wine/infrastructure/web/policy/PublicWineCatalogAccessPolicy.java) |
-| Texto de búsqueda | Hasta 512 caracteres; prefijo y contenido, y similitud si no hay resultados | [`WineSearchNativeRepository.java`](../../../../backend/src/main/java/com/vinnot/wine/infrastructure/persistence/search/WineSearchNativeRepository.java) |
+| Texto de búsqueda | Hasta 512 caracteres; prefijo y contenido, y similitud si no hay resultados; ignora tildes y mayúsculas («septima» encuentra «Séptima») | [`WineSearchNativeRepository.java`](../../../../backend/src/main/java/com/vinnot/wine/infrastructure/persistence/search/WineSearchNativeRepository.java) |
 | Tipos de vino | `RED`, `WHITE`, `ROSE`, `SPARKLING`, `DESSERT`, `FORTIFIED` y `ORANGE` | [`WineType.java`](../../../../backend/src/main/java/com/vinnot/wine/domain/valueobject/WineType.java) |
 | Foto de etiqueta | JPEG o PNG, hasta 8 MiB y 24 Mpx, con lados mínimos de 320 y 720 px y luz y foco suficientes | [`WineLabelUploadValidator.java`](../../../../backend/src/main/java/com/vinnot/wine/infrastructure/web/WineLabelUploadValidator.java) |
-| Escaneo | Respuesta en 18 segundos como máximo; no guarda la foto | [`ScanWineLabelCommandHandler.java`](../../../../backend/src/main/java/com/vinnot/wine/application/command/handler/ScanWineLabelCommandHandler.java) |
+| Escaneo | Respuesta en 18 segundos como máximo; no guarda la foto; búsqueda por texto, búsqueda visual y elección entre candidatas con el modelo de visión | [`ScanWineLabelCommandHandler.java`](../../../../backend/src/main/java/com/vinnot/wine/application/command/handler/ScanWineLabelCommandHandler.java) |
+| Códigos de barras | Un código confirmado (veredictos `CONFIRMED`) para un vino activo por al menos dos miembros, y por más miembros que cualquier otro vino, responde el escaneo como coincidencia exacta sin IA | [`JdbcWineBarcodeConfirmations.java`](../../../../backend/src/main/java/com/vinnot/wine/infrastructure/persistence/adapter/JdbcWineBarcodeConfirmations.java) |
+| Veredicto del escaneo | Un veredicto por escaneo (`CONFIRMED`, `CORRECTED`, `NOT_IN_CATALOG`); una coincidencia exacta corregida abre una denuncia de calidad de catálogo y nunca edita el catálogo | [`SubmitWineLabelScanFeedbackCommandHandler.java`](../../../../backend/src/main/java/com/vinnot/wine/application/command/handler/SubmitWineLabelScanFeedbackCommandHandler.java) |
 | Límites de uso | Por usuario: 60 consultas por minuto al catálogo, 30 escaneos por hora y 10 propuestas o fotos por día | [`RateLimitPolicyResolver.java`](../../../../backend/src/main/java/com/vinnot/shared/infrastructure/security/RateLimitPolicyResolver.java) |
 | Propuestas | Solo se publican sin revisión cuando reconocimiento, deduplicación y moderación son seguros | [Vinos propuestos](submissions.md) |
 
@@ -64,8 +67,8 @@ stateDiagram-v2
 ## Datos
 
 Tablas creadas en `V1__baseline_schema.sql` y ampliadas por los índices de
-búsqueda (`V3`, `V4`, `V14`, `V15`, `V16`, `V61`, `V85`, `V86`), la versión del catálogo
-(`V19`) y las propuestas (`V10`, `V41`).
+búsqueda (`V3`, `V4`, `V14`, `V15`, `V16`, `V61`, `V85`, `V86`, `V90`), la versión del catálogo
+(`V19`), las propuestas (`V10`, `V41`) y el escaneo de etiquetas (`V91`, `V92`).
 
 ```mermaid
 erDiagram
@@ -132,3 +135,14 @@ erDiagram
 `grape_types` y `wine_types` son catálogos de referencia sin relación directa:
 `wines.grapes` guarda los nombres de las uvas y `wines.wine_type` el código del
 tipo.
+
+El escaneo de etiquetas suma tres estructuras, fuera del diagrama:
+
+| Tabla o columna | Contenido |
+|---|---|
+| Funciones de búsqueda de `V90` | `catalog_search_unaccent` (envoltorio `IMMUTABLE` de `unaccent`) y las funciones que construyen `wine_catalog_search`, que guardan el texto sin tildes y en minúsculas; las filas indexadas antes las reescribe `CatalogSearchAccentNormalizer` después del arranque |
+| `wine_image_embeddings` (`V91`) | Un vector por vino cuya imagen de etiqueta aloja Vinnot: `wine_id` (clave primaria, `ON DELETE CASCADE`), `image_url`, `model`, `dimensions`, `scale` y `embedding` (bytes int8); índice parcial `idx_wines_hosted_label_image` sobre `wines` |
+| `wine_label_scans` (`V92`) | Suma `barcode`, `feedback` (`CONFIRMED`, `CORRECTED` o `NOT_IN_CATALOG`), `feedback_wine_id` y `feedback_at` |
+| `wine_barcode_confirmations` (`V92`) | Una confirmación por miembro y código (clave primaria `(barcode, user_id)`, vale la última) con `wine_id` y `confirmed_at` |
+
+Ver [Modelo de base de datos](../../backend/data/database-model.md) y [Arquitectura](architecture.md#precisión-del-escaneo-de-etiquetas).

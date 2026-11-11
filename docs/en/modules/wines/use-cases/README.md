@@ -8,7 +8,7 @@ Use cases of the wines module: searching and paging the catalog, viewing the det
 | `UC-WIN-02` | [Page through the catalog](uc-win-02-page-catalog.md) | Web, APK | Signed-in user |
 | `UC-WIN-03` | [View a wine's detail](uc-win-03-view-wine-detail.md) | Web, APK | Signed-in user |
 | `UC-WIN-04` | [See the invitation to scan from the app](uc-win-04-scan-invitation.md) | Web | Signed-in user |
-| `UC-WIN-05` | [Scan a wine label](uc-win-05-scan-label.md) | APK | Signed-in user, Recognition provider (OpenAI) |
+| `UC-WIN-05` | [Scan a wine label](uc-win-05-scan-label.md) | APK | Signed-in user, Recognition provider (OpenAI), Image embedding provider (Google Gemini) |
 | `UC-WIN-06` | [Search by hand from the scanner](uc-win-06-manual-search-from-scan.md) | APK | Signed-in user |
 | `UC-WIN-07` | [Propose a wine missing from the catalog](uc-win-07-submit-wine.md) | APK | Signed-in user, Recognition provider (OpenAI), Email service |
 | `UC-WIN-08` | [Add the label photo to a wine without an image](uc-win-08-attach-label-photo.md) | APK | Signed-in user, Recognition provider (OpenAI) |

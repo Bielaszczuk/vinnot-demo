@@ -2539,7 +2539,8 @@
       "VIOLENCE": "Violence or threats",
       "PRIVACY": "Privacy",
       "MISINFORMATION": "Misleading information",
-      "OTHER": "Other"
+      "OTHER": "Other",
+      "CATALOG_QUALITY": "Catalog quality"
     },
     "statuses": {
       "OPEN": "Received",
@@ -2552,7 +2553,8 @@
       "COMMENT": "Comment",
       "USER": "User",
       "EVENT": "Event",
-      "WINE_ROUTE": "Route"
+      "WINE_ROUTE": "Route",
+      "WINE": "Wine"
     },
     "removeContent": "Remove content and resolve",
     "removeConfirm": "This deletes the review or comment and resolves the report with the chosen reason. This cannot be undone.",
@@ -2641,13 +2643,15 @@
         "AUTHOR_WARNED": "The author was warned",
         "CONTENT_FIXED": "The author fixed the content",
         "ACCOUNT_ACTION": "Action was taken on the account",
-        "OTHER": "Other"
+        "OTHER": "Other",
+        "CATALOG_FIXED": "The catalog was fixed"
       },
       "DISMISSED": {
         "NO_VIOLATION": "It does not break the community rules",
         "DUPLICATE_REPORT": "Duplicate report",
         "INSUFFICIENT_EVIDENCE": "Not enough evidence",
-        "OTHER": "Other"
+        "OTHER": "Other",
+        "CATALOG_CORRECT": "The catalog was already right"
       },
       "REMOVE_CONTENT": {
         "COMMUNITY_RULES": "It breaks the community rules",
@@ -2662,7 +2666,13 @@
       "conflict": "You are involved in this case; another moderator must review it.",
       "decisionRequired": "Choose or write the reason for the decision (up to 2000 characters).",
       "removalTarget": "This content is handled from its own admin section."
-    }
+    },
+    "reportedByLabel": "Reported by",
+    "automaticReporter": "Vinnot (automatic)",
+    "relatedWineLabel": "Wine the member chose",
+    "catalogQualityDescription": "A member corrected an exact scan match: the wine may be a duplicate, or have the wrong winery or the wrong image. Check both wines and fix the catalog by hand if needed.",
+    "openMatchedWine": "Open the matched wine",
+    "openChosenWine": "Open the chosen wine"
   },
   "discovery": {
     "locating": "Finding your location…",

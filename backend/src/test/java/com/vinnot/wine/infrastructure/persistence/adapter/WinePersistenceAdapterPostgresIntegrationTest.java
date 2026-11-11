@@ -2,6 +2,7 @@ package com.vinnot.wine.infrastructure.persistence.adapter;
 
 import com.vinnot.wine.application.port.out.WineRepositoryPort;
 import com.vinnot.wine.application.port.out.WineLabelSearchCriteria;
+import com.vinnot.wine.infrastructure.persistence.search.CatalogSearchAccentNormalizer;
 import com.vinnot.wine.infrastructure.persistence.search.WineSearchNativeRepository;
 import com.vinnot.shared.domain.valueobject.PageQuery;
 import org.junit.jupiter.api.AfterEach;
@@ -27,6 +28,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import com.vinnot.wine.application.service.WineLabelImagePublicationService;
@@ -299,13 +301,17 @@ class WinePersistenceAdapterPostgresIntegrationTest {
 
     @Test
     void characterizesCatalogUnicodePunctuationAndRepeatedPageResults() {
-        // Audit only: preserve the existing parser/tier behavior until a product decision.
-        for (String search : List.of("!!!", "東京")) {
-            var result = wineRepository.searchAdvanced(search, null, wineryId,
-                    null, null, null, PageQuery.of(0, 20), false);
-            assertThat(result.content()).extracting(wine -> wine.getId())
-                    .containsExactly(searchWineId, otherWineId);
-        }
+        // Punctuation alone is not a search word; letters of any script are.
+        assertThat(wineRepository.searchAdvanced("!!!", null, wineryId,
+                null, null, null, PageQuery.of(0, 20), false).content())
+                .extracting(wine -> wine.getId()).containsExactly(searchWineId, otherWineId);
+        assertThat(wineRepository.searchAdvanced("東京", null, wineryId,
+                null, null, null, PageQuery.of(0, 20), false).content()).isEmpty();
+        jdbcTemplate.update("UPDATE wines SET name=? WHERE id=?", "東京 Reserva", otherWineId);
+        assertThat(wineRepository.searchAdvanced("東京", null, wineryId,
+                null, null, null, PageQuery.of(0, 20), false).content())
+                .extracting(wine -> wine.getId()).containsExactly(otherWineId);
+        jdbcTemplate.update("UPDATE wines SET name=? WHERE id=?", "Black Tears White", otherWineId);
         jdbcTemplate.update("UPDATE wines SET name=? WHERE id=?", "Éxito Reserva", searchWineId);
         assertThat(wineRepository.searchAdvanced("Éxito", null, wineryId,
                 null, null, null, PageQuery.of(0, 20), false).content())
@@ -323,6 +329,91 @@ class WinePersistenceAdapterPostgresIntegrationTest {
         assertThat(repeated.content()).extracting(wine -> wine.getId()).containsExactly(searchWineId);
         assertThat(first.totalElements()).isEqualTo(2);
         assertThat(second.totalElements()).isEqualTo(2);
+    }
+
+    @Test
+    void findsAndNormalizesRowsIndexedBeforeAccentInsensitiveSearch() {
+        jdbcTemplate.update("UPDATE wines SET name=? WHERE id=?", "Séptima Reserva Malbec", searchWineId);
+        // Rows indexed by the build functions before V90 kept their accents.
+        for (String readModel : List.of("wine_catalog_search", "wine_catalog_filter_search")) {
+            jdbcTemplate.update("UPDATE " + readModel + " SET search_vector = "
+                    + "setweight(to_tsvector('simple', ?), 'A') || setweight(to_tsvector('simple', ?), 'B'), "
+                    + "search_text = lower(? || ' ' || ?) WHERE wine_id = ?",
+                    "Séptima Reserva Malbec", "Tapiz Search Boundary",
+                    "Séptima Reserva Malbec", "Tapiz Search Boundary", searchWineId);
+        }
+        // Until normalized, a row is still found as before: by its accented form.
+        assertFoundBySearch(searchWineId, "Séptima", "épt");
+        assertThat(wineRepository.findByIndexedIdentity(new WineLabelSearchCriteria(
+                List.of("Séptima Reserva"), null, null, null, 20))).extracting(Wine::getId).contains(searchWineId);
+
+        var normalizer = new CatalogSearchAccentNormalizer(jdbcTemplate, true, 1, Duration.ofMillis(1));
+        assertThat(normalizer.normalizePending()).isGreaterThanOrEqualTo(2);
+        for (String readModel : List.of("wine_catalog_search", "wine_catalog_filter_search")) {
+            assertThat(jdbcTemplate.queryForObject("SELECT search_text FROM " + readModel + " WHERE wine_id = ?",
+                    String.class, searchWineId)).isEqualTo("septima reserva malbec tapiz search boundary");
+        }
+        assertFoundBySearch(searchWineId, "septima", "Séptima", "ept", "épt");
+        assertThat(wineRepository.findByIndexedIdentity(new WineLabelSearchCriteria(
+                List.of("SEPTIMA RESERVA"), null, null, null, 20))).extracting(Wine::getId).contains(searchWineId);
+        assertThat(normalizer.normalizePending()).isZero();
+
+        // A full pass without work stops the normalizer until the next start.
+        jdbcTemplate.update("UPDATE wine_catalog_search SET search_text = 'séptima' WHERE wine_id = ?", searchWineId);
+        assertThat(normalizer.normalizePending()).isZero();
+        assertThat(new CatalogSearchAccentNormalizer(jdbcTemplate, false, 10, Duration.ZERO).normalizePending())
+                .isZero();
+        assertThat(new CatalogSearchAccentNormalizer(jdbcTemplate, true, 10_000, Duration.ZERO).normalizePending())
+                .isEqualTo(1);
+    }
+
+    private void assertFoundBySearch(UUID expected, String... terms) {
+        for (String term : terms) {
+            assertThat(wineRepository.searchAdvanced(term, null, null, null, null, null,
+                    PageQuery.of(0, 20), false).content()).as(term).extracting(Wine::getId).contains(expected);
+            assertThat(wineRepository.searchAdvanced(term, "RED", null, null, null, null,
+                    PageQuery.of(0, 20), false).content()).as(term + " filtered")
+                    .extracting(Wine::getId).contains(expected);
+        }
+    }
+
+    @Test
+    void retrievesTheActiveCatalogOfTheObservedProducer() {
+        jdbcTemplate.update("UPDATE wineries SET name=? WHERE id=?", "Bodega Camuñas Límite", wineryId);
+        jdbcTemplate.update("UPDATE wines SET is_active=false WHERE id=?", otherWineId);
+        for (String core : List.of("camunas limite", "limite")) {
+            assertThat(wineRepository.findByProducerIdentity(new WineLabelSearchCriteria(
+                    List.of(core), null, null, null, 150)))
+                    .as(core).extracting(Wine::getId).containsExactly(searchWineId);
+        }
+        for (String core : List.of("limite camunas", "camu", "black tears")) {
+            assertThat(wineRepository.findByProducerIdentity(new WineLabelSearchCriteria(
+                    List.of(core), null, null, null, 150)))
+                    .as(core).extracting(Wine::getId).doesNotContain(searchWineId);
+        }
+        jdbcTemplate.update("UPDATE wines SET is_active=true WHERE id=?", otherWineId);
+        assertThat(wineRepository.findByProducerIdentity(new WineLabelSearchCriteria(
+                List.of("camunas limite"), null, null, null, 1))).hasSize(1);
+    }
+
+    @Test
+    void matchesCatalogIdentityWithoutDependingOnAccents() {
+        jdbcTemplate.update("UPDATE wines SET name=? WHERE id=?", "Séptima Reserva Malbec", searchWineId);
+        jdbcTemplate.update("UPDATE wineries SET name=? WHERE id=?", "Bodega Peñaflor Ñandú", wineryId);
+
+        for (String term : List.of("SEPTIMA RESERVA", "Séptima Reserva", "PENAFLOR NANDU")) {
+            assertThat(wineRepository.findByIndexedIdentity(new WineLabelSearchCriteria(
+                    List.of(term), null, null, null, 20)))
+                    .as(term).extracting(Wine::getId).contains(searchWineId);
+        }
+        for (String term : List.of("septima", "SÉPTIMA reserva", "sept", "ept", "penaflor", "Ñandú")) {
+            assertThat(wineRepository.searchAdvanced(term, null, null, null, null, null,
+                    PageQuery.of(0, 20), false).content())
+                    .as(term).extracting(Wine::getId).contains(searchWineId);
+            assertThat(wineRepository.searchAdvanced(term, "RED", null, null, null, null,
+                    PageQuery.of(0, 20), false).content())
+                    .as(term + " filtered").extracting(Wine::getId).containsExactly(searchWineId);
+        }
     }
 
     @Test

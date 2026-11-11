@@ -2999,7 +2999,13 @@
     "addWineHeadline": "Add your wine",
     "addWithoutPhoto": "Add without a photo",
     "addWithoutPhotoHint": "Don't have the bottle with you?",
-    "addWineCaptureHint": "Take a photo of the label. If it is already on Vinnot we show it to you; if not, fill in the details and we add it."
+    "addWineCaptureHint": "Take a photo of the label. If it is already on Vinnot we show it to you; if not, fill in the details and we add it.",
+    "scanBackLabel": "Scan the back label",
+    "scanBackLabelDescription": "Not one of these? The back label usually shows the winery and the barcode, which helps us find it.",
+    "backLabelHeadline": "Scan the back label",
+    "backLabelHint": "Turn the bottle around and frame the back label. We will add what we read to the front photo.",
+    "backLabelCancel": "Back to the result",
+    "barcodeDetected": "Barcode read"
   },
   "search": "Search",
   "type": "Type",
@@ -3065,7 +3071,8 @@
       "VIOLENCE": "Violence or threats",
       "PRIVACY": "Privacy",
       "MISINFORMATION": "Misleading information",
-      "OTHER": "Other"
+      "OTHER": "Other",
+      "CATALOG_QUALITY": "Catalog quality"
     },
     "statuses": {
       "OPEN": "Received",
@@ -3078,7 +3085,8 @@
       "COMMENT": "Comment",
       "USER": "User",
       "EVENT": "Event",
-      "WINE_ROUTE": "Route"
+      "WINE_ROUTE": "Route",
+      "WINE": "Wine"
     },
     "removeContent": "Remove content and resolve",
     "removeConfirm": "This deletes the review or comment and resolves the report. Record the reason first; this cannot be undone.",
@@ -3176,8 +3184,14 @@
       "OFFENSIVE": "Offensive or discriminatory content",
       "SPAM": "Spam or advertising",
       "PERSONAL_DATA": "It exposes personal data",
-      "OTHER": "Other"
-    }
+      "OTHER": "Other",
+      "CATALOG_FIXED": "The catalog was fixed",
+      "CATALOG_CORRECT": "The catalog was already right"
+    },
+    "catalogQualityDescription": "A member corrected an exact scan match: it may be a duplicate wine, the wrong winery or the wrong image.",
+    "automaticReporter": "Vinnot (automatic)",
+    "reportedByLabel": "Reported by",
+    "chosenWineLabel": "Wine the member chose"
   },
   "media": {
     "cover": "Cover photo",

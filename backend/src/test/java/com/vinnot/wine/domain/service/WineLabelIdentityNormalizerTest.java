@@ -2,12 +2,36 @@ package com.vinnot.wine.domain.service;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Set;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class WineLabelIdentityNormalizerTest {
+    @Test
+    void producerCoreKeepsDistinctiveWordsInPrintedOrder() {
+        assertThat(WineLabelIdentityNormalizer.producerCore("Bodega Mevi")).isEqualTo("mevi");
+        assertThat(WineLabelIdentityNormalizer.producerCore("Finca Camuñas")).isEqualTo("camunas");
+        assertThat(WineLabelIdentityNormalizer.producerCore("Viñedos y Bodegas Pascual Toso S.A."))
+                .isEqualTo("pascual toso");
+        assertThat(WineLabelIdentityNormalizer.producerCore("Bodegas de la Finca")).isEmpty();
+        assertThat(WineLabelIdentityNormalizer.producerCore(null)).isEmpty();
+    }
+
+    @Test
+    void recognizesLinesMadeOnlyOfGenericDesignationsOrKnownContext() {
+        List<String> context = Arrays.asList("Viognier", null, "Mendoza", "Argentina");
+        for (String generic : List.of("Edición Limitada", "ESTATE GROWN VIOGNIER", "Vino Fino Tinto",
+                "OLD VINE BLEND", "Gran Reserva", "Single Vineyard Mendoza", "Rosé Brut Nature")) {
+            assertThat(WineLabelIdentityNormalizer.isGenericDesignationOnly(generic, context)).as(generic).isTrue();
+        }
+        for (String identity : List.of("Edición Limitada Isabella", "Luna Roja", "Gran Reserva 1884", "Alamos",
+                "---", "")) {
+            assertThat(WineLabelIdentityNormalizer.isGenericDesignationOnly(identity, context)).as(identity).isFalse();
+        }
+    }
+
     @Test
     void recognizesCompleteLongProducerNamesSplitByOcrWithoutAcceptingPartialBrands() {
         assertThat(WineLabelIdentityNormalizer.producerSimilarity("REVER SAL", "Reversal")).isEqualTo(1.0);

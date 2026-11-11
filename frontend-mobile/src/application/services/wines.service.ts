@@ -23,6 +23,7 @@ import type {
   WineComparison,
   WineFilter,
   WineLabelScanInput,
+  WineScanFeedbackInput,
   WineLabelImageAttachmentInput,
   WineLabelImageAttachmentResult,
   WineReview,
@@ -159,8 +160,18 @@ export const winesService = {
   },
 
   async scanLabel(input: WineLabelScanInput, signal?: AbortSignal): Promise<WineScanResult> {
-    const dto = await winesClient.scanLabel(input.imageUri, input.observedText, signal);
+    const dto = await winesClient.scanLabel(
+      input.imageUri,
+      input.observedText,
+      signal,
+      input.barcode ?? undefined,
+    );
     return mapWineScanResult(dto);
+  },
+
+  /** Records what the member did with a scan result; the scan itself never depends on it. */
+  async sendScanFeedback(input: WineScanFeedbackInput): Promise<void> {
+    await winesClient.sendScanFeedback(input.scanId, input.verdict, input.wineId);
   },
 
   async submitWine(input: WineSubmissionInput): Promise<WineSubmissionResult> {

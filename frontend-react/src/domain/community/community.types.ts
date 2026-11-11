@@ -15,6 +15,12 @@ export const reportReasons = [
   "OTHER",
 ] as const;
 export type ReportReason = (typeof reportReasons)[number];
+/**
+ * Moderation also shows reports Vinnot files itself: catalog quality reports
+ * target a wine and have no reporter. Members can never choose these.
+ */
+export type ModerationTargetType = ReportTargetType | "WINE";
+export type ModerationReason = ReportReason | "CATALOG_QUALITY";
 export type ReportStatus = "OPEN" | "IN_REVIEW" | "RESOLVED" | "DISMISSED";
 export interface ReportInput {
   targetType: ReportTargetType;
@@ -28,9 +34,10 @@ export interface ReportReceipt {
   status: ReportStatus;
   createdAt: Date;
 }
-export interface ModerationReport extends ReportReceipt {
+export interface ModerationReport extends Omit<ReportReceipt, "target"> {
+  target: { type: ModerationTargetType; id: string };
   authorId: string | null;
-  reason: ReportReason;
+  reason: ModerationReason;
   description: string;
   excerpt: string;
   reviewerId: string | null;
@@ -38,8 +45,11 @@ export interface ModerationReport extends ReportReceipt {
   /** Names behind the ids; null when the server could not resolve them. */
   authorUsername: string | null;
   reviewerUsername: string | null;
-  /** Wine name (review, comment), event title, route name or username. */
+  /** Wine name (review, comment, wine), event title, route name or username. */
   targetLabel: string | null;
+  /** The wine a member picked instead of the matched one (catalog quality only). */
+  relatedTargetId: string | null;
+  relatedTargetLabel: string | null;
 }
 export interface BlockedUser {
   userId: string;

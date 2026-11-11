@@ -11,6 +11,9 @@ export const reportReasons = [
 ] as const;
 export type ReportReason = (typeof reportReasons)[number];
 export type ReportStatus = "OPEN" | "IN_REVIEW" | "RESOLVED" | "DISMISSED";
+/** Moderators also see system reports on catalog wines, which members can never file. */
+export type ModerationTargetType = ReportTargetType | "WINE";
+export type ModerationReason = ReportReason | "CATALOG_QUALITY";
 export interface ReportInput {
   targetType: ReportTargetType;
   targetId: string;
@@ -23,9 +26,10 @@ export interface ReportReceipt {
   status: ReportStatus;
   createdAt: Date;
 }
-export interface ModerationReport extends ReportReceipt {
+export interface ModerationReport extends Omit<ReportReceipt, "target"> {
+  target: { type: ModerationTargetType; id: string };
   authorId: string | null;
-  reason: ReportReason;
+  reason: ModerationReason;
   description: string;
   excerpt: string;
   reviewerId: string | null;
@@ -35,6 +39,8 @@ export interface ModerationReport extends ReportReceipt {
   reviewerUsername: string | null;
   /** Wine name (review, comment), event title, route name or username. */
   targetLabel: string | null;
+  /** Catalog quality reports: the wine the member chose instead of the matched one. */
+  relatedTargetLabel: string | null;
 }
 export interface BlockedUser {
   userId: string;

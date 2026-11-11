@@ -18,6 +18,7 @@ instante ([Reseñas](../reviews/README.md)) y el equipo revisa las denuncias des
 |---|---|
 | Usuario autenticado | Sigue a otros miembros, abre perfiles públicos, consulta sugerencias y el muro de quienes sigue, denuncia contenido, bloquea y desbloquea cuentas y consulta su actividad |
 | Moderador o administrador | Revisa las denuncias y retira contenido (desde Administración) |
+| Vinnot (automático) | Abre una denuncia de calidad de catálogo cuando un miembro corrige una coincidencia exacta del escaneo de etiquetas ([Vinos](../wines/use-cases/uc-win-05-scan-label.md)) |
 | Servicio de email | Avisa el resultado de una denuncia y el retiro de contenido |
 | Servicio de push | Avisa a un miembro que alguien empezó a seguirlo |
 
@@ -28,6 +29,7 @@ instante ([Reseñas](../reviews/README.md)) y el equipo revisa las denuncias des
 | Acceso | Denuncias y bloqueos requieren sesión; la identidad sale del token | [`CommunityController.java`](../../../../backend/src/main/java/com/vinnot/community/infrastructure/web/CommunityController.java) |
 | Qué se denuncia | Usuarios activos, reseñas y comentarios aprobados de vinos activos, eventos ya publicados y rutas publicadas | [`JdbcCommunityTargetAdapter.java`](../../../../backend/src/main/java/com/vinnot/community/infrastructure/persistence/JdbcCommunityTargetAdapter.java) |
 | Motivos | Spam, acoso, odio, contenido sexual, violencia, privacidad, desinformación u otro; «Otro» exige descripción de hasta 2000 caracteres | [`CommunityReport.java`](../../../../backend/src/main/java/com/vinnot/community/domain/model/CommunityReport.java) |
+| Calidad de catálogo | Solo Vinnot denuncia un vino del catálogo: objetivo `WINE`, motivo `CATALOG_QUALITY`, sin denunciante y con el otro vino en `related_target_id`; una denuncia abierta por par de vinos en cualquier orden; la moderación la resuelve o la descarta y corrige el catálogo a mano, nunca automáticamente. Los miembros reciben 422 `REPORT_NOT_ALLOWED` | [`ReportCatalogIssueCommandHandler.java`](../../../../backend/src/main/java/com/vinnot/community/application/command/handler/ReportCatalogIssueCommandHandler.java) |
 | Sin duplicados | Una denuncia abierta por persona y contenido; repetirla devuelve el mismo comprobante | [`CreateReportCommandHandler.java`](../../../../backend/src/main/java/com/vinnot/community/application/command/handler/CreateReportCommandHandler.java) |
 | Límites | 10 denuncias nuevas por día y 10 envíos por hora con su propia política `report`, separada de las consultas a soporte | [`RateLimitPolicyResolver.java`](../../../../backend/src/main/java/com/vinnot/shared/infrastructure/security/RateLimitPolicyResolver.java) |
 | Bloqueo | Vale en ambos sentidos: oculta reseñas, comentarios y perfil, corta likes, comentarios y avisos, y termina los seguimientos en ambas direcciones | [`ChangeUserBlockCommandHandler.java`](../../../../backend/src/main/java/com/vinnot/community/application/command/handler/ChangeUserBlockCommandHandler.java) |
@@ -69,7 +71,7 @@ stateDiagram-v2
 
 ## Datos
 
-Tablas creadas en `V24`; `V25` indexa las denuncias cerradas para la depuración. `V87`, `V88` y `V89` agregan la capa social y el perfil de gustos (ver abajo).
+Tablas creadas en `V24`; `V25` indexa las denuncias cerradas para la depuración. `V87`, `V88` y `V89` agregan la capa social y el perfil de gustos, y `V93` las denuncias de calidad de catálogo (ver abajo).
 
 ```mermaid
 erDiagram
@@ -101,6 +103,7 @@ erDiagram
         varchar decision
         timestamptz created_at
         timestamptz updated_at
+        uuid related_target_id
     }
     community_report_actions {
         bigint id PK
@@ -135,7 +138,7 @@ erDiagram
     }
 ```
 
-[Ver diagrama de «Comunidad · Datos» completo](https://images.vinnot.com/docs/diagrams/v1/es/modules-community-readme-b3f558090537.svg)
+[Ver diagrama de «Comunidad · Datos» completo](https://images.vinnot.com/docs/diagrams/v1/es/modules-community-readme-1c0033997903.svg)
 
 El contenido denunciado se identifica por tipo y ID sin clave foránea, para que
 el caso se conserve aunque el contenido se borre. Borrar una cuenta elimina sus
@@ -165,3 +168,12 @@ primaria `(user_id, trait)`, `user_id` referencia `users` con `ON DELETE
 CASCADE`), `trait` `ACIDITY`, `BODY`, `TANNIN` o `SWEETNESS`, `score` de 0 a 100 y
 `updated_at`. Sin fila, el rasgo muestra su valor calculado. Ver
 [Paladar ajustable](architecture.md#paladar-ajustable).
+
+`V93` suma a `community_reports` las denuncias de calidad de catálogo: el tipo de
+objetivo `WINE`, el motivo `CATALOG_QUALITY`, la columna opcional
+`related_target_id` (el vino que eligió el miembro) y el índice único parcial
+`community_report_open_catalog_pair` sobre
+`(LEAST(target_id, related_target_id), GREATEST(target_id, related_target_id))`
+para las denuncias `CATALOG_QUALITY` en `OPEN` o `IN_REVIEW`, así que un par de
+vinos tiene como máximo una denuncia abierta. Ver
+[Denuncias de calidad de catálogo](architecture.md#denuncias-de-calidad-de-catálogo).

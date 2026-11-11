@@ -40,6 +40,18 @@ public enum WineLabelLanguageVocabulary {
     private static final Set<String> GENERIC_WINE_TERMS = Set.of(
             "fine", "vin", "vinho", "vinhos", "vino", "vinos", "wein", "weine",
             "wine", "wines");
+    /**
+     * Quality, style and origin wording printed on many labels. A line made only of these words never
+     * identifies a product on its own; searched alone it fills the candidate pool with unrelated producers.
+     */
+    private static final Set<String> GENERIC_DESIGNATIONS = Set.of(
+            "blanc", "blanco", "blend", "bottled", "brut", "classic", "clasico", "clarete", "cosecha",
+            "crianza", "dulce", "edicion", "edition", "especial", "espumante", "espumoso", "estate",
+            "extra", "fino", "gran", "grand", "grown", "harvest", "joven", "late", "limitada",
+            "limited", "metodo", "natural", "nature", "oak", "old", "organic", "premium", "red",
+            "reserva", "reserve", "roble", "rosado", "rose", "seleccion", "selection", "single",
+            "special", "tardia", "tinto", "tradicional", "varietal", "vine", "vines", "vineyard",
+            "white");
     private static final Set<String> LEGAL_ENTITY_DESIGNATORS = Set.of(
             "gmbh", "inc", "lda", "limited", "llc", "ltd", "sa", "spa", "srl");
 
@@ -58,6 +70,10 @@ public enum WineLabelLanguageVocabulary {
                 .collect(Collectors.toSet());
         terms.addAll(GENERIC_WINE_TERMS);
         return Set.copyOf(terms);
+    }
+
+    public static Set<String> genericDesignations() {
+        return GENERIC_DESIGNATIONS;
     }
 
     public static Set<String> allProducerDesignators() {

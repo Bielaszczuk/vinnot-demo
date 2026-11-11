@@ -40,5 +40,6 @@ export function mapWineScanResult(dto: WineScanResultInput): WineScanResult {
         score: candidate.score,
       })) ?? [],
     extractedData: dto.extractedData ? mapExtractedLabelData(dto.extractedData) : null,
+    scanId: dto.scanId ?? null,
   };
 }

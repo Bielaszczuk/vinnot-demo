@@ -47,7 +47,7 @@ flowchart LR
 ### Contract and boundaries
 
 `community` handles reports about `REVIEW`, `COMMENT`, `USER`, `EVENT` and
-`WINE_ROUTE`. The server resolves the author and a bounded content snapshot;
+`WINE_ROUTE`, plus the catalog quality reports about `WINE` that only Vinnot files. The server resolves the author and a bounded content snapshot;
 clients submit only the target type, ID, reason and description. Reportable targets
 are active users, approved reviews/comments on active wines, events that have been published,
 and published routes. Drafts cannot be reported through this public flow.
@@ -98,7 +98,7 @@ items per page.
 | `POST /users/me/taste-quiz/skip` | 204; records `SKIPPED` only when the caller has no quiz yet, so a completed quiz is never erased |
 | `PUT /users/me/taste-traits` | Body `{structure}`: a trait key to a whole score from 0 to 100, or to `null` to clear that trait; traits left out stay as they are; 204. 400 `INVALID_TASTE_ADJUSTMENT` for a missing or empty `structure`, an unknown trait or a score that is not a whole number from 0 to 100, and nothing is stored (see [Adjustable palate](#adjustable-palate)) |
 | `DELETE /users/me/taste-traits` | 204, idempotent; clears every manual value of the caller |
-| `GET /admin/community/reports?status=OPEN` | ADMIN/MODERATOR; queue with private evidence plus `authorUsername`, `reviewerUsername` and `targetLabel` |
+| `GET /admin/community/reports?status=OPEN` | ADMIN/MODERATOR; queue with private evidence plus `authorUsername`, `reviewerUsername`, `targetLabel`, `relatedTargetId` and `relatedTargetLabel` |
 | `PATCH /admin/community/reports/{id}` | ADMIN/MODERATOR; assignment or documented decision |
 | `POST /admin/community/reports/{id}/remove-content` | ADMIN/MODERATOR plus `REVIEW_DELETE`; review/comment only; reason required |
 
@@ -133,6 +133,24 @@ stateDiagram-v2
 An assigned reviewer keeps ownership; another reviewer cannot change the case.
 Final statuses cannot be reopened. `community_report_actions` records each
 transition with reviewer, time and decision. Reporter receipts do not expose notes.
+
+### Catalog quality reports
+
+Vinnot itself files a moderation report when a member corrects an exact label
+scan match, because the matched wine and the wine the member picked may be
+duplicates, or one of them may carry the wrong winery or image
+([UC-WIN-05](../wines/use-cases/uc-win-05-scan-label.md)). The wines module only
+knows its output port `CatalogQualitySignalPort`; its adapter
+`CommunityCatalogQualitySignalAdapter` calls the community input port
+`ReportCatalogIssueUseCase`.
+
+| Rule | Detail |
+|---|---|
+| Shape | `CommunityReport.exactMatchCorrected`: no reporter or author, target `WINE` (the matched wine), reason `CATALOG_QUALITY`, `related_target_id` the chosen wine, fixed English description and an excerpt `matched → chosen` built from `CommunityTargetPort.describeCatalogWine` (name, vintage and winery) |
+| No duplicates | `ReportCatalogIssueCommandHandler` skips a pair that already has an open or in-review report in either order, and `insertIfAbsent` relies on the partial unique index `community_report_open_catalog_pair` (`V93`) to drop concurrent duplicates |
+| Isolation | It runs in its own transaction (`REQUIRES_NEW`), so a failed report never rolls back the scan feedback; a wine that no longer exists or is inactive files nothing |
+| Members | `CommunityReport.requireMemberReportable` rejects a `WINE` target or the `CATALOG_QUALITY` reason in `POST /community/reports` with 422 `REPORT_NOT_ALLOWED`; `JdbcCommunityTargetAdapter` never resolves a wine as public member-reportable content |
+| Moderation | The queue returns `relatedTargetId` and `relatedTargetLabel`, and `targetLabel` is the wine name. Moderators resolve or dismiss the report; `remove-content` refuses it, the email notifier has nobody to notify, and catalog rows are only fixed by hand in wine administration |
 
 ### Blocking effects
 

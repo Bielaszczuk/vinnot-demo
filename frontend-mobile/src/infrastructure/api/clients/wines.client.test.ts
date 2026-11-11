@@ -268,3 +268,44 @@ describe("winesClient review avatars", () => {
     });
   });
 });
+
+describe("winesClient label scan barcode and feedback", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("sends the barcode read next to the label as its own multipart part", async () => {
+    postMock.mockResolvedValue({ data: { outcome: "NO_MATCH", scanId: "scan-1" } });
+
+    const result = await winesClient.scanLabel("file:///label.jpg", ["CATENA"], undefined, "7791234567898");
+
+    const sent = postMock.mock.calls.at(-1)?.[1] as FormData;
+    expect(sent.get("barcode")).toBe("7791234567898");
+    expect(sent.getAll("observedText")).toEqual(["CATENA"]);
+    expect(result.scanId).toBe("scan-1");
+  });
+
+  it("sends no barcode part when none was read", async () => {
+    postMock.mockResolvedValue({ data: { outcome: "NO_MATCH" } });
+
+    await winesClient.scanLabel("file:///label.jpg", ["CATENA"]);
+
+    const sent = postMock.mock.calls.at(-1)?.[1] as FormData;
+    expect(sent.get("barcode")).toBeNull();
+    expect(sent.getAll("observedText")).toEqual(["CATENA"]);
+  });
+
+  it("posts the member verdict for a scan", async () => {
+    postMock.mockResolvedValue({ data: undefined, status: 204 });
+
+    await winesClient.sendScanFeedback("scan/1", "CORRECTED", "wine-2");
+    await winesClient.sendScanFeedback("scan-2", "NOT_IN_CATALOG", null);
+
+    expect(postMock).toHaveBeenNthCalledWith(1, "/wines/scans/scan%2F1/feedback", {
+      verdict: "CORRECTED",
+      wineId: "wine-2",
+    });
+    expect(postMock).toHaveBeenNthCalledWith(2, "/wines/scans/scan-2/feedback", {
+      verdict: "NOT_IN_CATALOG",
+      wineId: null,
+    });
+  });
+});

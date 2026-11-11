@@ -4,10 +4,10 @@ import { Button } from '@components/ui/Button'
 import { ReasonPicker } from '@components/ui/ReasonPicker'
 import { fieldLabelClassName } from '@components/ui/fieldStyles'
 import { useConfirm } from '@hooks/useConfirm'
-import type { ReportTargetType } from '@domain/community/community.types'
+import type { ModerationTargetType } from '@domain/community/community.types'
 import {
   MAX_REPORT_DECISION_LENGTH,
-  REPORT_DECISION_REASONS,
+  reportDecisionReasons,
   reportOutcomes,
   type ReportDecisionReason,
   type ReportOutcome,
@@ -23,7 +23,7 @@ const OUTCOME_TONES = { RESOLVED: 'wine', DISMISSED: 'wine', REMOVE_CONTENT: 'da
 
 interface ReportDecisionFormProps {
   reportId: string
-  targetType: ReportTargetType
+  targetType: ModerationTargetType
   disabled: boolean
   onDecide: (input: { id: string; status: 'IN_REVIEW' | 'RESOLVED' | 'DISMISSED'; decision: string }) => void
   onRemove: (input: { id: string; decision: string }) => void
@@ -38,7 +38,7 @@ export function ReportDecisionForm({ reportId, targetType, disabled, onDecide, o
   const { confirm } = useConfirm()
   const id = useId()
   const [outcome, setOutcome] = useState<ReportOutcome>('RESOLVED')
-  const [reason, setReason] = useState<ReportDecisionReason>(REPORT_DECISION_REASONS.RESOLVED[0])
+  const [reason, setReason] = useState<ReportDecisionReason>(reportDecisionReasons('RESOLVED', targetType)[0] ?? 'OTHER')
   const [note, setNote] = useState('')
   const decision = presetReasonText(
     reason, t(`community.decisionReasons.${outcome}.${reason}`), note, MAX_REPORT_DECISION_LENGTH,
@@ -46,7 +46,7 @@ export function ReportDecisionForm({ reportId, targetType, disabled, onDecide, o
 
   const chooseOutcome = (next: ReportOutcome) => {
     setOutcome(next)
-    setReason(REPORT_DECISION_REASONS[next][0])
+    setReason(reportDecisionReasons(next, targetType)[0] ?? 'OTHER')
     setNote('')
   }
 
@@ -89,7 +89,7 @@ export function ReportDecisionForm({ reportId, targetType, disabled, onDecide, o
       </div>
       <ReasonPicker
         legend={t('community.decisionReasonLabel')}
-        reasons={REPORT_DECISION_REASONS[outcome] as readonly ReportDecisionReason[]}
+        reasons={reportDecisionReasons(outcome, targetType)}
         value={reason}
         onChange={setReason}
         getLabel={(code) => t(`community.decisionReasons.${outcome}.${code}`)}

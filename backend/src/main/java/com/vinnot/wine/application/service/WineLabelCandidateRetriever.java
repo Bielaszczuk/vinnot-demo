@@ -40,6 +40,8 @@ public class WineLabelCandidateRetriever {
     private static final int MAX_OBSERVED_TERM_TOKENS = 6;
     private static final int MAX_FALLBACK_TOKENS = 12;
     private static final int MIN_IDENTITY_TERM_LENGTH = 3;
+    private static final int PRODUCER_CATALOG_POOL_SIZE = 150;
+    private static final int MIN_PRODUCER_CORE_LENGTH = 4;
 
     private final WineRepositoryPort wineRepository;
 
@@ -65,6 +67,8 @@ public class WineLabelCandidateRetriever {
             }
         }
         retrieveIndexedEvidence(label, deadline, timedOut).forEach(wine ->
+                uniqueCandidates.putIfAbsent(wine.getId(), wine));
+        retrieveProducerCatalog(label, deadline, timedOut).forEach(wine ->
                 uniqueCandidates.putIfAbsent(wine.getId(), wine));
         if (!uniqueCandidates.isEmpty()) {
             return List.copyOf(uniqueCandidates.values());
@@ -103,6 +107,29 @@ public class WineLabelCandidateRetriever {
         return List.copyOf(candidates.values());
     }
 
+    /**
+     * The identified producer's whole active catalog (bounded): the printed product is then chosen among the
+     * producer's own wines, even when its catalog name shares no indexed word with the label.
+     */
+    private List<Wine> retrieveProducerCatalog(ExtractedWineLabel label, WineLabelScanDeadline deadline,
+                                             AtomicBoolean timedOut) {
+        String producer = WineLabelIdentityNormalizer.producerCore(label.wineryName());
+        if (producer.replace(" ", "").length() < MIN_PRODUCER_CORE_LENGTH
+                || WineLabelIdentityNormalizer.isGenericDesignationOnly(producer, Arrays.asList(
+                        label.grapeVariety(), label.wineType(), label.region(), label.country()))) {
+            return List.of();
+        }
+        deadline.remaining();
+        try {
+            return wineRepository.findByProducerIdentity(new WineLabelSearchCriteria(
+                    List.of(producer), label.vintage(), label.grapeVariety(), label.wineType(),
+                    PRODUCER_CATALOG_POOL_SIZE));
+        } catch (WineLabelCatalogSearchTimeoutException ignored) {
+            timedOut.set(true);
+            return List.of();
+        }
+    }
+
     private List<String> complementaryOcrTerms(ExtractedWineLabel label) {
         if (Objects.isNull(label.wineryName()) || label.wineryName().isBlank()) {
             return List.of();
@@ -133,8 +160,12 @@ public class WineLabelCandidateRetriever {
         terms.add(label.searchKeywords());
         terms.add(label.wineryName());
         terms.addAll(observedTerms(label));
+        List<String> context = Arrays.asList(
+                label.grapeVariety(), label.wineType(), label.region(), label.country());
         return usefulTerms(terms, label.vintage()).stream()
                 .filter(term -> !isStructuredMetadataOnly(term, label))
+                .filter(term -> term.equals(label.wineryName())
+                        || !WineLabelIdentityNormalizer.isGenericDesignationOnly(term, context))
                 .toList();
     }
 
@@ -167,6 +198,17 @@ public class WineLabelCandidateRetriever {
     }
 
     /** An unrelated indexed hit must not suppress approximate identity retrieval. */
+    /** Active catalog wines by id, in the order given (used for visual hints). */
+    public List<Wine> retrieveByIds(List<UUID> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        Map<UUID, Wine> found = new LinkedHashMap<>();
+        wineRepository.findAllByIds(ids).stream().filter(Wine::isActive)
+                .forEach(wine -> found.put(wine.getId(), wine));
+        return ids.stream().map(found::get).filter(Objects::nonNull).toList();
+    }
+
     public List<Wine> retrieveApproximate(ExtractedWineLabel label, WineLabelScanDeadline deadline) {
         deadline.remaining();
         AtomicBoolean timedOut = new AtomicBoolean();

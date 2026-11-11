@@ -46,6 +46,7 @@ import {
   exitWineDetail,
   isOpenedFromWineScanner,
   opensWineReviewsTab,
+  readScannedVintage,
 } from "@/presentation/navigation/wineNavigation";
 import { useWineReviewFocus, useWineReviewShortcut } from "@/presentation/hooks/ui/useWineReviewFocus";
 import { layout, radii, spacing } from "@/shared/theme/tokens";
@@ -55,12 +56,13 @@ import { BrandRefreshControl } from "@/presentation/components/ui/BrandRefreshCo
 import { fontSizes } from "@/shared/theme/typography";
 
 export default function WineDetailScreen() {
-  const { id, returnTo, scanReturnTo, review, tab: tabParam } = useLocalSearchParams<{
+  const { id, returnTo, scanReturnTo, review, tab: tabParam, scannedVintage } = useLocalSearchParams<{
     id: string;
     returnTo?: string;
     scanReturnTo?: string | string[];
     review?: string;
     tab?: string;
+    scannedVintage?: string | string[];
   }>();
   const router = useRouter();
   const shareLink = useShareLink();
@@ -360,6 +362,7 @@ export default function WineDetailScreen() {
         <CellarAddSheet
           visible={cellarSheetOpen}
           initialWine={wine}
+          initialVintage={readScannedVintage(scannedVintage)}
           onClose={() => setCellarSheetOpen(false)}
         />
       </KeyboardAwareScrollView>

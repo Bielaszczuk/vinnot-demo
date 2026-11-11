@@ -25,6 +25,10 @@ describe("operation cache tags", () => {
   it("does not refetch catalogs for a read-only scan", () => {
     expect(mutationTags("wine.scan")).toEqual([]);
   });
+  it("does not refetch anything or award points for scan feedback", () => {
+    expect(mutationTags("wine.scanFeedback")).toEqual([]);
+    expect(pointsTags("wine.scanFeedback")).toEqual([]);
+  });
   it("keeps cellar queries scoped to cellar data", () => {
     expect(queryTags("cellar.list")).toEqual(["Cellar"]);
   });

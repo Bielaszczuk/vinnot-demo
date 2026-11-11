@@ -243,6 +243,7 @@ Las denuncias de la comunidad se revisan en «Denuncias de la comunidad», pesta
 - No ves las denuncias que hiciste ni las que tratan sobre tu contenido.
 - Si otra persona ya tomó el caso, no puedes decidirlo.
 - Quien denunció recibe el resultado. Las denuncias cerradas se eliminan a los 90 días.
+- Las denuncias de calidad de catálogo las abre Vinnot cuando un miembro corrige una coincidencia exacta del escaneo de etiquetas. En la web muestran «Vinnot (automático)» en «Reportado por», el vino reconocido, «Vino elegido por el miembro» y los botones «Abrir el vino reconocido» y «Abrir el vino elegido». Solo se pueden resolver («Se corrigió el catálogo») o desestimar («El catálogo estaba bien» o «Denuncia duplicada»): revisa ambos vinos y, si uno está duplicado o tiene la bodega o la imagen equivocada, corrígelo a mano en [Vinos](#vinos). Al cerrarlas no se envía ningún email. En la app el caso muestra la misma explicación, «Reportado por: Vinnot (automático)» y «Vino elegido por el miembro», y «Revisar contenido» abre la administración de vinos.
 - Las medidas sobre cuentas, como suspender, las toma un administrador.
 
 Caso de uso: [UC-ADM-07](../modules/admin/use-cases/uc-adm-07-moderate-reports.md). Reglas de la comunidad: [Comunidad](../modules/community/README.md).

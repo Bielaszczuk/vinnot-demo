@@ -3,6 +3,7 @@ package com.vinnot.wine.infrastructure.persistence.search;
 import com.vinnot.shared.domain.valueobject.PageResult;
 import com.vinnot.shared.infrastructure.persistence.PageMapper;
 import com.vinnot.wine.domain.model.Wine;
+import com.vinnot.wine.domain.service.WineLabelLanguageVocabulary;
 import com.vinnot.wine.infrastructure.persistence.entity.WineJpaEntity;
 import com.vinnot.wine.infrastructure.persistence.mapper.WinePersistenceMapper;
 import jakarta.persistence.EntityManager;
@@ -38,6 +39,19 @@ public class WineSearchNativeRepository {
     private static final int CATALOG_FALLBACK_QUERY_TIMEOUT_MS = 3_000;
     private static final int MIN_CATALOG_CANDIDATE_LIMIT = 500;
     private static final int MAX_SUBSTRING_COMPATIBILITY_LENGTH = 3;
+    /**
+     * The read models store unaccented text (V90). Rows written before V90 keep their accents until
+     * CatalogSearchAccentNormalizer rewrites them, so queries match both the unaccented and the typed form.
+     */
+    private static final int PRODUCER_HIT_LIMIT = 500;
+    private static final int PRODUCER_LIMIT = 5;
+    /** Ranks producers by their distinctive words, as the domain does: "Bodega Norton" ranks as "norton". */
+    private static final String PRODUCER_DESIGNATOR_PATTERN = "\\m("
+            + WineLabelLanguageVocabulary.allProducerDesignators().stream().sorted()
+                    .collect(Collectors.joining("|"))
+            + ")\\M";
+    private static final String UNACCENT_FUNCTION = "public.catalog_search_unaccent";
+    private static final String PREFIX_QUERY = accentTolerantQuery("to_tsquery", "CAST(:searchTsQuery AS TEXT)");
     /** Read model with the catalog search text and the filter attributes, intersected in one GIN index (V86). */
     private static final String FILTERED_CATALOG = "wine_catalog_filter_search";
     /** Entries walked per grape key before a sparse filter combination falls back to the exact filtered set. */
@@ -219,11 +233,11 @@ public class WineSearchNativeRepository {
             candidateBranches.add(
                     "(SELECT w.id AS wine_id, "
                             + "1.0 + ts_rank_cd(catalog.search_vector, "
-                            + "plainto_tsquery('simple', " + fullTextParameter + "), 2) "
+                            + accentTolerantQuery("plainto_tsquery", fullTextParameter) + ", 2) "
                             + "AS identity_score FROM wine_catalog_search catalog "
                             + "JOIN wines w ON w.id = catalog.wine_id "
                             + "WHERE w.is_active = true AND catalog.search_vector "
-                            + "@@ plainto_tsquery('simple', " + fullTextParameter + ") "
+                            + "@@ " + accentTolerantQuery("plainto_tsquery", fullTextParameter) + " "
                             + "ORDER BY identity_score DESC, w.id ASC "
                             + "LIMIT :indexedBranchLimit)");
             candidateBranches.add(
@@ -236,7 +250,8 @@ public class WineSearchNativeRepository {
             params.put(parameter, terms.get(index));
             // OCR can join product words with punctuation. PostgreSQL treats a
             // hyphenated word/host name as an extra required lexeme; catalog text
-            // may use spaces instead. Preserve scripts/accents and all identity tokens.
+            // may use spaces instead. Scripts and every identity token are preserved;
+            // accents are removed in SQL, like the stored catalog text.
             params.put(parameter + "Tokens", terms.get(index)
                     .replaceAll("(?<=[\\p{L}\\p{N}])[.\\p{Pd}](?=[\\p{L}\\p{N}])", " "));
         }
@@ -269,6 +284,53 @@ public class WineSearchNativeRepository {
      * containment. Parameters are normalized by the application layer and are
      * bound values; wildcard placement never interpolates user input into SQL.
      */
+    /**
+     * The active wines of the producers named by an observed producer core. Candidate producers are kept only
+     * when their normalized name contains the core as whole words, so "mevi" finds "Bodega Mevi" and "camunas"
+     * finds "Finca Camuñas"; the five most similar producers are returned, most similar first.
+     */
+    @SuppressWarnings("unchecked")
+    public List<Wine> findByProducerIdentity(String producerCore, int limit) {
+        if (Objects.isNull(producerCore) || producerCore.isBlank()) {
+            return List.of();
+        }
+        String normalizedName = "regexp_replace(lower(" + unaccented("wy.name")
+                + "), '[^a-z0-9]+', ' ', 'g')";
+        // Producer names as written (trigram index), plus producers whose unaccented catalog identity carries
+        // the core, which also reaches accented names. Both branches are bounded before deduplication.
+        String sql = "WITH producer_hits AS ("
+                + "(SELECT wy.id AS winery_id FROM wineries wy "
+                + "WHERE wy.is_active = true AND wy.name ILIKE CONCAT('%', CAST(:producerCore AS TEXT), '%') "
+                + "ORDER BY wy.id LIMIT :producerHitLimit) "
+                + "UNION "
+                + "(SELECT w.winery_id FROM wine_catalog_search catalog "
+                + "JOIN wines w ON w.id = catalog.wine_id "
+                + "WHERE w.is_active = true AND w.winery_id IS NOT NULL "
+                + "AND catalog.search_vector @@ "
+                + accentTolerantQuery("plainto_tsquery", "CAST(:producerCore AS TEXT)") + " "
+                + "LIMIT :producerHitLimit)"
+                + "), producers AS ("
+                + "SELECT wy.id, similarity(btrim(regexp_replace(regexp_replace(" + normalizedName
+                + ", CAST(:producerDesignators AS TEXT), ' ', 'g'), ' +', ' ', 'g')), "
+                + "CAST(:producerCore AS TEXT)) AS similarity "
+                + "FROM wineries wy JOIN producer_hits hits ON hits.winery_id = wy.id "
+                + "WHERE wy.is_active = true "
+                + "AND ' ' || " + normalizedName + " || ' ' LIKE CONCAT('% ', CAST(:producerCore AS TEXT), ' %') "
+                + "ORDER BY similarity DESC, wy.id ASC LIMIT :producerLimit"
+                + ") SELECT w.* FROM producers p JOIN wines w ON w.winery_id = p.id "
+                + "WHERE w.is_active = true "
+                + "ORDER BY p.similarity DESC, w.name ASC, w.id ASC LIMIT :wineLimit";
+        Query query = entityManager.createNativeQuery(sql, WineJpaEntity.class);
+        query.setParameter("producerCore", producerCore.trim());
+        query.setParameter("producerHitLimit", PRODUCER_HIT_LIMIT);
+        query.setParameter("producerLimit", PRODUCER_LIMIT);
+        query.setParameter("producerDesignators", PRODUCER_DESIGNATOR_PATTERN);
+        query.setParameter("wineLimit", limit);
+        query.setHint("jakarta.persistence.query.timeout", LABEL_INDEXED_QUERY_TIMEOUT_MS);
+        List<WineJpaEntity> results = query.getResultList();
+        return results.stream().map(WinePersistenceMapper::toDomain).toList();
+    }
+
     @SuppressWarnings("unchecked")
     public List<Wine> findByCommercialIdentity(
             List<String> identityTerms, Integer vintage,
@@ -321,6 +383,20 @@ public class WineSearchNativeRepository {
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
+
+    private static String unaccented(String textExpression) {
+        return UNACCENT_FUNCTION + "(" + textExpression + ")";
+    }
+
+    private static String accentTolerantQuery(String tsQueryFunction, String textExpression) {
+        return "(" + tsQueryFunction + "('simple', " + unaccented(textExpression) + ") || "
+                + tsQueryFunction + "('simple', " + textExpression + "))";
+    }
+
+    private static String accentTolerantLike(String column, String patternExpression) {
+        return "(" + column + " LIKE " + unaccented(patternExpression) + " OR " + column + " LIKE "
+                + patternExpression + ")";
+    }
 
     private static String winePredicate(boolean includeInactive) {
         return activePredicate("w", includeInactive);
@@ -531,7 +607,7 @@ public class WineSearchNativeRepository {
     private boolean containsShortSearchWord(String[] words) {
         return Arrays.stream(words)
                 .map(word -> word.toLowerCase(Locale.ROOT)
-                        .replaceAll("[^\\p{Alnum}]+", ""))
+                        .replaceAll("[^\\p{L}\\p{N}]+", ""))
                 .anyMatch(word -> word.length() <= MAX_SUBSTRING_COMPATIBILITY_LENGTH);
     }
 
@@ -556,7 +632,7 @@ public class WineSearchNativeRepository {
             for (int index = 0; index < words.length; index++) {
                 String parameter = "containedWord" + index;
                 containmentPredicates.add(
-                        "catalog.search_text LIKE CAST(:" + parameter + " AS TEXT)");
+                        accentTolerantLike("catalog.search_text", "CAST(:" + parameter + " AS TEXT)"));
                 params.put(parameter, "%" + words[index].toLowerCase(Locale.ROOT) + "%");
             }
         }
@@ -628,14 +704,14 @@ public class WineSearchNativeRepository {
         return switch (tier) {
             case PREFIX -> "(SELECT w.id AS wine_id, "
                 + "2.0 + ts_rank_cd(catalog.search_vector, "
-                + "to_tsquery('simple', CAST(:searchTsQuery AS TEXT))) "
+                + PREFIX_QUERY + ") "
                 + "+ CASE WHEN LOWER(w.name) = LOWER(CAST(:searchText AS TEXT)) "
                 + "THEN 2.0 ELSE 0.0 END AS relevance "
                 + "FROM wine_catalog_search catalog "
                 + "JOIN wines w ON w.id = catalog.wine_id "
                 + "WHERE " + activeWine + " "
                 + "AND catalog.search_vector @@ "
-                + "to_tsquery('simple', CAST(:searchTsQuery AS TEXT)) "
+                + PREFIX_QUERY + " "
                 + filters
                 + " LIMIT :candidateLimit)";
             case CONTAINMENT -> "(SELECT w.id AS wine_id, 1.5 AS relevance "
@@ -662,13 +738,13 @@ public class WineSearchNativeRepository {
         return switch (tier) {
             case PREFIX -> "(SELECT catalog.wine_id, catalog.name, "
                 + "2.0 + ts_rank_cd(catalog.search_vector, "
-                + "to_tsquery('simple', CAST(:searchTsQuery AS TEXT))) "
+                + PREFIX_QUERY + ") "
                 + "+ CASE WHEN LOWER(catalog.name) = LOWER(CAST(:searchText AS TEXT)) "
                 + "THEN 2.0 ELSE 0.0 END AS relevance "
                 + "FROM " + FILTERED_CATALOG + " catalog "
                 + "WHERE " + activeCatalog + " "
                 + "AND catalog.search_vector @@ "
-                + "to_tsquery('simple', CAST(:searchTsQuery AS TEXT))"
+                + PREFIX_QUERY
                 + catalogFilters
                 + " LIMIT :candidateLimit)";
             case CONTAINMENT -> "(SELECT catalog.wine_id, catalog.name, 1.5 AS relevance "
@@ -895,7 +971,7 @@ public class WineSearchNativeRepository {
     private String toPrefixTsQuery(String word) {
         String normalized = word
                 .toLowerCase(Locale.ROOT)
-                .replaceAll("[^\\p{Alnum}]+", "");
+                .replaceAll("[^\\p{L}\\p{N}]+", "");
         if (normalized.isBlank()) {
             return null;
         }

@@ -6,9 +6,15 @@ import {
 import {
   useAttachWineLabelImage,
   useScanWineLabel,
+  useSendScanFeedback,
   useWines,
 } from "@/presentation/hooks/queries/wine/useWines";
-import type { WineSummary } from "@/domain/wine/wine.types";
+import type { WineScanFeedbackVerdict, WineSummary } from "@/domain/wine/wine.types";
+import {
+  mergeObservedLabelText,
+  normalizeLabelBarcode,
+  plausibleScannedVintage,
+} from "@/domain/wine/labelScan";
 import { useToast } from "@/presentation/providers/ToastProvider";
 import { useTranslation } from "react-i18next";
 import { useDebounce } from "@/presentation/hooks/ui";
@@ -43,6 +49,15 @@ export function useWineLabelScanViewModel({ addWineIntent = false }: WineLabelSc
   const [manualQuery, setManualQuery] = useState("");
   const scanMutation = useScanWineLabel();
   const attachImageMutation = useAttachWineLabelImage();
+  const feedbackMutation = useSendScanFeedback();
+  const scansWithFeedback = useRef(new Set<string>());
+  // The last valid EAN/UPC code the preview saw during this scan session.
+  const barcodeRef = useRef<string | null>(null);
+  const [barcodeDetected, setBarcodeDetected] = useState(false);
+  // While true, the next capture is the back label of the current scan.
+  const backLabelScanRef = useRef(false);
+  const [isBackLabelScan, setIsBackLabelScan] = useState(false);
+  const [backLabelMerged, setBackLabelMerged] = useState(false);
   const resetScanMutation = scanMutation.reset;
   const requestGeneration = useRef(0);
   const captureInProgress = useRef(false);
@@ -81,6 +96,11 @@ export function useWineLabelScanViewModel({ addWineIntent = false }: WineLabelSc
       if (!camera || !imageUri) {
         throw new Error("Camera did not return a captured image");
       }
+      if (backLabelScanRef.current) {
+        imageCaptured = true;
+        await analyzeBackLabel(camera, imageUri, generation);
+        return;
+      }
       if (capturedImageRef.current) releaseImage(capturedImageRef.current);
       capturedImageRef.current = imageUri;
       setCapturedUri(imageUri);
@@ -100,11 +120,48 @@ export function useWineLabelScanViewModel({ addWineIntent = false }: WineLabelSc
     }
   };
 
+  /**
+   * Reads the back label and re-sends the front photo with both readings, so
+   * the scan keeps its best image. Without a front photo the back one is sent.
+   */
+  const analyzeBackLabel = async (
+    camera: WineLabelCameraHandle,
+    backUri: string,
+    generation: number,
+  ) => {
+    const frontUri = capturedImageRef.current;
+    if (!frontUri) {
+      capturedImageRef.current = backUri;
+      setCapturedUri(backUri);
+    }
+    setScanErrorKey(null);
+    setTorchEnabled(false);
+    setMode("analysis");
+    let backText: string[];
+    try {
+      backText = await camera.recognizeText(backUri);
+    } finally {
+      if (frontUri) releaseImage(backUri);
+    }
+    if (generation !== requestGeneration.current) return;
+    const mergedText = mergeObservedLabelText(frontUri ? observedText : [], backText);
+    backLabelScanRef.current = false;
+    setIsBackLabelScan(false);
+    setBackLabelMerged(true);
+    setObservedText(mergedText);
+    await analyze(frontUri ?? backUri, mergedText, generation);
+  };
+
   const analyze = async (imageUri: string, detectedText: string[], generation: number) => {
     const release = retainImage(imageUri);
     let outcome: string | undefined;
     try {
-      const scan = await scanMutation.mutateAsync({ imageUri, observedText: detectedText });
+      const barcode = barcodeRef.current;
+      const scan = await scanMutation.mutateAsync({
+        imageUri,
+        observedText: detectedText,
+        ...(barcode ? { barcode } : {}),
+      });
       outcome = scan?.outcome;
     } finally {
       release();
@@ -117,7 +174,8 @@ export function useWineLabelScanViewModel({ addWineIntent = false }: WineLabelSc
   const handleAnalysisFailure = (error: unknown, generation: number, hasCapturedImage: boolean) => {
     if (generation !== requestGeneration.current || isAborted(error)) return;
     const errorKey = resolveScanErrorKey(error);
-    scanMutation.reset();
+    // A back photo that could not be used keeps the front result to return to.
+    if (hasCapturedImage || !backLabelScanRef.current) scanMutation.reset();
     setScanErrorKey(errorKey);
     setMode(hasCapturedImage ? "error" : "camera");
     showError(t(errorKey));
@@ -150,8 +208,53 @@ export function useWineLabelScanViewModel({ addWineIntent = false }: WineLabelSc
     setObservedText([]);
     setScanErrorKey(null);
     setManualQuery("");
+    barcodeRef.current = null;
+    setBarcodeDetected(false);
+    backLabelScanRef.current = false;
+    setIsBackLabelScan(false);
+    setBackLabelMerged(false);
     setMode("camera");
   }, [resetScanMutation, scanCancel, releaseImage]);
+
+  const handleBarcodeDetected = useCallback((data: string) => {
+    const code = normalizeLabelBarcode(data);
+    if (!code) return;
+    barcodeRef.current = code;
+    setBarcodeDetected(true);
+  }, []);
+
+  const startBackLabelScan = () => {
+    backLabelScanRef.current = true;
+    setIsBackLabelScan(true);
+    setTorchEnabled(false);
+    setMode("camera");
+  };
+
+  const cancelBackLabelScan = () => {
+    backLabelScanRef.current = false;
+    setIsBackLabelScan(false);
+    setMode("result");
+  };
+
+  const scanResult = scanMutation.data;
+
+  /** Fire-and-forget: at most one verdict per recorded scan, failures never reach the member. */
+  const sendFeedback = (verdict: WineScanFeedbackVerdict, wineId: string | null) => {
+    const scanId = scanResult?.scanId;
+    if (!scanId || scansWithFeedback.current.has(scanId)) return;
+    scansWithFeedback.current.add(scanId);
+    feedbackMutation.mutate({ scanId, verdict, wineId });
+  };
+
+  /** The member opened or added a wine from this scan: the match itself, or another one. */
+  const reportWineChosen = (selectedWine: WineSummary) =>
+    sendFeedback(
+      scanResult?.wine?.id === selectedWine.id ? "CONFIRMED" : "CORRECTED",
+      selectedWine.id,
+    );
+
+  /** The member proposed the scanned wine because the catalog lacks it. */
+  const reportNotInCatalog = () => sendFeedback("NOT_IN_CATALOG", null);
 
   const attachCapturedImageIfMissing = useCallback(
     (selectedWine: WineSummary) => {
@@ -202,6 +305,15 @@ export function useWineLabelScanViewModel({ addWineIntent = false }: WineLabelSc
       if (searchEnabled) void manualSearch.refetch();
     },
     scanMutation,
+    scannedVintage: plausibleScannedVintage(scanResult?.extractedData?.vintage),
+    reportWineChosen,
+    reportNotInCatalog,
+    barcodeDetected,
+    handleBarcodeDetected,
+    isBackLabelScan,
+    canScanBackLabel: !!capturedUri && !backLabelMerged && !scanResult?.wine,
+    startBackLabelScan,
+    cancelBackLabelScan,
     attachCapturedImageIfMissing,
     capture,
     retryAnalysis,

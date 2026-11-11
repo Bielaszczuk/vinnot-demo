@@ -264,6 +264,20 @@ Los barridos semanales/manuales resuelven el grafo Android y construyen la image
 desde cero, y sólo siembran esos cachés. El build `prepare` de producción usa
 `docker build --pull` sin caché.
 
+Los paquetes del sistema operativo no dependen de que los servidores de Ubuntu respondan
+en ese momento. `backend/docker/apt-install.sh` instala paquetes de Ubuntu probando
+primero el archivo oficial (`archive.ubuntu.com` y `security.ubuntu.com`) y, si no
+responde, mirrors en otros dominios (kernel.org, MIT, Leaseweb, RWTH Aachen). Usa los
+tres primeros que responden y apt verifica todo con la clave del archivo de Ubuntu, así
+que un mirror no puede cambiar los paquetes. Si nada responde, reintenta tres veces con
+espera creciente y termina con `APT failed after 3 attempts`. Lo usan:
+
+- El job Backend, para el encoder WebP. Los paquetes `.deb` quedan cacheados con
+  `actions/cache` por arquitectura e imagen del runner (`ImageOS` e `ImageVersion`); con
+  la caché se instalan sin red.
+- La etapa runtime del `Dockerfile` del backend, así una caída del DNS de `ubuntu.com` no
+  hace fallar el escaneo de la imagen, el deploy de dev ni el `prepare` de producción.
+
 ## Mantenimiento
 
 Linux usa `ubuntu-24.04` y las Actions JavaScript usan Node 24 con SHA completo.

@@ -163,6 +163,17 @@ public interface WineRepositoryPort {
     List<Wine> findByCommercialIdentity(WineLabelSearchCriteria criteria);
 
     /**
+     * Finds the active wines of the producers whose name contains or resembles
+     * the observed producer core (designators such as "Bodega" removed), so a
+     * label's product can be chosen among its producer's whole catalog.
+     *
+     * @param criteria the producer core as the single identity term and the
+     *                 maximum number of wines
+     * @return wines of the most similar producers, most similar producer first
+     */
+    List<Wine> findByProducerIdentity(WineLabelSearchCriteria criteria);
+
+    /**
      * Finds wines by a collection of IDs (batch lookup).
      *
      * @param ids the wine IDs

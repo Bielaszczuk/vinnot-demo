@@ -1,39 +1,14 @@
 import type { Text } from "@infinitered/react-native-mlkit-text-recognition";
+import { boundObservedLabelText } from "@/shared/image/wineLabelText";
 import { retainWineLabelImage } from "./wineLabelTemporaryImages";
 
-const MAX_OBSERVED_LINES = 24;
-const MAX_LINE_LENGTH = 120;
-const MAX_TOTAL_CHARACTERS = 2_000;
 const DEFAULT_RECOGNITION_TIMEOUT_MS = 1_000;
 let nativeRecognitionInFlight = false;
 
 export function normalizeRecognizedWineLabelText(result: Text): string[] {
   const blockLines = result.blocks.flatMap((block) => block.lines.map((line) => line.text));
   const rawLines = blockLines.length > 0 ? blockLines : result.text.split(/\r?\n/u);
-  const seen = new Set<string>();
-  let totalCharacters = 0;
-
-  return rawLines
-    .map((line) => line.replace(/\s+/gu, " ").trim())
-    .filter((line) => {
-      if (!line) {
-        return false;
-      }
-      const normalized = line.toLocaleLowerCase();
-      if (seen.has(normalized)) {
-        return false;
-      }
-      seen.add(normalized);
-      return true;
-    })
-    .map((line) => line.slice(0, MAX_LINE_LENGTH))
-    .slice(0, MAX_OBSERVED_LINES)
-    .filter((line) => {
-      // Preserve complete bounded lines; optional OCR must fit the HTTP contract.
-      if (totalCharacters + line.length > MAX_TOTAL_CHARACTERS) return false;
-      totalCharacters += line.length;
-      return true;
-    });
+  return boundObservedLabelText(rawLines);
 }
 
 /**

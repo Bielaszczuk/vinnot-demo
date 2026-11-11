@@ -153,7 +153,7 @@ class AiSpendingPostgresIntegrationTest {
     }
 
     @Test
-    void admitsThreeOfTwentyUsersWithoutAQueueAndRecoversAfterCompletion() throws Exception {
+    void admitsTwoOfTwentyBackgroundRequestsWithoutAQueueKeepingTheInteractiveSlot() throws Exception {
         var policy = new AiProviderAdmissionPolicy(3, Duration.ofMinutes(2), BigDecimal.ONE, BigDecimal.ZERO, true);
         // Distinct service objects simulate replicas sharing the same durable lease and ledger ports.
         var services = List.of(new AiProviderAdmissionService(leases, ledger, policy),
@@ -188,9 +188,9 @@ class AiSpendingPostgresIntegrationTest {
                 assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
                 start.countDown();
                 assertThat(attempted.await(20, TimeUnit.SECONDS)).isTrue();
-                assertThat(accepted.get()).isEqualTo(3);
-                assertThat(rejected.get()).isEqualTo(17);
-                assertMoney("reserved_usd", "0.3");
+                assertThat(accepted.get()).isEqualTo(2);
+                assertThat(rejected.get()).isEqualTo(18);
+                assertMoney("reserved_usd", "0.2");
             } finally {
                 start.countDown();
                 complete.countDown();
@@ -200,7 +200,7 @@ class AiSpendingPostgresIntegrationTest {
             }
         }
         assertMoney("reserved_usd", "0");
-        assertMoney("spent_usd", "0.03");
+        assertMoney("spent_usd", "0.02");
         var permit = services.getFirst().acquire("model", new BigDecimal("0.1"));
         services.getFirst().complete(permit, Optional.of(BigDecimal.ZERO));
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ai_generation_leases", Integer.class)).isZero();

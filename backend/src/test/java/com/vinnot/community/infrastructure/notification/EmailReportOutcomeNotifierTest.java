@@ -45,13 +45,24 @@ class EmailReportOutcomeNotifierTest {
     }
 
     @Test
+    void aCatalogQualityReportHasNobodyToEmail() {
+        NotificationPort notifications = mock(NotificationPort.class);
+        CommunityReport resolved = CommunityReport.exactMatchCorrected(UUID.randomUUID(), UUID.randomUUID(), "", Instant.now())
+                .review(UUID.randomUUID(), CommunityReport.Status.RESOLVED, "Fixed the winery by hand", Instant.now());
+
+        new EmailReportOutcomeNotifier(notifications).reportClosed(resolved, false);
+
+        verifyNoInteractions(notifications);
+    }
+
+    @Test
     void aReporterWhoDeletedTheirAccountIsNotWritten() {
         NotificationPort notifications = mock(NotificationPort.class);
         CommunityReport report = CommunityReport.create(UUID.randomUUID(), new ContentTarget(ContentTarget.Type.REVIEW, UUID.randomUUID()),
                 UUID.randomUUID(), CommunityReport.Reason.SPAM, "", "excerpt", Instant.now());
         CommunityReport orphan = new CommunityReport(report.id(), null, report.target(), report.authorId(), report.reason(),
                 report.description(), report.excerpt(), CommunityReport.Status.DISMISSED, null, "No breach",
-                report.createdAt(), report.updatedAt());
+                report.createdAt(), report.updatedAt(), null);
 
         new EmailReportOutcomeNotifier(notifications).reportClosed(orphan, false);
 

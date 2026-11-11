@@ -8,7 +8,7 @@ Casos de uso del módulo de vinos: buscar y recorrer el catálogo, ver el detall
 | `UC-WIN-02` | [Recorrer las páginas del catálogo](uc-win-02-page-catalog.md) | Web, APK | Usuario autenticado |
 | `UC-WIN-03` | [Ver el detalle de un vino](uc-win-03-view-wine-detail.md) | Web, APK | Usuario autenticado |
 | `UC-WIN-04` | [Ver la invitación a escanear desde la app](uc-win-04-scan-invitation.md) | Web | Usuario autenticado |
-| `UC-WIN-05` | [Escanear la etiqueta de un vino](uc-win-05-scan-label.md) | APK | Usuario autenticado, Proveedor de reconocimiento (OpenAI) |
+| `UC-WIN-05` | [Escanear la etiqueta de un vino](uc-win-05-scan-label.md) | APK | Usuario autenticado, Proveedor de reconocimiento (OpenAI), Proveedor de embeddings de imagen (Google Gemini) |
 | `UC-WIN-06` | [Buscar a mano desde el escáner](uc-win-06-manual-search-from-scan.md) | APK | Usuario autenticado |
 | `UC-WIN-07` | [Proponer un vino que no está en el catálogo](uc-win-07-submit-wine.md) | APK | Usuario autenticado, Proveedor de reconocimiento (OpenAI), Servicio de email |
 | `UC-WIN-08` | [Agregar la foto de la etiqueta a un vino sin imagen](uc-win-08-attach-label-photo.md) | APK | Usuario autenticado, Proveedor de reconocimiento (OpenAI) |

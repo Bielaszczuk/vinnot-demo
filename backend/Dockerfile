@@ -20,8 +20,9 @@ LABEL org.opencontainers.image.revision=${APP_REVISION}
 WORKDIR /app
 
 # Refresh the packages inherited from the pinned base: OpenSSL (CVE-2026-84782) and Brotli (CVE-2026-111497).
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl libssl3t64 openssl openssl-provider-legacy webp libbrotli1 \
+# apt-install.sh falls back to Ubuntu mirrors on other domains when ubuntu.com does not resolve (#544).
+RUN --mount=type=bind,source=docker/apt-install.sh,target=/tmp/apt-install.sh \
+    sh /tmp/apt-install.sh curl libssl3t64 openssl openssl-provider-legacy webp libbrotli1 \
     && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' libssl3t64)" ge '3.5.5-1ubuntu3.6' \
     && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' libbrotli1)" ge '1.2.0-3ubuntu0.1' \
     && rm -rf /var/lib/apt/lists/*

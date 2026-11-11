@@ -7,11 +7,13 @@ import { releaseWineLabelImage } from "./wineLabelTemporaryImages";
 const mockTakePicture = jest.fn();
 const mockPrepareImage = jest.fn();
 const mockAnalyzeQuality = jest.fn();
+let mockCameraProps: Record<string, unknown> = {};
 
 jest.mock("expo-camera", () => {
   const React = jest.requireActual<typeof import("react")>("react");
   return {
-    CameraView: React.forwardRef(function CameraMock(_props, ref) {
+    CameraView: React.forwardRef(function CameraMock(props: Record<string, unknown>, ref) {
+      mockCameraProps = props;
       React.useImperativeHandle(ref, () => ({ takePictureAsync: mockTakePicture }));
       return null;
     }),
@@ -87,5 +89,35 @@ describe("WineLabelCamera resource ownership", () => {
     });
     expect(deleteAsync).toHaveBeenCalledTimes(1);
     expect(deleteAsync).toHaveBeenCalledWith("file:///cache/raw.jpg", { idempotent: true });
+  });
+});
+
+describe("WineLabelCamera barcode reading", () => {
+  it("reads EAN/UPC codes and reports each one it sees", () => {
+    const onBarcodeDetected = jest.fn();
+    render(
+      <WineLabelCamera
+        torchEnabled={false}
+        captureRegion={{ originX: 0, originY: 0, width: 1, height: 1 }}
+        onBarcodeDetected={onBarcodeDetected}
+      />,
+    );
+
+    expect(mockCameraProps.barcodeScannerSettings).toEqual({
+      barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e"],
+    });
+    (mockCameraProps.onBarcodeScanned as (result: { type: string; data: string }) => void)({
+      type: "ean13",
+      data: "7791234567898",
+    });
+    expect(onBarcodeDetected).toHaveBeenCalledWith("7791234567898");
+  });
+
+  it("leaves barcode scanning off when nobody listens for codes", () => {
+    render(
+      <WineLabelCamera torchEnabled={false} captureRegion={{ originX: 0, originY: 0, width: 1, height: 1 }} />,
+    );
+
+    expect(mockCameraProps.onBarcodeScanned).toBeUndefined();
   });
 });

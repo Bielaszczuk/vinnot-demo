@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.doThrow;
@@ -63,11 +64,77 @@ class AiProviderAdmissionServiceTest {
     }
 
     @Test
-    void rejectsSaturationWithoutQueuingOrReservingMoney() {
+    void rejectsBackgroundSaturationWithoutQueuingOrTouchingTheInteractiveSlot() {
         var service = new AiProviderAdmissionService(leases, ledger, policy(true, BigDecimal.ZERO));
         assertCode(() -> service.acquire("model", maximum), "AI_CAPACITY_EXCEEDED");
         verifyNoInteractions(ledger);
-        verify(leases).tryAcquire("provider-capacity:2", Duration.ofMinutes(2));
+        verify(leases).tryAcquire("provider-capacity:0", Duration.ofMinutes(2));
+        verify(leases).tryAcquire("provider-capacity:1", Duration.ofMinutes(2));
+        verify(leases, never()).tryAcquire(eq("provider-capacity:2"), any());
+    }
+
+    @Test
+    void interactiveRequestsTryTheKeptSlotFirst() {
+        var kept = new AiGenerationLeasePort.Lease("provider-capacity:2", UUID.randomUUID());
+        when(leases.tryAcquire("provider-capacity:2", Duration.ofMinutes(2))).thenReturn(Optional.of(kept));
+        when(ledger.reserve(eq("model"), eq(maximum), anyList())).thenReturn(reservationId);
+
+        var permit = service(true, BigDecimal.ZERO).acquireInteractive("model", maximum, Duration.ofSeconds(4));
+
+        assertThat(permit.leaseKey()).isEqualTo("provider-capacity:2");
+        verify(leases, never()).tryAcquire(eq("provider-capacity:0"), any());
+    }
+
+    @Test
+    void interactiveRequestsWaitForASlotToFreeUp() {
+        when(leases.tryAcquire("provider-capacity:0", Duration.ofMinutes(2)))
+                .thenReturn(Optional.empty(), Optional.empty(), Optional.of(lease));
+        when(ledger.reserve(eq("model"), eq(maximum), anyList())).thenReturn(reservationId);
+
+        long started = System.nanoTime();
+        var permit = service(true, BigDecimal.ZERO).acquireInteractive("model", maximum, Duration.ofSeconds(4));
+
+        assertThat(permit.reservationId()).isEqualTo(reservationId);
+        assertThat(Duration.ofNanos(System.nanoTime() - started)).isGreaterThanOrEqualTo(Duration.ofMillis(350));
+    }
+
+    @Test
+    void interactiveWaitIsCappedByPolicyAndByTheCaller() {
+        var shortWait = new AiProviderAdmissionService(leases, ledger, new AiProviderAdmissionPolicy(
+                3, Duration.ofMinutes(2), new BigDecimal("30"), BigDecimal.ZERO, true, Duration.ofMillis(300)));
+        long started = System.nanoTime();
+        assertCode(() -> shortWait.acquireInteractive("model", maximum, Duration.ofSeconds(10)),
+                "AI_CAPACITY_EXCEEDED");
+        assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofSeconds(2));
+
+        started = System.nanoTime();
+        assertCode(() -> service(true, BigDecimal.ZERO).acquireInteractive("model", maximum, Duration.ofSeconds(-1)),
+                "AI_CAPACITY_EXCEEDED");
+        assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofMillis(300));
+        verifyNoInteractions(ledger);
+    }
+
+    @Test
+    void anInterruptedWaitGivesUpAndKeepsTheInterruptFlag() {
+        Thread.currentThread().interrupt();
+        try {
+            assertCode(() -> service(true, BigDecimal.ZERO).acquireInteractive("model", maximum, Duration.ofSeconds(4)),
+                    "AI_CAPACITY_EXCEEDED");
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        } finally {
+            Thread.interrupted();
+        }
+        verifyNoInteractions(ledger);
+    }
+
+    @Test
+    void withFewerThanThreeSlotsNothingIsKeptForInteractiveRequests() {
+        var two = new AiProviderAdmissionService(leases, ledger, new AiProviderAdmissionPolicy(
+                2, Duration.ofMinutes(2), new BigDecimal("30"), BigDecimal.ZERO, true));
+        assertCode(() -> two.acquire("model", maximum), "AI_CAPACITY_EXCEEDED");
+        verify(leases).tryAcquire("provider-capacity:1", Duration.ofMinutes(2));
+        assertCode(() -> service(false, BigDecimal.ZERO).acquireInteractive("model", maximum, Duration.ofSeconds(1)),
+                "AI_PAID_CALLS_PAUSED");
     }
 
     @Test

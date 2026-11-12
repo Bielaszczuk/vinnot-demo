@@ -37,6 +37,8 @@ public class WineSearchNativeRepository {
     private static final int LABEL_INDEXED_QUERY_TIMEOUT_MS = 750;
     /** Matches ranked per label term; a specific term has fewer, so its ranking is unchanged. */
     private static final int LABEL_FULL_TEXT_MATCH_LIMIT = 2_000;
+    /** Most similar producers whose wines a label search expands; a generic phrase resembles thousands of names. */
+    private static final int LABEL_WINERY_MATCH_LIMIT = 50;
     private static final int CATALOG_PREFIX_QUERY_TIMEOUT_MS = 2_000;
     private static final int CATALOG_FALLBACK_QUERY_TIMEOUT_MS = 3_000;
     private static final int MIN_CATALOG_CANDIDATE_LIMIT = 500;
@@ -146,16 +148,17 @@ public class WineSearchNativeRepository {
                             + castParameter + ", '%') LIMIT :fuzzyMatchLimit) bounded "
                             + "ORDER BY identity_score DESC, bounded.id ASC "
                             + "LIMIT :branchLimit)");
+            // A generic label phrase resembles thousands of producer names; joining every one of their wines reads
+            // most of the wines table. Only the most similar producers are expanded into their wines.
             candidateBranches.add(
-                    "(SELECT w.id AS wine_id, " + winerySimilarity
-                            + " AS identity_score FROM wineries wy "
-                            + "JOIN wines w ON w.winery_id = wy.id "
-                            + "WHERE wy.is_active = true AND w.is_active = true "
+                    "(SELECT w.id AS wine_id, top.identity_score FROM (SELECT wy.id, " + winerySimilarity
+                            + " AS identity_score FROM wineries wy WHERE wy.is_active = true "
                             + "AND (wy.name % " + castParameter
                             + " OR wy.name ILIKE CONCAT('%', "
                             + castParameter + ", '%')) "
-                            + "ORDER BY identity_score DESC, w.id ASC "
-                            + "LIMIT :branchLimit)");
+                            + "ORDER BY identity_score DESC, wy.id ASC LIMIT :wineryMatchLimit) top "
+                            + "JOIN wines w ON w.winery_id = top.id WHERE w.is_active = true "
+                            + "ORDER BY top.identity_score DESC, w.id ASC LIMIT :branchLimit)");
             params.put(parameter, terms.get(index));
         }
 
@@ -201,6 +204,7 @@ public class WineSearchNativeRepository {
         params.put("branchLimit", limit);
         params.put("resultLimit", limit);
         params.put("fuzzyMatchLimit", LABEL_FULL_TEXT_MATCH_LIMIT);
+        params.put("wineryMatchLimit", LABEL_WINERY_MATCH_LIMIT);
 
         Query query = entityManager.createNativeQuery(sql, WineJpaEntity.class);
         params.forEach(query::setParameter);
@@ -248,13 +252,14 @@ public class WineSearchNativeRepository {
                             + "ORDER BY identity_score DESC, catalog.wine_id ASC "
                             + "LIMIT :indexedRankLimit) ranked "
                             + "JOIN wines w ON w.id = ranked.wine_id WHERE w.is_active = true)");
+            // As in the fuzzy search, only the most similar producers are expanded into their wines.
             candidateBranches.add(
-                    "(SELECT w.id AS wine_id, 0.8 AS identity_score FROM wineries wy "
-                            + "JOIN wines w ON w.winery_id = wy.id "
-                            + "WHERE wy.is_active = true AND w.is_active = true "
+                    "(SELECT w.id AS wine_id, 0.8 AS identity_score FROM (SELECT wy.id, similarity(wy.name, "
+                            + castParameter + ") AS winery_score FROM wineries wy WHERE wy.is_active = true "
                             + "AND wy.name % " + castParameter + " "
-                            + "ORDER BY similarity(wy.name, " + castParameter + ") DESC, w.id ASC "
-                            + "LIMIT :indexedBranchLimit)");
+                            + "ORDER BY winery_score DESC, wy.id ASC LIMIT :wineryMatchLimit) top "
+                            + "JOIN wines w ON w.winery_id = top.id WHERE w.is_active = true "
+                            + "ORDER BY top.winery_score DESC, w.id ASC LIMIT :indexedBranchLimit)");
             params.put(parameter, terms.get(index));
             // OCR can join product words with punctuation. PostgreSQL treats a
             // hyphenated word/host name as an extra required lexeme; catalog text
@@ -279,6 +284,7 @@ public class WineSearchNativeRepository {
         params.put("indexedResultLimit", limit);
         params.put("indexedMatchLimit", LABEL_FULL_TEXT_MATCH_LIMIT);
         params.put("indexedRankLimit", limit * 2);
+        params.put("wineryMatchLimit", LABEL_WINERY_MATCH_LIMIT);
 
         Query query = entityManager.createNativeQuery(
                 sql, WineJpaEntity.class);

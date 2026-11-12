@@ -29,6 +29,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.vinnot.wine.application.service.WineLabelImagePublicationService;
@@ -249,6 +250,35 @@ class WinePersistenceAdapterPostgresIntegrationTest {
             assertThat(repeated).isEqualTo(first);
         } finally {
             jdbcTemplate.update("DELETE FROM wines WHERE winery_id = ?", wineryId);
+        }
+    }
+
+    @Test
+    void keepsTheMostSimilarProducerWhenManyProducersResembleTheLabel() {
+        jdbcTemplate.update("UPDATE wineries SET name = ? WHERE id = ?", "Quebrada Altura", wineryId);
+        List<UUID> decoyWineries = new ArrayList<>();
+        try {
+            for (int index = 0; index < 60; index++) {
+                UUID decoy = new UUID(1, index + 1);
+                decoyWineries.add(decoy);
+                jdbcTemplate.update("INSERT INTO wineries (id, name) VALUES (?, ?)",
+                        decoy, "Quebrada Altura Decoy " + index);
+                jdbcTemplate.update("INSERT INTO wines (id, winery_id, name, wine_type) VALUES (?, ?, ?, 'RED')",
+                        new UUID(2, index + 1), decoy, "Decoy Cuvee " + index);
+            }
+            // An OCR typo misses the indexed words, so only the producer similarity can find the wine.
+            var indexed = wineRepository.findByIndexedIdentity(new WineLabelSearchCriteria(
+                    List.of("Quebrada Altuar"), null, null, null, 2));
+            var fuzzy = wineRepository.findByFuzzyMatch(new WineLabelSearchCriteria(
+                    List.of("Quebrada Altuar"), null, null, null, 2));
+
+            assertThat(indexed).extracting(Wine::getId).containsExactlyInAnyOrder(searchWineId, otherWineId);
+            assertThat(fuzzy).extracting(Wine::getId).containsExactlyInAnyOrder(searchWineId, otherWineId);
+        } finally {
+            for (UUID decoy : decoyWineries) {
+                jdbcTemplate.update("DELETE FROM wines WHERE winery_id = ?", decoy);
+                jdbcTemplate.update("DELETE FROM wineries WHERE id = ?", decoy);
+            }
         }
     }
 

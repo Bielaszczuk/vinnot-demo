@@ -171,13 +171,16 @@ class WineSearchNativeRepositoryTest {
                 .doesNotContain("w.name % CAST(:identityTerm0 AS TEXT)")
                 .contains("LIMIT :fuzzyMatchLimit) bounded")
                 .contains("wy.name % CAST(:identityTerm0 AS TEXT)")
-                .contains("LIMIT :branchLimit)")
+                .contains("ORDER BY identity_score DESC, wy.id ASC LIMIT :wineryMatchLimit) top "
+                        + "JOIN wines w ON w.winery_id = top.id WHERE w.is_active = true "
+                        + "ORDER BY top.identity_score DESC, w.id ASC LIMIT :branchLimit)")
                 .contains("FROM candidate_ids candidates")
                 .doesNotContain("similarity(w.name, CAST(:identityTerm0 AS TEXT)) > 0.1");
         verify(query).setParameter("branchLimit", 40);
         verify(query).setParameter("prefilterLimit", 200);
         verify(query).setParameter("resultLimit", 40);
         verify(query).setParameter("fuzzyMatchLimit", 2_000);
+        verify(query).setParameter("wineryMatchLimit", 50);
         verify(query).setHint("jakarta.persistence.query.timeout", 1_500);
     }
 
@@ -239,12 +242,15 @@ class WineSearchNativeRepositoryTest {
                                 + "LIMIT :indexedRankLimit) ranked JOIN wines w ON w.id = ranked.wine_id "
                                 + "WHERE w.is_active = true")
                 .contains("CAST(:indexedIdentity0Tokens AS TEXT))), 2)")
-                .contains("ORDER BY similarity(wy.name, CAST(:indexedIdentity0 AS TEXT)) DESC, w.id ASC")
+                .contains("ORDER BY winery_score DESC, wy.id ASC LIMIT :wineryMatchLimit) top "
+                        + "JOIN wines w ON w.winery_id = top.id WHERE w.is_active = true "
+                        + "ORDER BY top.winery_score DESC, w.id ASC LIMIT :indexedBranchLimit)")
                 .doesNotContain("ILIKE");
         verify(query).setParameter("indexedIdentity0", "Bad Brothers");
         verify(query).setParameter("indexedIdentity1", "Facon Selection");
         verify(query).setParameter("indexedBranchLimit", 60);
         verify(query).setParameter("indexedResultLimit", 60);
+        verify(query).setParameter("wineryMatchLimit", 50);
         verify(query).setHint("jakarta.persistence.query.timeout", 750);
     }
     @Test

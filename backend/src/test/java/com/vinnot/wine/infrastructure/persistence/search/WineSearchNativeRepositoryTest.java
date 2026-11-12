@@ -37,6 +37,25 @@ class WineSearchNativeRepositoryTest {
     }
 
     @Test
+    void ranksOnlyABoundedSetOfFullTextMatchesSoACommonWordCannotScanTheCatalog() {
+        EntityManager entityManager = mock(EntityManager.class);
+        Query query = mock(Query.class);
+        WineSearchNativeRepository repository = new WineSearchNativeRepository();
+        ReflectionTestUtils.setField(repository, "entityManager", entityManager);
+        when(entityManager.createNativeQuery(anyString(), eq(WineJpaEntity.class))).thenReturn(query);
+        when(query.getResultList()).thenReturn(List.of());
+        repository.findByIndexedIdentity(List.of("Malbec"), 60);
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(entityManager).createNativeQuery(sqlCaptor.capture(), eq(WineJpaEntity.class));
+        assertThat(sqlCaptor.getValue())
+                .contains("FROM (SELECT matched.wine_id, matched.search_vector FROM wine_catalog_search matched "
+                        + "WHERE matched.search_vector @@ ")
+                .contains("LIMIT :indexedMatchLimit) catalog");
+        verify(query).setParameter("indexedMatchLimit", 2_000);
+        verify(query).setParameter("indexedRankLimit", 120);
+    }
+
+    @Test
     void searchesCatalogThroughOrderedPrefixContainmentAndFuzzyTiers() {
         EntityManager entityManager = mock(EntityManager.class);
         Query prefixQuery = mock(Query.class);
@@ -148,7 +167,9 @@ class WineSearchNativeRepositoryTest {
                 sqlCaptor.capture(), eq(WineJpaEntity.class));
         assertThat(sqlCaptor.getValue())
                 .contains("WITH candidate_scores AS")
-                .contains("w.name % CAST(:identityTerm0 AS TEXT)")
+                .contains("w.name ILIKE CONCAT('%', CAST(:identityTerm0 AS TEXT), '%')")
+                .doesNotContain("w.name % CAST(:identityTerm0 AS TEXT)")
+                .contains("LIMIT :fuzzyMatchLimit) bounded")
                 .contains("wy.name % CAST(:identityTerm0 AS TEXT)")
                 .contains("LIMIT :branchLimit)")
                 .contains("FROM candidate_ids candidates")
@@ -156,6 +177,7 @@ class WineSearchNativeRepositoryTest {
         verify(query).setParameter("branchLimit", 40);
         verify(query).setParameter("prefilterLimit", 200);
         verify(query).setParameter("resultLimit", 40);
+        verify(query).setParameter("fuzzyMatchLimit", 2_000);
         verify(query).setHint("jakarta.persistence.query.timeout", 1_500);
     }
 
@@ -204,8 +226,8 @@ class WineSearchNativeRepositoryTest {
                 sqlCaptor.capture(), eq(WineJpaEntity.class));
         assertThat(sqlCaptor.getValue())
                 .contains("WITH candidate_scores AS")
-                .contains("FROM wine_catalog_search catalog")
-                .contains("catalog.search_vector @@ (plainto_tsquery('simple', public.catalog_search_unaccent("
+                .contains("FROM wine_catalog_search matched")
+                .contains("matched.search_vector @@ (plainto_tsquery('simple', public.catalog_search_unaccent("
                         + "CAST(:indexedIdentity0Tokens AS TEXT))) || plainto_tsquery('simple', "
                         + "CAST(:indexedIdentity0Tokens AS TEXT)))")
                 .contains("wy.name % CAST(:indexedIdentity0 AS TEXT)")
@@ -213,8 +235,9 @@ class WineSearchNativeRepositoryTest {
                 .contains("ORDER BY identity_score DESC")
                 .contains("LIMIT :indexedBranchLimit")
                 .contains(
-                        "ORDER BY identity_score DESC, w.id ASC "
-                                + "LIMIT :indexedBranchLimit")
+                        "ORDER BY identity_score DESC, catalog.wine_id ASC "
+                                + "LIMIT :indexedRankLimit) ranked JOIN wines w ON w.id = ranked.wine_id "
+                                + "WHERE w.is_active = true")
                 .contains("CAST(:indexedIdentity0Tokens AS TEXT))), 2)")
                 .contains("ORDER BY similarity(wy.name, CAST(:indexedIdentity0 AS TEXT)) DESC, w.id ASC")
                 .doesNotContain("ILIKE");

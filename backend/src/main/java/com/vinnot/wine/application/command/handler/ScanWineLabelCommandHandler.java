@@ -23,24 +23,31 @@ import com.vinnot.wine.application.service.WineLabelScanDeadline;
 import com.vinnot.wine.application.service.WineLabelScanRecorder;
 import com.vinnot.wine.application.service.WineLabelCandidateVerifier;
 import com.vinnot.wine.application.service.WineVisualIndexService;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.time.Duration;
 import java.util.function.Supplier;
 
 @Service
-@RequiredArgsConstructor
 public class ScanWineLabelCommandHandler implements ScanWineLabelUseCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(ScanWineLabelCommandHandler.class);
@@ -52,6 +59,14 @@ public class ScanWineLabelCommandHandler implements ScanWineLabelUseCase {
     /** A barcode is trusted once this many members confirmed the same wine, more than for any other wine. */
     private static final int BARCODE_MINIMUM_MEMBERS = 2;
     private static final double BARCODE_MATCH_CONFIDENCE = 1.0;
+    /** Runs a scan's local lookup and recognition so they can overlap. */
+    public static final String SCAN_EXECUTOR = "wineLabelScanExecutor";
+    /**
+     * A local lookup that answers the scan usually does so quickly; past this wait, recognition starts beside it
+     * instead of after it, so a lookup that cannot answer no longer delays the scan.
+     */
+    private static final Duration RECOGNITION_HEDGE = Duration.ofMillis(400);
+    private static final Set<String> RECOVERABLE_LOCAL_FAILURES = Set.of("LABEL_CATALOG_UNAVAILABLE", "LABEL_SCAN_TIMEOUT");
 
     private final WineLabelRecognitionPort recognitionPort;
     private final WineLabelCatalogMatcher catalogMatcher;
@@ -63,63 +78,207 @@ public class ScanWineLabelCommandHandler implements ScanWineLabelUseCase {
     private final WineBarcodeConfirmationPort barcodeConfirmations;
     private final WineRepositoryPort wineRepository;
     private final WineryQueryPort wineryQueryPort;
+    private final Executor scanExecutor;
+    private final Duration scanBudget;
+
+    @Autowired
+    public ScanWineLabelCommandHandler(WineLabelRecognitionPort recognitionPort,
+                                       WineLabelCatalogMatcher catalogMatcher,
+                                       WineLabelMetricsPort metricsPort,
+                                       WineLabelScanPolicy scanPolicy,
+                                       WineLabelScanRecorder scanRecorder,
+                                       WineVisualIndexService visualIndex,
+                                       WineLabelCandidateVerifier candidateVerifier,
+                                       WineBarcodeConfirmationPort barcodeConfirmations,
+                                       WineRepositoryPort wineRepository,
+                                       WineryQueryPort wineryQueryPort,
+                                       @Qualifier(SCAN_EXECUTOR) Executor scanExecutor) {
+        this(recognitionPort, catalogMatcher, metricsPort, scanPolicy, scanRecorder, visualIndex, candidateVerifier,
+                barcodeConfirmations, wineRepository, wineryQueryPort, scanExecutor, WineLabelScanDeadline.DEFAULT_BUDGET);
+    }
+
+    ScanWineLabelCommandHandler(WineLabelRecognitionPort recognitionPort,
+                                WineLabelCatalogMatcher catalogMatcher,
+                                WineLabelMetricsPort metricsPort,
+                                WineLabelScanPolicy scanPolicy,
+                                WineLabelScanRecorder scanRecorder,
+                                WineVisualIndexService visualIndex,
+                                WineLabelCandidateVerifier candidateVerifier,
+                                WineBarcodeConfirmationPort barcodeConfirmations,
+                                WineRepositoryPort wineRepository,
+                                WineryQueryPort wineryQueryPort,
+                                Executor scanExecutor,
+                                Duration scanBudget) {
+        this.recognitionPort = recognitionPort;
+        this.catalogMatcher = catalogMatcher;
+        this.metricsPort = metricsPort;
+        this.scanPolicy = scanPolicy;
+        this.scanRecorder = scanRecorder;
+        this.visualIndex = visualIndex;
+        this.candidateVerifier = candidateVerifier;
+        this.barcodeConfirmations = barcodeConfirmations;
+        this.wineRepository = wineRepository;
+        this.wineryQueryPort = wineryQueryPort;
+        this.scanExecutor = scanExecutor;
+        this.scanBudget = scanBudget;
+    }
 
     @Override
     public WineLabelScanResponse execute(ScanWineLabelCommand command) {
-        long startedAt = System.nanoTime();
-        WineLabelScanDeadline deadline = new WineLabelScanDeadline(WineLabelScanDeadline.DEFAULT_BUDGET);
+        ScanTrace trace = new ScanTrace();
+        try {
+            WineLabelScanResponse response = scan(command, trace);
+            trace.log(response.outcome().name());
+            return response;
+        } catch (RuntimeException failure) {
+            trace.log("FAILED_" + failureName(failure));
+            throw failure;
+        }
+    }
+
+    private WineLabelScanResponse scan(ScanWineLabelCommand command, ScanTrace trace) {
+        long startedAt = trace.startedAt;
+        WineLabelScanDeadline deadline = new WineLabelScanDeadline(scanBudget);
         Optional<WineLabelScanResponse> barcodeMatch = crowdConfirmedBarcodeMatch(command);
         if (barcodeMatch.isPresent()) {
             recordMetrics(barcodeMatch.get(), startedAt, false);
             return rememberBarcodeAnswer(command, barcodeMatch.get());
         }
+        ExtractedWineLabel observedLabel = null;
+        CompletableFuture<WineLabelCatalogMatcher.MatchResult> localSearch = null;
         if (!command.observedText().isEmpty()) {
-            ExtractedWineLabel observedLabel = fromObservedText(command.observedText());
-            try {
-                WineLabelCatalogMatcher.MatchResult localMatch =
-                        measureStage(WineLabelMetricsPort.ScanStage.LOCAL_CATALOG,
-                                () -> catalogMatcher.match(observedLabel, deadline.limitedTo(LOCAL_CATALOG_BUDGET), List.of()));
-                if (scanPolicy.canCompleteWithoutVisualFallback(localMatch)) {
-                    WineLabelScanResponse response = toResponse(observedLabel, localMatch);
-                    recordMetrics(response, startedAt, false);
-                    return remember(command, response);
-                }
-            } catch (ExternalServiceUnavailableException exception) {
-                if (!"LABEL_CATALOG_UNAVAILABLE".equals(exception.getCode())
-                        && !"LABEL_SCAN_TIMEOUT".equals(exception.getCode())) {
-                    throw exception;
-                }
-                // Noisy native OCR can exhaust a broad lookup. Visual extraction
-                // may recover with a precise identity; the enriched lookup must still succeed.
-                deadline.remaining();
+            ExtractedWineLabel localLabel = fromObservedText(command.observedText());
+            observedLabel = localLabel;
+            localSearch = CompletableFuture.supplyAsync(() -> measureStage(
+                    WineLabelMetricsPort.ScanStage.LOCAL_CATALOG, trace,
+                    () -> catalogMatcher.match(localLabel, deadline.limitedTo(LOCAL_CATALOG_BUDGET), List.of())),
+                    scanExecutor);
+            Optional<WineLabelCatalogMatcher.MatchResult> localMatch =
+                    completableLocalMatch(localSearch, RECOGNITION_HEDGE, deadline);
+            if (localMatch.isPresent()) {
+                return localResponse(command, observedLabel, localMatch.get(), startedAt);
             }
         }
 
-        // Image retrieval against our own catalog runs beside recognition, so it adds no latency.
+        // A local lookup that is still running keeps racing recognition; image retrieval against our own catalog
+        // runs beside both, so neither adds latency to the other.
         CompletableFuture<List<WineVisualIndexPort.VisualMatch>> visualSearch =
                 visualIndex.startSearch(command.imageBytes(), command.contentType(), VISUAL_CANDIDATES);
+        CompletableFuture<ExtractedWineLabel> recognition = CompletableFuture.supplyAsync(() -> measureStage(
+                WineLabelMetricsPort.ScanStage.VISUAL_RECOGNITION, trace,
+                () -> recognitionPort.recognize(command.imageBytes(), command.contentType(), deadline.remaining())),
+                scanExecutor);
         ExtractedWineLabel label;
         try {
-            label = measureStage(
-                    WineLabelMetricsPort.ScanStage.VISUAL_RECOGNITION,
-                    () -> recognitionPort.recognize(
-                            command.imageBytes(), command.contentType(), deadline.remaining()));
+            if (Objects.nonNull(localSearch) && !localSearch.isDone()) {
+                awaitFirst(localSearch, recognition, deadline);
+                if (recognition.isCompletedExceptionally()) {
+                    // A provider that refuses at once (paused paid calls, exhausted budget) must not fail a scan
+                    // the local lookup can still answer: its own budget bounds this wait.
+                    awaitFirst(localSearch, localSearch, deadline);
+                }
+                Optional<WineLabelCatalogMatcher.MatchResult> localMatch = localSearch.isDone()
+                        ? completableLocalMatch(localSearch, Duration.ZERO, deadline)
+                        : Optional.empty();
+                if (localMatch.isPresent()) {
+                    recognition.cancel(true);
+                    visualSearch.cancel(true);
+                    return localResponse(command, observedLabel, localMatch.get(), startedAt);
+                }
+            }
+            label = join(recognition);
         } catch (RuntimeException failure) {
+            recognition.cancel(true);
             visualSearch.cancel(true);
             throw failure;
         }
         label = mergeObservedText(label, command.observedText());
         ExtractedWineLabel enrichedLabel = label;
-        List<WineVisualIndexPort.VisualMatch> visualHints = visualIndex.await(visualSearch, VISUAL_SEARCH_WAIT);
+        List<WineVisualIndexPort.VisualMatch> visualHints = measureStage(
+                WineLabelMetricsPort.ScanStage.VISUAL_WAIT, trace,
+                () -> visualIndex.await(visualSearch, VISUAL_SEARCH_WAIT));
         WineLabelCatalogMatcher.MatchResult catalogMatch = measureStage(
-                WineLabelMetricsPort.ScanStage.ENRICHED_CATALOG,
+                WineLabelMetricsPort.ScanStage.ENRICHED_CATALOG, trace,
                 () -> catalogMatcher.match(enrichedLabel, deadline, visualHints));
-        WineLabelCatalogMatcher.MatchResult match = candidateVerifier.verify(
-                command.imageBytes(), command.contentType(), enrichedLabel, catalogMatch, deadline);
+        WineLabelCatalogMatcher.MatchResult match = measureStage(
+                WineLabelMetricsPort.ScanStage.CANDIDATE_VERIFICATION, trace,
+                () -> candidateVerifier.verify(
+                        command.imageBytes(), command.contentType(), enrichedLabel, catalogMatch, deadline));
         deadline.remaining();
         WineLabelScanResponse response = toResponse(label, match);
         recordMetrics(response, startedAt, true);
         return remember(command, response);
+    }
+
+    private WineLabelScanResponse localResponse(ScanWineLabelCommand command, ExtractedWineLabel observedLabel,
+                                                WineLabelCatalogMatcher.MatchResult localMatch, long startedAt) {
+        WineLabelScanResponse response = toResponse(observedLabel, localMatch);
+        recordMetrics(response, startedAt, false);
+        return remember(command, response);
+    }
+
+    /**
+     * The local match when the lookup finished within {@code wait} and it can answer the scan alone. A lookup still
+     * running, a match too weak to answer, or an exhausted broad lookup gives nothing; noisy native OCR can exhaust a
+     * broad lookup, and visual extraction may recover with a precise identity. Any other failure is the scan's.
+     */
+    private Optional<WineLabelCatalogMatcher.MatchResult> completableLocalMatch(
+            CompletableFuture<WineLabelCatalogMatcher.MatchResult> localSearch, Duration wait,
+            WineLabelScanDeadline deadline) {
+        try {
+            WineLabelCatalogMatcher.MatchResult match = localSearch.get(wait.toMillis(), TimeUnit.MILLISECONDS);
+            return scanPolicy.canCompleteWithoutVisualFallback(match) ? Optional.of(match) : Optional.empty();
+        } catch (TimeoutException running) {
+            return Optional.empty();
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw scanTimeout();
+        } catch (ExecutionException failed) {
+            RuntimeException failure = unwrap(failed);
+            if (failure instanceof ExternalServiceUnavailableException unavailable
+                    && RECOVERABLE_LOCAL_FAILURES.contains(unavailable.getCode())) {
+                deadline.remaining();
+                return Optional.empty();
+            }
+            throw failure;
+        }
+    }
+
+    /** Waits until either lookup finishes, within the scan budget. */
+    private static void awaitFirst(CompletableFuture<?> first, CompletableFuture<?> second,
+                                   WineLabelScanDeadline deadline) {
+        try {
+            CompletableFuture.anyOf(first, second).get(deadline.remaining().toNanos(), TimeUnit.NANOSECONDS);
+        } catch (ExecutionException finishedWithFailure) {
+            // The failed lookup is read, and its failure handled, by the caller.
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw scanTimeout();
+        } catch (TimeoutException exhausted) {
+            throw scanTimeout();
+        }
+    }
+
+    /** The same failure the scan deadline raises once its budget is spent or the scan is interrupted. */
+    private static ExternalServiceUnavailableException scanTimeout() {
+        return new ExternalServiceUnavailableException(
+                "LABEL_SCAN_TIMEOUT", "Wine-label scan exceeded its time budget", null);
+    }
+
+    private static <T> T join(CompletableFuture<T> future) {
+        try {
+            return future.join();
+        } catch (CompletionException failed) {
+            throw unwrap(failed);
+        }
+    }
+
+    private static RuntimeException unwrap(Throwable wrapped) {
+        Throwable cause = Objects.requireNonNullElse(wrapped.getCause(), wrapped);
+        if (cause instanceof Error error) {
+            throw error;
+        }
+        return cause instanceof RuntimeException runtime ? runtime : new IllegalStateException(cause);
     }
 
     /**
@@ -187,17 +346,41 @@ public class ScanWineLabelCommandHandler implements ScanWineLabelUseCase {
     }
 
     private <T> T measureStage(
-            WineLabelMetricsPort.ScanStage stage, Supplier<T> operation) {
+            WineLabelMetricsPort.ScanStage stage, ScanTrace trace, Supplier<T> operation) {
         long startedAt = System.nanoTime();
         try {
             T result = operation.get();
-            metricsPort.recordScanStage(
-                    stage, Duration.ofNanos(System.nanoTime() - startedAt), true);
+            metricsPort.recordScanStage(stage, trace.add(stage, startedAt), true);
             return result;
         } catch (RuntimeException exception) {
-            metricsPort.recordScanStage(
-                    stage, Duration.ofNanos(System.nanoTime() - startedAt), false);
+            metricsPort.recordScanStage(stage, trace.add(stage, startedAt), false);
             throw exception;
+        }
+    }
+
+    private static String failureName(RuntimeException failure) {
+        return failure instanceof ExternalServiceUnavailableException unavailable
+                ? unavailable.getCode()
+                : failure.getClass().getSimpleName();
+    }
+
+    /** The time of each stage one scan ran, logged as a single line so slow scans can be explained. */
+    private static final class ScanTrace {
+        private final long startedAt = System.nanoTime();
+        private final Map<WineLabelMetricsPort.ScanStage, Long> stageMillis =
+                new EnumMap<>(WineLabelMetricsPort.ScanStage.class);
+
+        synchronized Duration add(WineLabelMetricsPort.ScanStage stage, long stageStartedAt) {
+            Duration elapsed = Duration.ofNanos(System.nanoTime() - stageStartedAt);
+            stageMillis.merge(stage, elapsed.toMillis(), Long::sum);
+            return elapsed;
+        }
+
+        synchronized void log(String outcome) {
+            StringBuilder line = new StringBuilder("totalMs=")
+                    .append(Duration.ofNanos(System.nanoTime() - startedAt).toMillis());
+            stageMillis.forEach((stage, millis) -> line.append(' ').append(stage).append('=').append(millis));
+            LOG.info("Label scan finished: outcome={} {}", outcome, line);
         }
     }
 

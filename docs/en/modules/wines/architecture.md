@@ -207,7 +207,8 @@ flowchart TD
     OCR -->|yes| LOCAL["LOCAL_CATALOG matching"]
     LOCAL --> EXACT{"match.exact"}
     EXACT -->|yes| RETURN["map response"]
-    EXACT -->|no| VISION["VISUAL_RECOGNITION"]
+    EXACT -->|"no, or no answer within 400 ms (keeps racing)"| VISION["VISUAL_RECOGNITION"]
+    LOCAL -.->|"answers before the provider"| RETURN
     OCR -->|no| VISION
     VISION --> MERGE["merge local and provider text"]
     VISION -.->|in parallel| VISUAL["visual index search"]
@@ -220,7 +221,7 @@ flowchart TD
     VISION -->|provider unavailable| ERROR["503 LABEL_RECOGNITION_UNAVAILABLE"]
 ```
 
-[View the full “Orchestration” diagram](https://images.vinnot.com/docs/diagrams/v1/en/modules-wines-architecture-a20eb08487f2.svg)
+[View the full “Orchestration” diagram](https://images.vinnot.com/docs/diagrams/v1/en/modules-wines-architecture-47703621372d.svg)
 
 The local step builds ExtractedWineLabel with observedText and a vintage only when there is one distinct plausible year line. The scorer can corroborate the candidate's producer and product only when all significant tokens occur literally in OCR and no significant text remains unexplained by identity, observed grapes or candidate origin. This is matching evidence, not catalog enrichment. Partial text, another commercial line or an incompatible variety prevents promotion. Early exit still requires match.exact with unchanged thresholds and ambiguity checks. Structured reliability is 1.0 with two distinct terms, 0.75 with one and 0.55 without terms. Insufficient evidence invokes visual recognition; local and remote lines are merged preserving order and deduplication.
 
@@ -229,6 +230,8 @@ The local step builds ExtractedWineLabel with observedText and a vintage only wh
 The OCR-only catalog stage has a 3 s sub-budget within the global deadline.
 Exhausting it allows visual recognition when global time remains; this neither
 extends the deadline nor hides failures unrelated to timeouts.
+
+The local lookup runs on the `wineLabelScanExecutor` executor (`WINE_LABEL_SCAN_THREADS`, 8 by default, no queue). If it has not answered the scan within 400 ms, label recognition and the visual index search start beside it instead of after it: the local lookup keeps racing and, if it can then answer alone, its result answers the scan and the provider results are discarded. A local lookup that answers within 400 ms avoids the provider call. If the provider fails at once (for example paused paid calls or an exhausted budget), the scan waits for the local lookup and uses it when it can answer; otherwise it returns the provider failure. When the executor is full, the work runs on the request thread, one stage after the other.
 
 If the optional OCR-only catalog stage exhausts its query budget, visual extraction may still proceed within the shared deadline. The enriched lookup must then succeed; an exhausted total deadline or another technical error is not converted into an empty business result.
 
@@ -375,7 +378,7 @@ The indexed query timeout remains 750 ms.
 
 Image errors include INVALID_LABEL_IMAGE, LABEL_IMAGE_RESOLUTION_TOO_LOW, LABEL_IMAGE_TOO_DARK, LABEL_IMAGE_TOO_BRIGHT and LABEL_IMAGE_OUT_OF_FOCUS; invalid OCR uses INVALID_LABEL_TEXT. Visual failure returns 503 LABEL_RECOGNITION_UNAVAILABLE; exhausted catalog retrieval without recovery returns LABEL_CATALOG_UNAVAILABLE; the deadline uses LABEL_SCAN_TIMEOUT. A timeout followed by valid recovery may continue, but an unrecovered technical failure never becomes NO_MATCH. Provider logs include numeric HTTP status, never keys or response bodies.
 
-LOCAL_CATALOG, VISUAL_RECOGNITION and ENRICHED_CATALOG stages record SUCCESS/FAILURE duration. Scan total/duration are recorded when building a business response; earlier thrown errors do not pass that point. Metrics do not store images.
+LOCAL_CATALOG, VISUAL_RECOGNITION, VISUAL_WAIT, ENRICHED_CATALOG and CANDIDATE_VERIFICATION stages record SUCCESS/FAILURE duration. Scan total/duration are recorded when building a business response; earlier thrown errors do not pass that point. Each scan also writes one INFO line `Label scan finished: outcome=<outcome> totalMs=<ms> <STAGE>=<ms> ...` with only the stages it ran; a failed scan uses `outcome=FAILED_<code>` (or the exception type). Metrics and logs never store images.
 
 #### Tests and sources
 

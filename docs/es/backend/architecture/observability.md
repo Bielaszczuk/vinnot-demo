@@ -61,7 +61,7 @@ Los contadores totales no se incrementan para una excepción anterior al punto d
 
 ## Taxonomía de etapas
 
-El enum `WineLabelMetricsPort.ScanStage` contiene exactamente `LOCAL_CATALOG`, `VISUAL_RECOGNITION` y `ENRICHED_CATALOG`. Validación HTTP, upload de red y serialización no tienen una etapa de este enum; contribuyen a la duración HTTP del filtro. Scoring forma parte de las llamadas al matcher de catálogo. Los hints SQL y el timeout visual se describen en [escaneo](../../modules/wines/architecture.md).
+El enum `WineLabelMetricsPort.ScanStage` contiene exactamente `LOCAL_CATALOG`, `VISUAL_RECOGNITION`, `VISUAL_WAIT` (espera del resultado de la búsqueda visual), `ENRICHED_CATALOG` y `CANDIDATE_VERIFICATION` (segunda llamada de visión que elige entre candidatas). Validación HTTP, upload de red y serialización no tienen una etapa de este enum; contribuyen a la duración HTTP del filtro. Scoring forma parte de las llamadas al matcher de catálogo. Los hints SQL y el timeout visual se describen en [escaneo](../../modules/wines/architecture.md).
 
 ## Logs de aplicación
 

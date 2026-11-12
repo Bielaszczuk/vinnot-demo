@@ -207,7 +207,8 @@ flowchart TD
     OCR -->|sí| LOCAL["Matching LOCAL_CATALOG"]
     LOCAL --> EXACT{"match.exact"}
     EXACT -->|sí| RETURN["Proyectar respuesta"]
-    EXACT -->|no| VISION["VISUAL_RECOGNITION"]
+    EXACT -->|"no, o sin respuesta a los 400 ms (sigue en carrera)"| VISION["VISUAL_RECOGNITION"]
+    LOCAL -.->|"responde antes que el proveedor"| RETURN
     OCR -->|no| VISION
     VISION --> MERGE["Combinar texto local y del proveedor"]
     VISION -.->|en paralelo| VISUAL["Búsqueda en el índice visual"]
@@ -220,7 +221,7 @@ flowchart TD
     VISION -->|proveedor no disponible| ERROR["503 LABEL_RECOGNITION_UNAVAILABLE"]
 ```
 
-[Ver diagrama de «Orquestación» completo](https://images.vinnot.com/docs/diagrams/v1/es/modules-wines-architecture-94a9bf6aae7f.svg)
+[Ver diagrama de «Orquestación» completo](https://images.vinnot.com/docs/diagrams/v1/es/modules-wines-architecture-fa41d25b2d3f.svg)
 
 El paso local construye ExtractedWineLabel con observedText y la añada sólo cuando existe una única línea de año plausible. El scorer puede corroborar productor y producto del candidato únicamente cuando todos sus tokens significativos están literalmente presentes en OCR y no queda texto significativo sin explicar por identidad, uvas observadas u origen del candidato. Esta corroboración es evidencia de matching, no enriquecimiento del catálogo. Texto parcial, otra línea comercial o una cepa incompatible impiden esa promoción. La salida anticipada sigue requiriendo match.exact, con los mismos umbrales y control de ambigüedad. La fiabilidad estructurada es 1,0 con dos términos distintos, 0,75 con uno y 0,55 sin términos. Si falta evidencia se utiliza reconocimiento visual y se combinan las líneas locales/remotas sin perder orden ni duplicar texto.
 
@@ -229,6 +230,8 @@ El paso local construye ExtractedWineLabel con observedText y la añada sólo cu
 La etapa de catálogo basada sólo en OCR tiene un subpresupuesto de 3 s dentro del
 deadline global. Su agotamiento permite continuar con reconocimiento visual si
 queda tiempo global; no extiende el deadline ni oculta errores ajenos al timeout.
+
+La búsqueda local corre en el executor `wineLabelScanExecutor` (`WINE_LABEL_SCAN_THREADS`, 8 por defecto, sin cola). Si en 400 ms no respondió el escaneo, el reconocimiento visual y la búsqueda en el índice visual arrancan en paralelo en vez de esperar a que termine: la búsqueda local sigue en carrera y, si después puede responder sola, su resultado contesta el escaneo y se descartan los del proveedor. Una búsqueda local que responde dentro de los 400 ms evita la llamada al proveedor. Si el proveedor falla enseguida (por ejemplo, llamadas pagas pausadas o presupuesto agotado), el escaneo espera a la búsqueda local y la usa si puede responder; si no, devuelve el error del proveedor. Con el executor lleno, el trabajo corre en el hilo de la request, una etapa tras otra.
 
 Si la etapa opcional de catálogo basada sólo en OCR agota el presupuesto de sus consultas, puede continuar la extracción visual dentro del deadline compartido. La búsqueda enriquecida debe completarse; agotar el deadline total u otro fallo técnico no se convierte en un resultado de negocio vacío.
 
@@ -375,7 +378,7 @@ no es el porcentaje de confianza del escaneo. El timeout indexado sigue en 750 m
 
 Errores de imagen: INVALID_LABEL_IMAGE, LABEL_IMAGE_RESOLUTION_TOO_LOW, LABEL_IMAGE_TOO_DARK, LABEL_IMAGE_TOO_BRIGHT y LABEL_IMAGE_OUT_OF_FOCUS; OCR inválido: INVALID_LABEL_TEXT. Fallo visual: 503 LABEL_RECOGNITION_UNAVAILABLE; catálogo agotado sin recuperación: LABEL_CATALOG_UNAVAILABLE; deadline: LABEL_SCAN_TIMEOUT. Un timeout seguido de recuperación válida permite continuar, pero un fallo técnico sin recuperación no se convierte en NO_MATCH. El log de proveedor registra código HTTP, no clave ni cuerpo de respuesta.
 
-Las etapas LOCAL_CATALOG, VISUAL_RECOGNITION y ENRICHED_CATALOG registran duración SUCCESS/FAILURE. Scan total/duration se registran al construir una respuesta de negocio; errores lanzados antes no recorren ese punto. No se almacenan imágenes en métricas.
+Las etapas LOCAL_CATALOG, VISUAL_RECOGNITION, VISUAL_WAIT, ENRICHED_CATALOG y CANDIDATE_VERIFICATION registran duración SUCCESS/FAILURE. Scan total/duration se registran al construir una respuesta de negocio; errores lanzados antes no recorren ese punto. Además, cada escaneo escribe una sola línea INFO `Label scan finished: outcome=<resultado> totalMs=<ms> <ETAPA>=<ms> ...` con solo las etapas que corrió; un escaneo fallido usa `outcome=FAILED_<código>` (o el tipo de excepción). No se almacenan imágenes en métricas ni en logs.
 
 #### Pruebas y fuentes
 

@@ -59,7 +59,7 @@ Total counters do not increment for an exception before the response point. An i
 
 ## Stage taxonomy
 
-The `WineLabelMetricsPort.ScanStage` enum contains exactly `LOCAL_CATALOG`, `VISUAL_RECOGNITION` and `ENRICHED_CATALOG`. HTTP validation, network upload and serialization have no stage in this enum; they contribute to filter HTTP duration. Scoring is part of catalog-matcher calls. SQL hints and visual timeout are described in [scanning](../../modules/wines/architecture.md).
+The `WineLabelMetricsPort.ScanStage` enum contains exactly `LOCAL_CATALOG`, `VISUAL_RECOGNITION`, `VISUAL_WAIT` (waiting for the visual search result), `ENRICHED_CATALOG` and `CANDIDATE_VERIFICATION` (the second vision call that chooses among candidates). HTTP validation, network upload and serialization have no stage in this enum; they contribute to filter HTTP duration. Scoring is part of catalog-matcher calls. SQL hints and visual timeout are described in [scanning](../../modules/wines/architecture.md).
 
 ## Application logs
 

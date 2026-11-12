@@ -18,6 +18,8 @@ public interface WineLabelMetricsPort {
     enum ScanStage {
         LOCAL_CATALOG,
         VISUAL_RECOGNITION,
-        ENRICHED_CATALOG
+        VISUAL_WAIT,
+        ENRICHED_CATALOG,
+        CANDIDATE_VERIFICATION
     }
 }

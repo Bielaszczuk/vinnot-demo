@@ -164,6 +164,8 @@ app:
   name: Vinnot
   version: 1.0.0
   wine-label:
+    # Threads that let a scan's local lookup and label recognition overlap.
+    scan-threads: ${WINE_LABEL_SCAN_THREADS:8}
     recognition:
       timeout: ${WINE_LABEL_RECOGNITION_TIMEOUT:12s}
       detail: ${WINE_LABEL_RECOGNITION_DETAIL:HIGH}

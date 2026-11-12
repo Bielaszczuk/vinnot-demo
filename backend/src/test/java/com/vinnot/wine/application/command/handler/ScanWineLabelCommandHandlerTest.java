@@ -1,5 +1,9 @@
 package com.vinnot.wine.application.command.handler;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.vinnot.wine.application.query.response.WineLabelScanResponse;
 import com.vinnot.wine.application.query.response.WineSummaryResponse;
 import com.vinnot.wine.application.service.WineLabelScanRecorder;
@@ -34,6 +38,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.slf4j.LoggerFactory;
 import com.vinnot.wine.application.port.out.WineLabelAliasPort;
 import com.vinnot.wine.application.port.out.WineBarcodeConfirmationPort;
 import com.vinnot.wine.application.port.out.WineRepositoryPort;
@@ -83,7 +94,7 @@ class ScanWineLabelCommandHandlerTest {
         handler = new ScanWineLabelCommandHandler(
                 recognitionPort, catalogMatcher, metricsPort,
                 new WineLabelScanPolicy(), scanRecorder, visualIndex, verifier,
-                barcodeConfirmations, wineRepository, wineryQuery);
+                barcodeConfirmations, wineRepository, wineryQuery, Runnable::run);
     }
 
     @Test
@@ -101,7 +112,7 @@ class ScanWineLabelCommandHandlerTest {
                 new WineLabelCandidateRetriever(wines), wineries,
                 new WineLabelMatchScorer(), aliases);
         var useCase = new ScanWineLabelCommandHandler(recognitionPort, matcher, metricsPort, new WineLabelScanPolicy(), scanRecorder,
-                visualIndex, verifier, barcodeConfirmations, wineRepository, wineryQuery);
+                visualIndex, verifier, barcodeConfirmations, wineRepository, wineryQuery, Runnable::run);
         var result = useCase.execute(command(List.of("TAPIZ", "BLACK TEARS", "MALBEC", "2020")));
         assertThat(result.outcome().name()).isEqualTo("EXACT_MATCH");
         assertThat(result.wine().id()).isEqualTo(wine.getId());
@@ -416,7 +427,7 @@ class ScanWineLabelCommandHandlerTest {
         when(recognitionPort.recognize(any(), any(), any())).thenReturn(label(List.of("NORTON")));
         var useCase = new ScanWineLabelCommandHandler(recognitionPort, catalogMatcher, metricsPort,
                 new WineLabelScanPolicy(), scanRecorder, visualIndexMock, verifierMock,
-                barcodeConfirmations, wineRepository, wineryQuery);
+                barcodeConfirmations, wineRepository, wineryQuery, Runnable::run);
 
         var result = useCase.execute(command(List.of()));
 
@@ -448,12 +459,309 @@ class ScanWineLabelCommandHandlerTest {
                 new ExternalServiceUnavailableException("LABEL_RECOGNITION_UNAVAILABLE", "down", null));
         var useCase = new ScanWineLabelCommandHandler(recognitionPort, catalogMatcher, metricsPort,
                 new WineLabelScanPolicy(), scanRecorder, visualIndexMock, verifier,
-                barcodeConfirmations, wineRepository, wineryQuery);
+                barcodeConfirmations, wineRepository, wineryQuery, Runnable::run);
 
         assertThatThrownBy(() -> useCase.execute(command(List.of())))
                 .isInstanceOf(ExternalServiceUnavailableException.class);
         assertThat(search).isCancelled();
         verify(catalogMatcher, never()).match(any(), any(), any());
+    }
+
+    @Test
+    void everyScanLogsItsOutcomeAndTheTimeOfEachStage() {
+        when(catalogMatcher.match(any(), any(), any())).thenReturn(noMatch()).thenReturn(exactMatch());
+        when(recognitionPort.recognize(any(), any(), any())).thenReturn(label(List.of("FORASTERO", "MALBEC")));
+        withScanLogs(logs -> {
+            assertThat(handler.execute(command(List.of("noisy OCR"))).outcome().name()).isEqualTo("EXACT_MATCH");
+            assertThat(logs.list).singleElement().satisfies(event -> {
+                assertThat(event.getLevel()).isEqualTo(Level.INFO);
+                assertThat(event.getFormattedMessage())
+                        .startsWith("Label scan finished: outcome=EXACT_MATCH totalMs=")
+                        .containsPattern("LOCAL_CATALOG=\\d+ ")
+                        .containsPattern("VISUAL_RECOGNITION=\\d+ ")
+                        .containsPattern("VISUAL_WAIT=\\d+ ")
+                        .containsPattern("ENRICHED_CATALOG=\\d+ ")
+                        .containsPattern("CANDIDATE_VERIFICATION=\\d+$");
+            });
+        });
+        verify(metricsPort).recordScanStage(eq(WineLabelMetricsPort.ScanStage.VISUAL_WAIT),
+                any(Duration.class), eq(true));
+        verify(metricsPort).recordScanStage(eq(WineLabelMetricsPort.ScanStage.CANDIDATE_VERIFICATION),
+                any(Duration.class), eq(true));
+    }
+
+    @Test
+    void aScanResolvedByTheLocalCatalogLogsOnlyTheStagesItRan() {
+        when(catalogMatcher.match(any(), any(), any())).thenReturn(exactMatch());
+        withScanLogs(logs -> {
+            handler.execute(command(List.of("FORASTERO", "SMALL BATCH", "MALBEC")));
+            assertThat(logs.list).singleElement().extracting(ILoggingEvent::getFormattedMessage)
+                    .asString().matches("Label scan finished: outcome=EXACT_MATCH totalMs=\\d+ LOCAL_CATALOG=\\d+");
+        });
+    }
+
+    @Test
+    void aFailedScanLogsTheFailureCodeOrTypeWithItsStages() {
+        var timeout = new ExternalServiceUnavailableException("LABEL_SCAN_TIMEOUT", "deadline", null);
+        when(recognitionPort.recognize(any(), any(), any()))
+                .thenThrow(timeout).thenThrow(new IllegalStateException("broken"));
+        withScanLogs(logs -> {
+            assertThatThrownBy(() -> handler.execute(command(List.of()))).isSameAs(timeout);
+            assertThatThrownBy(() -> handler.execute(command(List.of()))).isInstanceOf(IllegalStateException.class);
+            assertThat(logs.list).extracting(ILoggingEvent::getFormattedMessage).satisfiesExactly(
+                    first -> assertThat(first).matches(
+                            "Label scan finished: outcome=FAILED_LABEL_SCAN_TIMEOUT totalMs=\\d+ VISUAL_RECOGNITION=\\d+"),
+                    second -> assertThat(second).matches(
+                            "Label scan finished: outcome=FAILED_IllegalStateException totalMs=\\d+ VISUAL_RECOGNITION=\\d+"));
+        });
+    }
+
+    @Test
+    void recognitionStartsWhileASlowLocalLookupRunsAndAnswersWhenItFinishesFirst() throws Exception {
+        var localRelease = new CountDownLatch(1);
+        var recognitionStarted = new CountDownLatch(1);
+        var localSawRecognition = new AtomicBoolean();
+        when(catalogMatcher.match(any(), any(), any()))
+                .thenAnswer(invocation -> {
+                    localSawRecognition.set(recognitionStarted.await(5, TimeUnit.SECONDS));
+                    localRelease.await(5, TimeUnit.SECONDS);
+                    return noMatch();
+                })
+                .thenReturn(exactMatch());
+        when(recognitionPort.recognize(any(), any(), any())).thenAnswer(invocation -> {
+            recognitionStarted.countDown();
+            return label(List.of("FORASTERO", "MALBEC"));
+        });
+        withConcurrentHandler(concurrent -> {
+            var result = concurrent.execute(command(List.of("noisy OCR")));
+            assertThat(result.outcome().name()).isEqualTo("EXACT_MATCH");
+            assertThat(localRelease.getCount()).isEqualTo(1);
+            localRelease.countDown();
+        });
+        assertThat(localSawRecognition).isTrue();
+        verify(metricsPort).recordScan(eq(WineLabelScanResponse.Outcome.EXACT_MATCH), any(Duration.class), eq(true));
+    }
+
+    @Test
+    void aLocalMatchThatArrivesDuringRecognitionAnswersTheScanWithoutWaitingForIt() throws Exception {
+        var recognitionStarted = new CountDownLatch(1);
+        var recognitionRelease = new CountDownLatch(1);
+        var local = exactMatch();
+        when(catalogMatcher.match(any(), any(), any())).thenAnswer(invocation -> {
+            recognitionStarted.await(5, TimeUnit.SECONDS);
+            return local;
+        });
+        when(recognitionPort.recognize(any(), any(), any())).thenAnswer(invocation -> {
+            recognitionStarted.countDown();
+            recognitionRelease.await(5, TimeUnit.SECONDS);
+            return label(List.of("SOMETHING", "ELSE"));
+        });
+        withConcurrentHandler(concurrent -> {
+            var result = concurrent.execute(command(List.of("FORASTERO", "SMALL BATCH", "MALBEC")));
+            assertThat(result.outcome().name()).isEqualTo("EXACT_MATCH");
+            assertThat(result.wine().id()).isEqualTo(local.ranked().getFirst().candidate().wine().getId());
+            assertThat(recognitionRelease.getCount()).isEqualTo(1);
+            recognitionRelease.countDown();
+        });
+        verify(catalogMatcher, times(1)).match(any(), any(), any());
+        verify(metricsPort).recordScan(eq(WineLabelScanResponse.Outcome.EXACT_MATCH), any(Duration.class), eq(false));
+    }
+
+    @Test
+    void aLocalLookupThatFinishesFirstWithoutAnAnswerLetsRecognitionDecide() throws Exception {
+        var timeout = new ExternalServiceUnavailableException("LABEL_SCAN_TIMEOUT", "deadline", null);
+        List<Supplier<WineLabelCatalogMatcher.MatchResult>> localOutcomes = List.of(
+                this::noMatch,
+                () -> {
+                    throw timeout;
+                });
+        for (var localOutcome : localOutcomes) {
+            var recognitionStarted = new CountDownLatch(1);
+            var localFinished = new CountDownLatch(1);
+            when(catalogMatcher.match(any(), any(), any()))
+                    .thenAnswer(invocation -> {
+                        recognitionStarted.await(5, TimeUnit.SECONDS);
+                        localFinished.countDown();
+                        return localOutcome.get();
+                    })
+                    .thenReturn(exactMatch());
+            when(recognitionPort.recognize(any(), any(), any())).thenAnswer(invocation -> {
+                recognitionStarted.countDown();
+                localFinished.await(5, TimeUnit.SECONDS);
+                Thread.sleep(300);
+                return label(List.of("FORASTERO", "MALBEC"));
+            });
+            withConcurrentHandler(concurrent ->
+                    assertThat(concurrent.execute(command(List.of("noisy OCR"))).outcome().name())
+                            .isEqualTo("EXACT_MATCH"));
+        }
+        verify(recognitionPort, times(2)).recognize(any(), any(), any());
+    }
+
+    @Test
+    void anUnrelatedLocalFailureDuringRecognitionFailsTheScan() throws Exception {
+        var recognitionStarted = new CountDownLatch(1);
+        var recognitionRelease = new CountDownLatch(1);
+        var failure = new ExternalServiceUnavailableException("OTHER_SERVICE_FAILURE", "unavailable", null);
+        when(catalogMatcher.match(any(), any(), any())).thenAnswer(invocation -> {
+            recognitionStarted.await(5, TimeUnit.SECONDS);
+            throw failure;
+        });
+        when(recognitionPort.recognize(any(), any(), any())).thenAnswer(invocation -> {
+            recognitionStarted.countDown();
+            recognitionRelease.await(5, TimeUnit.SECONDS);
+            return label(List.of("FORASTERO"));
+        });
+        withConcurrentHandler(concurrent -> {
+            assertThatThrownBy(() -> concurrent.execute(command(List.of("noisy OCR")))).isSameAs(failure);
+            recognitionRelease.countDown();
+        });
+    }
+
+    @Test
+    void aScanThatRunsOutOfBudgetWhileBothLookupsRunTimesOut() throws Exception {
+        var release = new CountDownLatch(1);
+        when(catalogMatcher.match(any(), any(), any())).thenAnswer(invocation -> {
+            release.await(5, TimeUnit.SECONDS);
+            return noMatch();
+        });
+        when(recognitionPort.recognize(any(), any(), any())).thenAnswer(invocation -> {
+            release.await(5, TimeUnit.SECONDS);
+            return label(List.of("FORASTERO"));
+        });
+        var executor = Executors.newCachedThreadPool();
+        try {
+            var hurried = new ScanWineLabelCommandHandler(recognitionPort, catalogMatcher, metricsPort,
+                    new WineLabelScanPolicy(), scanRecorder, visualIndex, verifier,
+                    barcodeConfirmations, wineRepository, wineryQuery, executor, Duration.ofMillis(700));
+            assertThatThrownBy(() -> hurried.execute(command(List.of("noisy OCR"))))
+                    .isInstanceOfSatisfying(ExternalServiceUnavailableException.class,
+                            exception -> assertThat(exception.getCode()).isEqualTo("LABEL_SCAN_TIMEOUT"));
+        } finally {
+            release.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void anInterruptedScanStopsWithATimeoutWhetherItWaitsForTheLocalLookupOrForBothLookups() throws Exception {
+        var release = new CountDownLatch(1);
+        var requestThread = Thread.currentThread();
+        when(catalogMatcher.match(any(), any(), any()))
+                .thenAnswer(invocation -> {
+                    release.await(5, TimeUnit.SECONDS);
+                    return noMatch();
+                })
+                .thenAnswer(invocation -> {
+                    Thread.sleep(600);
+                    requestThread.interrupt();
+                    release.await(5, TimeUnit.SECONDS);
+                    return noMatch();
+                });
+        when(recognitionPort.recognize(any(), any(), any())).thenAnswer(invocation -> {
+            release.await(5, TimeUnit.SECONDS);
+            return label(List.of("FORASTERO"));
+        });
+        withConcurrentHandler(concurrent -> {
+            try {
+                Thread.currentThread().interrupt();
+                assertThatThrownBy(() -> concurrent.execute(command(List.of("noisy OCR"))))
+                        .isInstanceOfSatisfying(ExternalServiceUnavailableException.class,
+                                exception -> assertThat(exception.getCode()).isEqualTo("LABEL_SCAN_TIMEOUT"));
+                assertThat(Thread.interrupted()).isTrue();
+                assertThatThrownBy(() -> concurrent.execute(command(List.of("noisy OCR"))))
+                        .isInstanceOfSatisfying(ExternalServiceUnavailableException.class,
+                                exception -> assertThat(exception.getCode()).isEqualTo("LABEL_SCAN_TIMEOUT"));
+                assertThat(Thread.interrupted()).isTrue();
+            } finally {
+                release.countDown();
+            }
+        });
+    }
+
+    @Test
+    void aRecognitionErrorPropagatesUnchanged() {
+        var error = new StackOverflowError("deep");
+        when(recognitionPort.recognize(any(), any(), any())).thenThrow(error);
+        assertThatThrownBy(() -> handler.execute(command(List.of()))).isSameAs(error);
+    }
+
+    @Test
+    void aProviderThatRefusesAtOnceStillLetsASlowLocalLookupAnswer() throws Exception {
+        var paused = new ExternalServiceUnavailableException("AI_PAID_CALLS_PAUSED", "paused", null);
+        when(recognitionPort.recognize(any(), any(), any())).thenThrow(paused);
+        when(catalogMatcher.match(any(), any(), any()))
+                .thenAnswer(invocation -> {
+                    Thread.sleep(700);
+                    return exactMatch();
+                })
+                .thenAnswer(invocation -> {
+                    Thread.sleep(700);
+                    return noMatch();
+                });
+        withConcurrentHandler(concurrent -> {
+            assertThat(concurrent.execute(command(List.of("FORASTERO", "SMALL BATCH", "MALBEC"))).outcome().name())
+                    .isEqualTo("EXACT_MATCH");
+            assertThatThrownBy(() -> concurrent.execute(command(List.of("noisy OCR")))).isSameAs(paused);
+        });
+        verify(metricsPort).recordScan(eq(WineLabelScanResponse.Outcome.EXACT_MATCH), any(Duration.class), eq(false));
+    }
+
+    private void withConcurrentHandler(ThrowingConsumer<ScanWineLabelCommandHandler> scenario) throws Exception {
+        var executor = Executors.newCachedThreadPool();
+        try {
+            scenario.accept(new ScanWineLabelCommandHandler(recognitionPort, catalogMatcher, metricsPort,
+                    new WineLabelScanPolicy(), scanRecorder, visualIndex, verifier,
+                    barcodeConfirmations, wineRepository, wineryQuery, executor));
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @FunctionalInterface
+    private interface ThrowingConsumer<T> {
+        void accept(T value) throws Exception;
+    }
+
+    @Test
+    void aLocalFailureThatIsNotAServiceOutageFailsTheScanWithoutCallingRecognition() {
+        var failure = new IllegalStateException("broken matcher");
+        when(catalogMatcher.match(any(), any(), any())).thenThrow(failure);
+        assertThatThrownBy(() -> handler.execute(command(List.of("noisy OCR")))).isSameAs(failure);
+        verifyNoInteractions(recognitionPort);
+    }
+
+    @Test
+    void blankObservedLinesAreDroppedWhenLocalAndProviderTextAreMerged() {
+        when(catalogMatcher.match(any(), any(), any())).thenReturn(noMatch()).thenReturn(exactMatch());
+        when(recognitionPort.recognize(any(), any(), any()))
+                .thenReturn(label(List.of("MALBEC", "  ", "forastero")));
+        var result = handler.execute(command(List.of("FORASTERO", " ")));
+        assertThat(result.extractedData().observedText()).containsExactly("FORASTERO", "MALBEC");
+    }
+
+    @Test
+    void aCandidateWithoutAWineryIsSummarizedWithoutOne() {
+        Wine wine = Wine.create("Orphan Malbec", null, WineType.RED, UUID.randomUUID());
+        var orphan = new WineLabelCatalogMatcher.MatchResult(
+                List.of(new RankedWineLabelCandidate(new WineLabelCandidate(wine, null), 0.96)), Map.of(), true);
+        when(catalogMatcher.match(any(), any(), any())).thenReturn(orphan);
+        var result = handler.execute(command(List.of("ORPHAN", "MALBEC")));
+        assertThat(result.wine().id()).isEqualTo(wine.getId());
+        assertThat(result.wine().wineryName()).isNull();
+    }
+
+    private static void withScanLogs(Consumer<ListAppender<ILoggingEvent>> assertions) {
+        Logger logger = (Logger) LoggerFactory.getLogger(ScanWineLabelCommandHandler.class);
+        var logs = new ListAppender<ILoggingEvent>();
+        logs.start();
+        logger.addAppender(logs);
+        try {
+            assertions.accept(logs);
+        } finally {
+            logger.detachAppender(logs);
+            logs.stop();
+        }
     }
 
     private ScanWineLabelCommand barcodeCommand(UUID member, List<String> observedText) {

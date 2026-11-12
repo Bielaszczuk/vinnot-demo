@@ -199,11 +199,11 @@ El recuperador de aplicación usa primero identidad comercial cuando hay discrim
 | Método | Selección | Hint por consulta |
 |---|---|---|
 | findByCommercialIdentity | containment de producto y discriminadores | 1500 ms |
-| findByIndexedIdentity | FTS + rama de bodega | 750 ms |
-| findByFuzzyMatch | pg_trgm / ILIKE sobre vino y bodega | 1500 ms |
+| findByIndexedIdentity | FTS sobre a lo sumo 2000 coincidencias + rama de bodega | 750 ms |
+| findByFuzzyMatch | ILIKE sobre a lo sumo 2000 nombres de vino + pg_trgm sobre bodega | 1500 ms |
 | findByVisualCues | tipo/uva/añada, sin términos legibles | 1500 ms |
 
-Fuzzy compara cada término con ambos campos; su score SQL pondera mejor similitud de vino 0,55 y bodega 0,35, más añada 0,05, uva 0,05 y tipo 0,03 si hay evidencia. El prefilter conserva al menos 200 candidatos o cinco veces el límite solicitado; la selección final se ordena por match_score e ID. Las ramas indexadas tienen LIMIT antes del orden exterior: el desempate final ordena candidatos ya recuperados, no certifica selección exhaustiva.
+Fuzzy compara cada término con ambos campos; su score SQL pondera mejor similitud de vino 0,55 y bodega 0,35, más añada 0,05, uva 0,05 y tipo 0,03 si hay evidencia. El prefilter conserva al menos 200 candidatos o cinco veces el límite solicitado; la selección final se ordena por match_score e ID. Las ramas indexadas tienen LIMIT antes del orden exterior: el desempate final ordena candidatos ya recuperados, no certifica selección exhaustiva. Una palabra común ("malbec", "reserva") coincide con gran parte del catálogo; ordenar todas las coincidencias leía cientos de MB de disco y superaba el hint en producción (2,8 a 8,3 s). Por eso la rama FTS ordena a lo sumo 2000 coincidencias (el doble del límite antes de descartar vinos inactivos) y la rama de vino de fuzzy busca el término con ILIKE sobre a lo sumo 2000 nombres, sin el operador `%` sobre `wines.name`, que recorría la tabla (3,4 a 4,9 s). Con menos de 2000 coincidencias el resultado no cambia; la tolerancia a errores de tipeo queda en la rama de bodega.
 
 ```mermaid
 flowchart TD

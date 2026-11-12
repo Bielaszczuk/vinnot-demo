@@ -887,6 +887,14 @@ retrieves, ranks, and consolidates equivalent identities.
 grape, type, country, region, and discriminators. Visual-provider confidence does
 not replace the comparable label-to-catalog score.
 
+Scoring compares every label line with every candidate, and a scan ranks hundreds
+of candidates up to three times. `WineLabelIdentityNormalizer` therefore keeps
+its normalized text and significant tokens for up to 8,192 distinct values (the
+memo is emptied when full) and uses precompiled patterns. On a production thread
+dump the ranking spent 4-6 s of the enriched stage normalizing the same lines; a
+local benchmark of 400 candidates went from 670 ms to 36-43 ms with the same
+ranking.
+
 #### Exactness and suggestions
 
 - Base exact threshold: `0.90`.

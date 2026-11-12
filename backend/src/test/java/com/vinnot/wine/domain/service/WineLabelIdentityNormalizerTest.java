@@ -190,4 +190,28 @@ class WineLabelIdentityNormalizerTest {
                 "1492 Blanco 2018"))
                 .containsExactly("1492");
     }
+
+    @Test
+    void reusesTheTokensOfTextAlreadyScored() {
+        String line = "BODEGA TAPIZ RETRATO por Jean Claude";
+
+        Set<String> first = WineLabelIdentityNormalizer.significantTokens(line);
+
+        assertThat(WineLabelIdentityNormalizer.significantTokens(line)).isSameAs(first);
+        assertThat(WineLabelIdentityNormalizer.normalize(line))
+                .isSameAs(WineLabelIdentityNormalizer.normalize(line))
+                .isEqualTo("bodega tapiz retrato por jean claude");
+        assertThat(WineLabelIdentityNormalizer.significantTokens(null)).isEmpty();
+    }
+
+    @Test
+    void keepsNormalizingCorrectlyAfterManyDistinctTexts() {
+        for (int index = 0; index <= WineLabelIdentityNormalizer.MEMO_LIMIT; index++) {
+            WineLabelIdentityNormalizer.significantTokens("Cuvee " + index);
+        }
+
+        assertThat(WineLabelIdentityNormalizer.normalize("Viña Ñandú 100×100 & Co."))
+                .isEqualTo("vina nandu 100 x 100 co");
+        assertThat(WineLabelIdentityNormalizer.significantTokens("Cuvee 1492")).containsExactlyInAnyOrder("cuvee", "1492");
+    }
 }

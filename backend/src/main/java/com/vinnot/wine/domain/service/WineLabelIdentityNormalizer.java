@@ -9,7 +9,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -28,6 +31,22 @@ public final class WineLabelIdentityNormalizer {
     private static final int DISTINCTIVE_TEXT_MIN_LENGTH = 8;
     private static final int EARLIEST_PLAUSIBLE_VINTAGE = 1900;
     private static final int LATEST_PLAUSIBLE_VINTAGE = 2099;
+    private static final Pattern COMBINING_MARKS = Pattern.compile("\\p{M}+");
+    private static final Pattern DIGIT_MULTIPLIER = Pattern.compile("(?<=\\d)x(?=\\d)");
+    private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^\\p{L}\\p{N}]+");
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+    private static final Pattern DIGITS = Pattern.compile("\\d+");
+    private static final Pattern FOUR_DIGITS = Pattern.compile("\\d{4}");
+    private static final Pattern NUMBERED_PRODUCT = Pattern.compile("\\d{1,4} [\\p{L}].*");
+    private static final Pattern MEASUREMENT = Pattern.compile(".*\\b(?:m|mts|mt|metros|metres|meters|altitud|altitude"
+            + "|feet|ft|ml|cl|abv|vol|alcohol|alc|m s n m|m a s l|msnm|masl)\\b.*");
+    /**
+     * Scoring normalizes the same label lines and catalog names once per candidate; a scan ranks hundreds of
+     * candidates. Results are pure functions of the text, so they are kept up to this many distinct values.
+     */
+    static final int MEMO_LIMIT = 8_192;
+    private static final Map<String, String> NORMALIZED = new ConcurrentHashMap<>();
+    private static final Map<String, Set<String>> SIGNIFICANT_TOKENS = new ConcurrentHashMap<>();
     private static final Pattern MULTIPLICATIVE_IDENTIFIER = Pattern.compile(
             "(?:^| )(\\d+(?: x \\d+)+)(?: |$)");
 
@@ -43,19 +62,40 @@ public final class WineLabelIdentityNormalizer {
         if (!hasText(value)) {
             return "";
         }
+        return memoized(NORMALIZED, value, WineLabelIdentityNormalizer::computeNormalized);
+    }
+
+    private static String computeNormalized(String value) {
         String compatible = WineLabelUnicodeCompatibility.transliterate(value);
-        return Normalizer.normalize(compatible, Normalizer.Form.NFKD)
-                .replaceAll("\\p{M}+", "")
+        String withoutMarks = COMBINING_MARKS.matcher(Normalizer.normalize(compatible, Normalizer.Form.NFKD))
+                .replaceAll("")
                 .toLowerCase(Locale.ROOT)
-                .replace('×', 'x')
-                .replaceAll("(?<=\\d)x(?=\\d)", " x ")
-                .replace('&', ' ')
-                .replaceAll("[^\\p{L}\\p{N}]+", " ")
-                .replaceAll("\\s+", " ")
-                .trim();
+                .replace('×', 'x');
+        String spaced = DIGIT_MULTIPLIER.matcher(withoutMarks).replaceAll(" x ").replace('&', ' ');
+        return WHITESPACE.matcher(NON_ALPHANUMERIC.matcher(spaced).replaceAll(" ")).replaceAll(" ").trim();
+    }
+
+    private static <V> V memoized(Map<String, V> memo, String value, Function<String, V> compute) {
+        V cached = memo.get(value);
+        if (Objects.nonNull(cached)) {
+            return cached;
+        }
+        V computed = compute.apply(value);
+        if (memo.size() >= MEMO_LIMIT) {
+            memo.clear();
+        }
+        memo.put(value, computed);
+        return computed;
     }
 
     public static Set<String> significantTokens(String value) {
+        if (Objects.isNull(value)) {
+            return Set.of();
+        }
+        return memoized(SIGNIFICANT_TOKENS, value, WineLabelIdentityNormalizer::computeSignificantTokens);
+    }
+
+    private static Set<String> computeSignificantTokens(String value) {
         // Preserve the descriptor as evidence across translated catalog names;
         // do not remove it or inject it when the label does not show it.
         Set<String> tokens = searchTokens(value).stream()
@@ -79,7 +119,7 @@ public final class WineLabelIdentityNormalizer {
     public static Set<String> identityDiscriminatorTokens(String value) {
         Set<String> tokens = new LinkedHashSet<>(symbolDiscriminatorTokens(value));
         searchTokens(value).stream()
-                .filter(token -> token.matches("\\d+"))
+                .filter(token -> DIGITS.matcher(token).matches())
                 .map(token -> "__number_" + token + "__")
                 .forEach(tokens::add);
         return Set.copyOf(tokens);
@@ -101,7 +141,7 @@ public final class WineLabelIdentityNormalizer {
             return List.copyOf(compoundTerms);
         }
         return searchTokens(value).stream()
-                .filter(token -> token.matches("\\d+"))
+                .filter(token -> DIGITS.matcher(token).matches())
                 .toList();
     }
 
@@ -122,7 +162,7 @@ public final class WineLabelIdentityNormalizer {
     }
 
     public static boolean isPlausibleVintage(String value) {
-        if (!hasText(value) || !value.matches("\\d{4}")) {
+        if (!hasText(value) || !FOUR_DIGITS.matcher(value).matches()) {
             return false;
         }
         int numericValue = Integer.parseInt(value);
@@ -133,14 +173,13 @@ public final class WineLabelIdentityNormalizer {
     /** Numeric product designations, not vintages or measurement lines. */
     public static boolean isNumberedProductLine(String line) {
         String normalized = normalize(line);
-        return normalized.matches("\\d{1,4} [\\p{L}].*")
+        return NUMBERED_PRODUCT.matcher(normalized).matches()
                 && !isMeasurementLine(line)
                 && !commercialIdentifierSearchTerms(line).isEmpty();
     }
 
     public static boolean isMeasurementLine(String line) {
-        return normalize(line).matches(".*\\b(?:m|mts|mt|metros|metres|meters|altitud|altitude"
-                + "|feet|ft|ml|cl|abv|vol|alcohol|alc|m s n m|m a s l|msnm|masl)\\b.*");
+        return MEASUREMENT.matcher(normalize(line)).matches();
     }
 
     public static Set<String> producerTokens(String value) {

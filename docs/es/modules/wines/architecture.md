@@ -898,6 +898,14 @@ puro: pondera nombre, bodega, vintage, uva, tipo, país, región y discriminador
 La confianza del proveedor visual no reemplaza el score comparable catálogo-
 etiqueta.
 
+El scoring compara cada línea de la etiqueta con cada candidato, y un escaneo
+rankea cientos de candidatos hasta tres veces. Por eso `WineLabelIdentityNormalizer`
+conserva el texto normalizado y los tokens significativos de hasta 8.192 valores
+distintos (la memoria se vacía al llenarse) y usa patrones precompilados. En un
+volcado de hilos de producción el ranking pasaba 4-6 s de la etapa ampliada
+normalizando las mismas líneas; un benchmark local de 400 candidatos bajó de
+670 ms a 36-43 ms con el mismo ranking.
+
 #### Exactitud y sugerencias
 
 - Umbral base exacto: `0.90`.

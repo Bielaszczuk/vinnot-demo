@@ -34,6 +34,8 @@ public class GeminiImageEmbeddingAdapter implements WineImageEmbeddingPort {
     private static final int MIN_DIMENSIONS = 128;
     private static final int MAX_DIMENSIONS = 3072;
     private static final int MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
+    private static final int HTTP_PAYMENT_REQUIRED = 402;
+    private static final int HTTP_TOO_MANY_REQUESTS = 429;
     private static final Set<String> CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
 
     private final ObjectMapper objectMapper;
@@ -108,8 +110,13 @@ public class GeminiImageEmbeddingAdapter implements WineImageEmbeddingPort {
             Thread.currentThread().interrupt();
             throw unavailable("Image embedding request was interrupted", exception);
         }
-        if (response.statusCode() != 200) {
-            throw unavailable("Image embedding provider answered " + response.statusCode(), null);
+        int status = response.statusCode();
+        if (status == HTTP_PAYMENT_REQUIRED || status == HTTP_TOO_MANY_REQUESTS) {
+            throw new ExternalServiceUnavailableException(PROVIDER_LIMITED,
+                    "Image embedding provider answered " + status, null);
+        }
+        if (status != 200) {
+            throw unavailable("Image embedding provider answered " + status, null);
         }
         if (response.body().length > MAX_RESPONSE_BYTES) {
             throw unavailable("Image embedding response is too large", null);

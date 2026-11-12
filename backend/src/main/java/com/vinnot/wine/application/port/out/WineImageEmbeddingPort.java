@@ -8,6 +8,12 @@ import java.util.List;
  */
 public interface WineImageEmbeddingPort {
 
+    /**
+     * Error code of an {@code ExternalServiceUnavailableException} thrown when the provider refuses for quota or
+     * rate limits (HTTP 402 or 429): callers should wait before trying again instead of retrying at once.
+     */
+    String PROVIDER_LIMITED = "IMAGE_EMBEDDING_LIMITED";
+
     boolean isAvailable();
 
     /** Stable identity of the model and its settings; a change re-embeds the catalog. */

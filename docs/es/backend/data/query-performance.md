@@ -200,7 +200,8 @@ El recuperador de aplicación usa primero identidad comercial cuando hay discrim
 |---|---|---|
 | findByCommercialIdentity | containment de producto y discriminadores | 1500 ms |
 | findByIndexedIdentity | FTS sobre a lo sumo 2000 coincidencias + vinos de las 50 bodegas más parecidas | 750 ms |
-| findByFuzzyMatch | ILIKE sobre a lo sumo 2000 nombres de vino + pg_trgm sobre bodega (las 50 más parecidas) | 1500 ms |
+| findByFuzzyMatch | ILIKE sobre a lo sumo 2000 nombres de vino + pg_trgm o ILIKE sobre bodega (las 50 más parecidas) | 1500 ms |
+| findByProducerIdentity | ILIKE y FTS sobre a lo sumo 500 bodegas cada uno, las 5 más parecidas por palabras completas | 750 ms |
 | findByVisualCues | tipo/uva/añada, sin términos legibles | 1500 ms |
 
 Fuzzy compara cada término con ambos campos; su score SQL pondera mejor similitud de vino 0,55 y bodega 0,35, más añada 0,05, uva 0,05 y tipo 0,03 si hay evidencia. El prefilter conserva al menos 200 candidatos o cinco veces el límite solicitado; la selección final se ordena por match_score e ID. Las ramas indexadas tienen LIMIT antes del orden exterior: el desempate final ordena candidatos ya recuperados, no certifica selección exhaustiva. Una palabra común ("malbec", "reserva") coincide con gran parte del catálogo; ordenar todas las coincidencias leía cientos de MB de disco y superaba el hint en producción (2,8 a 8,3 s). Por eso la rama FTS ordena a lo sumo 2000 coincidencias (el doble del límite antes de descartar vinos inactivos) y la rama de vino de fuzzy busca el término con ILIKE sobre a lo sumo 2000 nombres, sin el operador `%` sobre `wines.name`, que recorría la tabla (3,4 a 4,9 s). Con menos de 2000 coincidencias el resultado no cambia; la tolerancia a errores de tipeo queda en la rama de bodega. Una frase genérica de etiqueta ("Single Vineyard", "Bodega") también se parece a miles de nombres de bodega: unir los vinos de las 1.877 bodegas parecidas a "Single Vineyard" tardaba 4,4 s en producción. Por eso ambas ramas de bodega expanden en vinos solo las 50 bodegas más parecidas (empates por ID). Sobre 75 etiquetas reales del catálogo y frases genéricas, el top 60 quedó idéntico salvo empates entre bodegas igual de parecidas en palabras sueltas ("Reserva", "Chateau", "Domaine"), y nunca se perdió el vino esperado.
@@ -255,7 +256,7 @@ Los hints JPA expresan budgets por clase de operación:
 | Operación | Budget actual |
 |---|---:|
 | label fuzzy/commercial/visual | 1500 ms |
-| label fallback indexado | 750 ms |
+| label fallback indexado/productor | 750 ms |
 | catálogo prefix/sin texto | 2000 ms |
 | catálogo containment/fuzzy fallback | 3000 ms |
 

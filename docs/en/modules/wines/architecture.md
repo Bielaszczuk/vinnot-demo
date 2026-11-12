@@ -231,7 +231,7 @@ The OCR-only catalog stage has a 3 s sub-budget within the global deadline.
 Exhausting it allows visual recognition when global time remains; this neither
 extends the deadline nor hides failures unrelated to timeouts.
 
-The local lookup runs on the `wineLabelScanExecutor` executor (`WINE_LABEL_SCAN_THREADS`, 8 by default, no queue). If it has not answered the scan within 400 ms, label recognition and the visual index search start beside it instead of after it: the local lookup keeps racing and, if it can then answer alone, its result answers the scan and the provider results are discarded. A local lookup that answers within 400 ms avoids the provider call. If the provider fails at once (for example paused paid calls or an exhausted budget), the scan waits for the local lookup and uses it when it can answer; otherwise it returns the provider failure. When the executor is full, the work runs on the request thread, one stage after the other.
+The local lookup runs on the `wineLabelScanExecutor` executor (`WINE_LABEL_SCAN_THREADS`, 8 by default, no queue). If it has not answered the scan within 400 ms, label recognition and the visual index search start beside it instead of after it: the local lookup keeps racing and, if it can then answer alone, its result answers the scan and the provider results are discarded. A local lookup that answers within 400 ms avoids the provider call. If the provider fails at once (for example paused paid calls or an exhausted budget), the scan waits for the local lookup and uses it when it can answer; otherwise it returns the provider failure. When the executor is full, the work runs on the request thread, one stage after the other. Discarded provider work is not aborted: it finishes, is charged and records its stage; such a scan reports `visual_fallback=false`.
 
 If the optional OCR-only catalog stage exhausts its query budget, visual extraction may still proceed within the shared deadline. The enriched lookup must then succeed; an exhausted total deadline or another technical error is not converted into an empty business result.
 
@@ -376,15 +376,15 @@ The indexed query timeout remains 750 ms.
 
 `WineLabelScanDeadline` shares a monotonic 18-second budget across OCR/catalog matching and visual recognition. It is checked around stages and between queries; visual recognition receives only the remaining time. This is neither an artificial wait nor the latency target: interactive latency is measured separately. Catalog keeps per-query hints (indexed 750 ms; fuzzy/commercial/visual 1500 ms); an already submitted query retains its own timeout. Upload, validation and transport are outside this application clock; mobile keeps a 22-second HTTP timeout. Cancellation does not imply rollback or distributed cancellation of remote work already started.
 
-Image errors include INVALID_LABEL_IMAGE, LABEL_IMAGE_RESOLUTION_TOO_LOW, LABEL_IMAGE_TOO_DARK, LABEL_IMAGE_TOO_BRIGHT and LABEL_IMAGE_OUT_OF_FOCUS; invalid OCR uses INVALID_LABEL_TEXT. Visual failure returns 503 LABEL_RECOGNITION_UNAVAILABLE; exhausted catalog retrieval without recovery returns LABEL_CATALOG_UNAVAILABLE; the deadline uses LABEL_SCAN_TIMEOUT. A timeout followed by valid recovery may continue, but an unrecovered technical failure never becomes NO_MATCH. Provider logs include numeric HTTP status, never keys or response bodies.
+Image errors include INVALID_LABEL_IMAGE, LABEL_IMAGE_RESOLUTION_TOO_LOW, LABEL_IMAGE_TOO_DARK, LABEL_IMAGE_TOO_BRIGHT and LABEL_IMAGE_OUT_OF_FOCUS; invalid OCR uses INVALID_LABEL_TEXT. Visual failure returns 503 LABEL_RECOGNITION_UNAVAILABLE; exhausted catalog retrieval without recovery returns LABEL_CATALOG_UNAVAILABLE; the deadline uses LABEL_SCAN_TIMEOUT. A timeout followed by valid recovery may continue, but an unrecovered technical failure never becomes NO_MATCH. Provider logs include the numeric HTTP status and, for OpenAI, the provider's error code (for example `HTTP 429 insufficient_quota`); never keys or response bodies.
 
-LOCAL_CATALOG, VISUAL_RECOGNITION, VISUAL_WAIT, ENRICHED_CATALOG and CANDIDATE_VERIFICATION stages record SUCCESS/FAILURE duration. Scan total/duration are recorded when building a business response; earlier thrown errors do not pass that point. Each scan also writes one INFO line `Label scan finished: outcome=<outcome> totalMs=<ms> <STAGE>=<ms> ...` with only the stages it ran; a failed scan uses `outcome=FAILED_<code>` (or the exception type). Metrics and logs never store images.
+LOCAL_CATALOG, VISUAL_RECOGNITION, VISUAL_WAIT, ENRICHED_CATALOG and CANDIDATE_VERIFICATION stages record SUCCESS/FAILURE duration. Scan total/duration are recorded when building a business response; earlier thrown errors do not pass that point. Each scan also writes one INFO line `Label scan finished: outcome=<outcome> totalMs=<ms> <STAGE>=<ms> ...` with only the stages that had finished when the scan answered; a failed scan uses `outcome=FAILED_<code>` (or the exception type). CANDIDATE_VERIFICATION is recorded on every scan that reaches recognition, at about 0 ms when confirmation is skipped. Metrics and logs never store images.
 
 #### Tests and sources
 
 Verify multipart validation, persistence normalization, fixture extraction, OCR merging, aliases, ranking/ambiguity with the real scorer, outcome shapes and provider failures. PostgreSQL validates retrieval; the benchmark measures precision/recall/stability/latency separately. Fake-provider tests are not evidence of OpenAI execution.
 
-Sources under `backend/src/main/java/com/vinnot/wine/`: `application/command/handler/ScanWineLabelCommandHandler.java`, `AttachWineLabelImageCommandHandler.java`; `application/service/WineLabelCatalogMatcher.java`, `WineLabelCandidateRetriever.java`, `WineLabelScanPolicy.java`; `domain/service/WineLabelMatchScorer.java`; `infrastructure/web/WineLabelUploadValidator.java`; `infrastructure/ai/OpenAiWineLabelRecognitionAdapter.java`.
+Sources under `backend/src/main/java/com/vinnot/wine/`: `application/command/handler/ScanWineLabelCommandHandler.java`, `AttachWineLabelImageCommandHandler.java`; `application/service/WineLabelCatalogMatcher.java`, `WineLabelCandidateRetriever.java`, `WineLabelScanPolicy.java`; `domain/service/WineLabelMatchScorer.java`, `WineLabelIdentityNormalizer.java`; `infrastructure/config/WineLabelScanConfig.java`; `infrastructure/web/WineLabelUploadValidator.java`; `infrastructure/ai/OpenAiWineLabelRecognitionAdapter.java`.
 
 [Submissions](submissions.md) · [SQL](../../backend/data/query-performance.md) · [Mobile workflow](architecture.md) · [Observability](../../backend/architecture/observability.md).
 
@@ -394,9 +394,9 @@ Scanning combines four independent signals; each one degrades to the previous be
 
 | Signal | How it works | Components |
 |---|---|---|
-| Accent-insensitive text | `V90` adds `catalog_search_unaccent`, an `IMMUTABLE` wrapper of `unaccent` with a fixed dictionary, and makes the build functions of both search read models store unaccented, lower-cased text. Queries are normalized the same way, so "SEPTIMA" finds "Séptima" in scans, the public catalog and administration. Rows written before `V90` are rewritten after startup in committed batches (5000 rows, 200 ms pause) on the `catalogMaintenanceTaskScheduler`; until then searches match both forms. | `WineSearchNativeRepository`, `CatalogSearchAccentNormalizer` |
+| Accent-insensitive text | `V90` adds `catalog_search_unaccent`, an `IMMUTABLE` wrapper of `unaccent` with a fixed dictionary, and makes the build functions of both search read models store unaccented, lower-cased text. Queries are normalized the same way, so "SEPTIMA" finds "Séptima" in scans, the public catalog and administration. Rows written before `V90` are rewritten after startup in committed batches (5000 rows, 200 ms pause) on the `catalogMaintenanceTaskScheduler`; until then searches match both forms. Once a full pass finds nothing left it stops; each restart checks again (in production, about 3 minutes of light batches). | `WineSearchNativeRepository`, `CatalogSearchAccentNormalizer` |
 | Producer-first retrieval | The producer read on the label also retrieves that winery's wines; a generic line on its own ("Reserva", "Malbec", "Estate") never becomes the wine's identity. | `WineLabelCandidateRetriever`, `WineLabelLanguageVocabulary`, `WineLabelIdentityNormalizer` |
-| Visual search | Every catalog wine whose label image Vinnot hosts has one Google Gemini embedding (`gemini-embedding-2`, 768 dimensions) stored as int8 in `wine_image_embeddings` (`V91`). The backend loads all vectors of the active model into an in-memory index and compares the scanned photo by cosine similarity (at least 0.6), in parallel with OpenAI recognition and on a bounded pool (2 threads, queue of 4); the scan waits at most 1.5 s for it. Up to 10 visual matches join the candidates and, when the text finds nothing, become suggestions. A scheduler loads the index 30 s after startup and embeds up to 200 pending images every 60 s. Without `GEMINI_API_KEY` the signal is off. | `WineVisualIndexService`, `GeminiImageEmbeddingAdapter`, `InMemoryWineVisualIndex`, `JdbcWineImageEmbeddingRepository`, `CatalogImageSourceAdapter`, `WineVisualIndexScheduler` |
+| Visual search | Every catalog wine whose label image Vinnot hosts has one Google Gemini embedding (`gemini-embedding-2`, 768 dimensions) stored as int8 in `wine_image_embeddings` (`V91`). The backend loads all vectors of the active model into an in-memory index and compares the scanned photo by cosine similarity (at least 0.6), in parallel with OpenAI recognition and on a bounded pool (2 threads, queue of 4); the scan waits at most 1.5 s for it. Up to 10 visual matches join the candidates and, when the text finds nothing, become suggestions. A scheduler loads the index 30 s after startup and embeds up to 200 pending images every 60 s. When Gemini refuses for quota or rate limits (HTTP 402 or 429), the backfill pauses 5 minutes, doubling up to 6 hours, and the log names the status; a successful run ends the pause. Without `GEMINI_API_KEY` the signal is off. | `WineVisualIndexService`, `GeminiImageEmbeddingAdapter`, `InMemoryWineVisualIndex`, `JdbcWineImageEmbeddingRepository`, `CatalogImageSourceAdapter`, `WineVisualIndexScheduler` |
 | Candidate confirmation | Without an exact match and with at least 3 s left, the vision model receives the photo with the 5 best text candidates and up to 3 visual ones, reads the printed producer and product and picks one or none (at most 8 s). The pick becomes exact only with confidence of at least 0.85 and when `WineLabelPickEvidence` finds every word of the product read in the candidate, every word of the candidate's name in the label text and an agreeing producer. | `WineLabelCandidateVerifier`, `WineLabelPickEvidence`, `OpenAiWineLabelCandidateVerificationAdapter` |
 
 **AI capacity.** `ai.admission.maximum-concurrent` (3 by default) bounds provider calls. With three or more slots the last one is kept for interactive requests: a label scan tries the reserved slot first and then waits up to `ai.admission.interactive-wait` (4 s) for any slot before answering 503 `AI_CAPACITY_EXCEEDED`, while profiles and comparisons use the other slots and fail fast. Image decoding waits up to 2 s for a processing slot before answering 503 `IMAGE_PROCESSING_BUSY`. `services.openai.vision-reasoning-effort` (empty by default) lets the vision request use a reasoning model with the `max_completion_tokens` shape.
@@ -417,6 +417,7 @@ Scanning combines four independent signals; each one degrades to the previous be
 | `app.wine-label.visual-index.min-similarity` | `0.6` | Cosine similarity a catalog label needs to count as a visual candidate |
 | `app.wine-label.visual-index.backfill-batch` / `backfill-delay-ms` / `initial-delay-ms` | `200` / `60000` / `30000` | Backfill size and schedule |
 | `app.wine-label.visual-index.image-timeout` | `10s` | Download timeout of each catalog image |
+| `app.wine-label.scan-threads` (`WINE_LABEL_SCAN_THREADS`) | `8` | Threads of `wineLabelScanExecutor` that let the local lookup and recognition overlap; no queue, a full pool runs the work on the request thread |
 | `app.wine-label.visual-index.search-threads` / `search-queue` | `2` / `4` | Pool that embeds scanned photos |
 | `app.wine-label.verification.enabled` / `min-confidence` | `true` / `0.85` | Candidate confirmation by the vision model |
 | `app.wine-label.search-normalization.enabled` / `batch-size` / `pause` | `true` / `5000` / `200ms` | Rewriting of pre-`V90` search rows |
@@ -858,8 +859,9 @@ exceed the total budget are omitted without splitting them; a later shorter line
 can use the remaining space. OCR is an optional aid and must not prevent visual
 recognition by exceeding request limits.
 
-If local OCR produces an exact and unambiguous catalog match, the backend finishes
-through the fast path. Otherwise it calls the visual port. The provider extracts
+If local OCR produces an exact and unambiguous catalog match within 400 ms, the
+backend finishes through the fast path. Otherwise the visual port starts while the
+local lookup keeps running (see [Orchestration](#orchestration)). The provider extracts
 structured evidence and observed text; when the catalog search is not exact, the
 vision model may pick among the shortlisted candidates, and the backend accepts
 that pick only when the words read on the label support it (see
@@ -872,14 +874,15 @@ flowchart LR
     MP["Multipart + OCR"] --> LOCAL["Local matching"]
     LOCAL --> FAST{"Exact"}
     FAST -- Yes --> OUT["EXACT_MATCH"]
-    FAST -- No --> VISION["WineLabelRecognitionPort"]
+    FAST -- "No / >400 ms" --> VISION["WineLabelRecognitionPort"]
+    LOCAL -.->|"exact before provider"| OUT
     VISION --> NORMALIZE["Normalize multilingual identity"]
     NORMALIZE --> RETRIEVE["Retrieve indexed candidates"]
     RETRIEVE --> SCORE["Deterministic scoring"]
     SCORE --> DECIDE["Exact, suggestions, or no match"]
 ```
 
-[View the full “Backend pipeline” diagram](https://images.vinnot.com/docs/diagrams/v1/en/modules-wines-architecture-ff8377899e97.svg)
+[View the full “Backend pipeline” diagram](https://images.vinnot.com/docs/diagrams/v1/en/modules-wines-architecture-ec0466c9bb82.svg)
 
 `ScanWineLabelCommandHandler` orchestrates stages. `WineLabelCatalogMatcher`
 retrieves, ranks, and consolidates equivalent identities.

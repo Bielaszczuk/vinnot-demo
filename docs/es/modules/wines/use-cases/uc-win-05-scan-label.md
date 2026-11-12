@@ -28,7 +28,7 @@
 4. La app revisa resolución, luz y foco, recorta y guarda la foto en JPEG de hasta 1600 px.
 5. La app lee el texto de la etiqueta en el dispositivo (hasta 24 líneas de 120 caracteres y 2000 en total).
 6. La app envía `POST /wines/scan` con la foto, el texto leído y, si leyó uno, el `barcode`.
-7. La API valida la foto, busca primero en el catálogo con el texto leído y, si no hay coincidencia exacta, reconoce la etiqueta con OpenAI y vuelve a buscar. Mientras OpenAI lee la etiqueta, la API compara la foto con las etiquetas del catálogo que aloja Vinnot (búsqueda visual) y suma los vinos más parecidos a las candidatas.
+7. La API valida la foto y busca en el catálogo con el texto leído. Si en 400 ms esa búsqueda no dio una coincidencia exacta, empieza en paralelo a reconocer la etiqueta con OpenAI, y una coincidencia exacta del catálogo que llegue antes sigue respondiendo el escaneo; si no, vuelve a buscar con lo reconocido. Mientras OpenAI lee la etiqueta, la API compara la foto con las etiquetas del catálogo que aloja Vinnot (búsqueda visual) y suma los vinos más parecidos a las candidatas.
 8. Si la búsqueda no alcanza para una coincidencia exacta, OpenAI mira la foto junto con las mejores candidatas de texto y de imagen, lee el productor y el producto impresos y elige una o ninguna. La elección cuenta como exacta solo si las palabras leídas en la etiqueta la respaldan.
 9. La API registra el escaneo y responde `EXACT_MATCH`, `POSSIBLE_MATCHES` (hasta 3) o `NO_MATCH`, con el `scanId` del escaneo registrado.
 10. Con coincidencia exacta, la app muestra el vino con «Ver detalles»; con sugerencias, la persona elige una; sin coincidencias, ofrece buscar a mano o proponer el vino.
@@ -86,11 +86,12 @@ sequenceDiagram
     alt Código confirmado
         API->>APP: EXACT_MATCH sin IA
     else Sin código confirmado
-        API->>DB: Busca con el texto leído
-        par Reconocimiento y búsqueda visual
-            API->>AI: Reconoce la etiqueta si hace falta
+        par Búsqueda por texto, reconocimiento y búsqueda visual
+            API->>DB: Busca con el texto leído
+            API->>AI: Reconoce la etiqueta si en 400 ms no hay coincidencia exacta
             API->>EMB: Embedding de la foto
         end
+        Note over API: Una coincidencia exacta por texto que llegue antes responde el escaneo
         API->>DB: Busca con lo reconocido y los vinos más parecidos
         API->>AI: Elige entre las candidatas si no hay exacta
         API->>APP: EXACT_MATCH, POSSIBLE_MATCHES o NO_MATCH + scanId
@@ -101,7 +102,7 @@ sequenceDiagram
     API->>DB: Veredicto y confirmación del código
 ```
 
-[Ver diagrama de «UC-WIN-05 · Escanear la etiqueta de un vino» completo](https://images.vinnot.com/docs/diagrams/v1/es/modules-wines-use-cases-uc-win-05-scan-label-7669a32854ba.svg)
+[Ver diagrama de «UC-WIN-05 · Escanear la etiqueta de un vino» completo](https://images.vinnot.com/docs/diagrams/v1/es/modules-wines-use-cases-uc-win-05-scan-label-eca5d4713a6c.svg)
 
 Diagrama de componentes en Lucidchart: [APK UC-SCAN-01](https://lucid.app/lucidchart/e095dd25-e8ac-41ba-bf5b-396e1055f217/edit).
 

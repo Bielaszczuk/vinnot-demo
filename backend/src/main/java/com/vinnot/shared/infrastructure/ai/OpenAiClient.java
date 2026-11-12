@@ -37,6 +37,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.Locale;
 
 /** Bounded transport, paid-attempt admission and conservative billing reconciliation. */
@@ -55,6 +56,7 @@ public class OpenAiClient implements AiCompletionService {
     private static final Duration MAX_OPERATION_TIMEOUT = Duration.ofSeconds(60);
     /** Time an interactive request keeps for the provider call itself after waiting for a slot. */
     private static final Duration MIN_PROVIDER_CALL = Duration.ofSeconds(3);
+    private static final Pattern SAFE_ERROR_CODE = Pattern.compile("[A-Za-z0-9_.-]{1,64}");
     private static final Set<String> BILLING_ERRORS = Set.of("insufficient_quota", "credit_balance_exhausted",
             "billing_hard_limit_reached", "organization_spend_limit_exceeded", "project_spend_limit_exceeded");
     private final HttpClient httpClient;
@@ -198,8 +200,7 @@ public class OpenAiClient implements AiCompletionService {
                 Thread.currentThread().interrupt();
                 return Map.of();
             } catch (Exception exception) {
-                LOG.warn("OpenAI {} attempt {}/{} failed: {}", operation, attempt, attempts,
-                        exception.getClass().getSimpleName());
+                LOG.warn("OpenAI {} attempt {}/{} failed: {}", operation, attempt, attempts, describe(exception));
                 long delay = retryDelay(exception, attempt);
                 long remainingMs = TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime());
                 if (attempt == attempts || delay < 0 || delay >= remainingMs || !pause(delay)) {
@@ -330,6 +331,15 @@ public class OpenAiClient implements AiCompletionService {
         } catch (RuntimeException invalid) {
             return 0;
         }
+    }
+
+    /** The provider status and its error code for a rejected call; never the response body. */
+    private static String describe(Exception failure) {
+        if (failure instanceof ProviderResponseException response) {
+            return "HTTP " + response.status
+                    + (SAFE_ERROR_CODE.matcher(response.code).matches() ? " " + response.code : "");
+        }
+        return failure.getClass().getSimpleName();
     }
 
     private String errorCode(String body) {

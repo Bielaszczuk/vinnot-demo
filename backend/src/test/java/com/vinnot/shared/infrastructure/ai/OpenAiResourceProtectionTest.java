@@ -4,12 +4,16 @@ import java.util.Objects;
 import tools.jackson.databind.ObjectMapper;
 import com.vinnot.shared.infrastructure.metrics.OperationalTelemetry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import com.vinnot.shared.application.exception.ExternalServiceUnavailableException;
 import com.vinnot.shared.application.port.AiProviderAdmissionPort;
 import org.junit.jupiter.api.AfterEach;
+import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -104,6 +108,30 @@ class OpenAiResourceProtectionTest {
         assertThat(calls.get()).isEqualTo(1);
         assertThat(metrics.get("vinnot.ai.attempts").tag("outcome", "QUOTA_EXHAUSTED").counter().count()).isEqualTo(1);
         verify(admission).complete(any(), eq(Optional.empty()));
+    }
+
+    @Test
+    void rejectedAttemptsLogTheProviderStatusAndCodeWithoutTheBody() throws Exception {
+        Logger logger = (Logger) LoggerFactory.getLogger(OpenAiClient.class);
+        var logs = new ListAppender<ILoggingEvent>();
+        logs.start();
+        logger.addAppender(logs);
+        try {
+            var quota = client(exchange -> respond(exchange, 429,
+                    "{\"error\":{\"code\":\"organization_spend_limit_exceeded\",\"message\":\"private provider body\"}}"),
+                    Duration.ofSeconds(3), 1);
+            assertThat(quota.chatCompletion("p", 0, 500)).isEmpty();
+            server.stop(0);
+            var unsafe = client(exchange -> respond(exchange, 500,
+                    "{\"error\":{\"code\":\"<script>alert(1)</script>\"}}"), Duration.ofSeconds(3), 1);
+            assertThat(unsafe.chatCompletion("p", 0, 500)).isEmpty();
+        } finally {
+            logger.detachAppender(logs);
+            logs.stop();
+        }
+        assertThat(logs.list).extracting(ILoggingEvent::getFormattedMessage).containsExactly(
+                "OpenAI text attempt 1/1 failed: HTTP 429 organization_spend_limit_exceeded",
+                "OpenAI text attempt 1/1 failed: HTTP 500");
     }
 
     @Test

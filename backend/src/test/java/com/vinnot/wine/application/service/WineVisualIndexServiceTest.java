@@ -1,5 +1,8 @@
 package com.vinnot.wine.application.service;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.vinnot.shared.application.exception.ExternalServiceUnavailableException;
 import com.vinnot.wine.application.port.out.CatalogImageSourcePort;
 import com.vinnot.wine.application.port.out.WineImageEmbeddingPort;
@@ -8,6 +11,7 @@ import com.vinnot.wine.application.port.out.WineImageEmbeddingRepositoryPort.Pen
 import com.vinnot.wine.application.port.out.WineVisualIndexPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.List;
@@ -126,6 +130,30 @@ class WineVisualIndexServiceTest {
         when(embeddings.embed(anyList())).thenThrow(new ExternalServiceUnavailableException(
                 "IMAGE_EMBEDDING_UNAVAILABLE", "down", null));
         assertThat(service.search(new byte[] {1}, "image/jpeg", 5)).isEmpty();
+    }
+
+    @Test
+    void searchLogsTheProviderCodeAndStatusWhenEmbeddingFails() {
+        service.load();
+        when(index.size()).thenReturn(1);
+        when(embeddings.embed(anyList()))
+                .thenThrow(new ExternalServiceUnavailableException(WineImageEmbeddingPort.PROVIDER_LIMITED,
+                        "Image embedding provider answered 429", null))
+                .thenThrow(new IllegalStateException("private detail"));
+        Logger logger = (Logger) LoggerFactory.getLogger(WineVisualIndexService.class);
+        var logs = new ListAppender<ILoggingEvent>();
+        logs.start();
+        logger.addAppender(logs);
+        try {
+            assertThat(service.search(new byte[] {1}, "image/jpeg", 5)).isEmpty();
+            assertThat(service.search(new byte[] {1}, "image/jpeg", 5)).isEmpty();
+        } finally {
+            logger.detachAppender(logs);
+            logs.stop();
+        }
+        assertThat(logs.list).extracting(ILoggingEvent::getFormattedMessage).containsExactly(
+                "Visual label search unavailable: IMAGE_EMBEDDING_LIMITED Image embedding provider answered 429",
+                "Visual label search unavailable: IllegalStateException");
     }
 
     @Test

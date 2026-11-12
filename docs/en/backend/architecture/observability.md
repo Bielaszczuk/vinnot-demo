@@ -76,12 +76,14 @@ Expected rejections log the code rather than the free-text message. Maps logs
 failure type or provider rejection, never the URL, key or body.
 See [resource protection](resource-protection.md).
 
+Each label scan writes one INFO line `Label scan finished: outcome=... totalMs=... <STAGE>=<ms>` (see [scanning](../../modules/wines/architecture.md)). A failed OpenAI attempt logs `HTTP <status> <error code>`, and the visual index logs the Gemini status, never the body.
+
 ## Symptom diagnosis
 
 | Symptom | First evidence | Next split |
 |---|---|---|
 | 5xx | request ID + exception mapping | handler/adapter logs |
-| slow scan | stage timers | provider vs DB vs host |
+| slow scan | stage timers + `Label scan finished` line | provider vs DB vs host |
 | slow catalog | request duration + query metrics | EXPLAIN/locks/connections |
 | 401 spike | auth endpoint/filter metrics | rotation/clock/client |
 | health down | container/actuator | DB, memory, migrations |

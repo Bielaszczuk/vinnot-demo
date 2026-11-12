@@ -80,12 +80,14 @@ serializadas. Los rechazos esperados registran el código, no el mensaje libre.
 Maps registra clase de fallo o rechazo del proveedor, nunca URL, clave ni body.
 Véase [protección de recursos](resource-protection.md).
 
+Cada escaneo de etiqueta escribe una línea INFO `Label scan finished: outcome=... totalMs=... <ETAPA>=<ms>` (ver [escaneo](../../modules/wines/architecture.md)). Un intento fallido de OpenAI registra `HTTP <código> <código de error>`, y el índice visual registra el código de Gemini, nunca el cuerpo.
+
 ## Diagnóstico por síntoma
 
 | Síntoma | Primera evidencia | Siguiente corte |
 |---|---|---|
 | 5xx | request ID + exception mapping | logs handler/adapters |
-| scan lento | stage timers | proveedor vs DB vs host |
+| scan lento | stage timers + línea `Label scan finished` | proveedor vs DB vs host |
 | catálogo lento | request duration + query metrics | EXPLAIN/locks/connections |
 | 401 masivo | auth endpoint/filter metrics | token rotation/clock/client |
 | health caído | container/actuator | DB, memory, migrations |

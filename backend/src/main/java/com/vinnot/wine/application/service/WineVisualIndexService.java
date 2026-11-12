@@ -1,5 +1,6 @@
 package com.vinnot.wine.application.service;
 
+import com.vinnot.shared.application.exception.ExternalServiceUnavailableException;
 import com.vinnot.wine.application.port.out.CatalogImageSourcePort;
 import com.vinnot.wine.application.port.out.WineImageEmbeddingPort;
 import com.vinnot.wine.application.port.out.WineImageEmbeddingRepositoryPort;
@@ -174,6 +175,9 @@ public class WineVisualIndexService {
         try {
             return Optional.of(embeddings.embed(List.of(
                     new WineImageEmbeddingPort.LabelImage(photo, contentType))).getFirst());
+        } catch (ExternalServiceUnavailableException exception) {
+            LOGGER.warn("Visual label search unavailable: {} {}", exception.getCode(), exception.getMessage());
+            return Optional.empty();
         } catch (RuntimeException exception) {
             LOGGER.warn("Visual label search unavailable: {}", exception.getClass().getSimpleName());
             return Optional.empty();

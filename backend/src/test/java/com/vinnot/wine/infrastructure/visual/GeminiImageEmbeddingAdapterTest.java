@@ -2,6 +2,7 @@ package com.vinnot.wine.infrastructure.visual;
 
 import com.sun.net.httpserver.HttpServer;
 import com.vinnot.shared.application.exception.ExternalServiceUnavailableException;
+import com.vinnot.wine.application.port.out.WineImageEmbeddingPort;
 import com.vinnot.wine.application.port.out.WineImageEmbeddingPort.LabelImage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -83,7 +84,15 @@ class GeminiImageEmbeddingAdapterTest {
     void reportsProviderFailuresAsUnavailable() throws IOException {
         var adapter = adapter("key");
         var image = List.of(new LabelImage(new byte[] {1}, "image/png"));
-        for (String[] answer : new String[][] {{"429", vectors(1, 128)}, {"200", "not json"},
+        for (String limit : new String[] {"402", "429"}) {
+            status = Integer.parseInt(limit);
+            body = "{\"error\":{\"message\":\"private provider body\"}}";
+            assertThatThrownBy(() -> adapter.embed(image)).as(limit)
+                    .isInstanceOf(ExternalServiceUnavailableException.class)
+                    .hasMessage("Image embedding provider answered " + limit)
+                    .extracting("code").isEqualTo(WineImageEmbeddingPort.PROVIDER_LIMITED);
+        }
+        for (String[] answer : new String[][] {{"500", vectors(1, 128)}, {"200", "not json"},
                 {"200", vectors(2, 128)}, {"200", vectors(1, 64)}, {"200", "{}"}}) {
             status = Integer.parseInt(answer[0]);
             body = answer[1];

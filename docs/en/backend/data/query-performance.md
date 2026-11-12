@@ -194,7 +194,8 @@ The application retriever first uses commercial identity when discriminators exi
 |---|---|---|
 | findByCommercialIdentity | product/discriminator containment | 1500 ms |
 | findByIndexedIdentity | FTS over at most 2000 matches + wines of the 50 most similar wineries | 750 ms |
-| findByFuzzyMatch | ILIKE over at most 2000 wine names + pg_trgm over winery (50 most similar) | 1500 ms |
+| findByFuzzyMatch | ILIKE over at most 2000 wine names + pg_trgm or ILIKE over winery (50 most similar) | 1500 ms |
+| findByProducerIdentity | ILIKE and FTS over at most 500 wineries each, 5 most similar whole-word producers | 750 ms |
 | findByVisualCues | type/grape/vintage, no readable terms | 1500 ms |
 
 Fuzzy compares each term against both fields; its SQL score weights best wine similarity 0.55 and winery similarity 0.35, plus vintage 0.05, grape 0.05 and type 0.03 when evidence exists. The prefilter keeps at least 200 candidates or five times the requested limit; final selection orders by match_score and ID. Indexed branches have LIMIT before the outer sort: final tie-breaking orders already retrieved candidates, not an exhaustive selection. A common word ("malbec", "reserva") matches a large share of the catalog; ranking every match read hundreds of MB from disk and exceeded the hint in production (2.8 to 8.3 s). The FTS branch therefore ranks at most 2000 matches (twice the limit before inactive wines are dropped), and the fuzzy wine branch finds the term with ILIKE over at most 2000 names, without the `%` operator on `wines.name`, which scanned the table (3.4 to 4.9 s). Below 2000 matches the result is unchanged; typo tolerance stays in the winery branch. A generic label phrase ("Single Vineyard", "Bodega") also resembles thousands of winery names: joining the wines of all 1,877 wineries similar to "Single Vineyard" took 4.4 s in production. Both winery branches therefore expand only the 50 most similar wineries (ties broken by ID) into their wines. Over 75 real catalog labels and generic phrases the top 60 stayed identical except for ties between equally similar wineries in single words ("Reserva", "Chateau", "Domaine"), and the expected wine was never lost.
@@ -248,7 +249,7 @@ JPA hints express per-operation budgets:
 | Operation | Current budget |
 |---|---:|
 | label fuzzy/commercial/visual | 1500 ms |
-| indexed label fallback | 750 ms |
+| indexed/producer label fallback | 750 ms |
 | catalog prefix/no text | 2000 ms |
 | catalog containment/fuzzy fallback | 3000 ms |
 
